@@ -89,6 +89,179 @@
 - Git 同步目标：https://github.com/WONISHI/Devly.git。原目录继承父仓库（指向另一项目），已只在 Devly 目录建立独立 Git 仓库；远端当前为空，因此首次同步包含现有项目基线和本次 B01 修改，不接触父仓库。
 - 同步结果：首次代码提交 `431bbe4dca58d494fb409ce4dbe8c6c20b91a820` 已通过 `git push --set-upstream origin main` 推送至 GitHub；随后 `git ls-remote origin refs/heads/main` 返回相同哈希，确认远端实际收到。此记录与任务表排版随后以独立文档提交同步。
 
+## LOG-009｜B02：统一请求、事件、错误契约与订阅清理
+
+- 日期：2026-11-21；阶段 1 / 步骤 1.3 / B02；用户指定与 B04、V01 一次完成，B03 保持待开始。
+- 实际完成：共享 v1 请求/响应/事件 Schema；固定方法白名单、严格参数和结果检查、UUID 关联、进行中重复 ID 拒绝；统一 INVALID_REQUEST/FORBIDDEN/INTERNAL_ERROR/INVALID_RESPONSE/TRANSPORT_ERROR，不返回内部堆栈或异常文本。
+- 归属与清理：Main 验证当前 WebContents、主 frame、页面 generation；异步完成后复核归属；订阅按页面隔离，最多 32 个；窗口/页面完整导航、崩溃、销毁时清理；Preload 只传业务数据，取消函数同步移除监听，处理重复取消及确认前取消的竞态。
+- 桥接细节：通过 contextBridge 返回显式 OperationResult DTO，避免 Error 自定义属性丢失；Renderer 网关解包后重建 ContractError，业务 hook 调用方式保持不变。Zod 在沙箱 preload 中打包，不放宽 sandbox/contextIsolation。
+- 涉及文件：src/shared/contracts.ts、src/main/request-router.ts、src/main/index.ts、src/preload/desktop-client.ts、src/preload/index.ts、src/renderer/src/platform/desktop.ts、electron.vite.config.ts、tests/ipc.test.ts、scripts/smoke-desktop.mjs、docs/ipc-contracts.md。
+- 验证：pnpm check 退出 0，其中 2 个测试文件 / 22 项测试通过（21 项新增）；覆盖非法输入、未授权 owner、旧页面异步响应、并发乱序关联、错误脱敏、事件隔离/取消归属、重复取消、生命周期清理、订阅限额、确认前事件/取消、失败后的 listener 清理。类型/Lint/生产构建通过。
+- 桌面证据：开发产物与未签名 Devly.app 的 pnpm verify:desktop 均退出 0；真实 IPC 事件到达并在清理后停止，错误 DTO 的 INTERNAL_ERROR 码穿过桥接仍保留，内部异常原文未泄露；目录取消/失败/成功、原组件预览、状态保留和 Renderer 隔离回归通过。
+- 边界：导航/崩溃的 owner 清理由单元测试及主进程生命周期接线覆盖，未注入真实崩溃；订阅停止不等于取消已开始的本机操作，没有实现 Agent 任务取消、文件写入或命令执行。事件暂存最多 32 条，没有持久化/重放保证。
+- 状态：B02 待开始 → 完成。下一步：本批 B04；批次结束后唯一下一项恢复 B03。
+
+## LOG-010｜B04：统一检查入口与目标平台构建计划
+
+- 日期：2026-11-21；阶段 1 / 步骤 1.4 / B04。
+- 实际完成：pnpm check 顺序运行类型、Lint、格式、关键测试、文档结构、原组件哈希和生产 bundle，任一失败非零退出；保留独立 build。增加 docs/quality-checks.md、scripts/check.mjs、check-docs.mjs 及 CI workflow。
+- CI 定义：main 推送/PR/手动触发 macos-14 ARM64 和 windows-2022 x64 独立作业；固定 Node/pnpm、frozen install、原生模块检查、开发桌面检查、未签名应用目录和包内桌面检查；只读仓库权限、限时、同分支取消、截图和 builder 证据上传。
+- 可移植性：桌面脚本允许 Codex CLI 检测为空，项目名由 cwd 推导；没有把该检查调整冒充 B03 的 Provider 设置入口实现。检查脚本支持 Windows cmd 调用 pnpm；原生 smoke 已分别选择 cmd.exe 或 /bin/sh。
+- 涉及文件：package.json、.github/workflows/check.yml、scripts/check.mjs、scripts/check-docs.mjs、scripts/smoke-desktop.mjs、eslint.config.js、.prettierignore、README.md、docs/quality-checks.md。
+- 验证：pnpm check 最终退出 0；pnpm run pack --config.mac.identity=null 退出 0，生成 release/mac-arm64/Devly.app；开发及包内 verify:desktop 均退出 0；pnpm verify:native 退出 0，SQLite SQL 与 PTY 输出/退出通过。
+- 发现与修复：首次统一检查发现临时 .cache 脚本被 Lint 扫描，以及文档链接使用了错误文件名；已排除生成目录、统一链接到 quality-checks.md，再运行通过。既有 bundle 仍有大 chunk 和上游 Zod 注释警告，退出 0 不代表已优化体积。
+- 未验证：本轮未推送或触发 GitHub Actions；远端 CI、Windows、Linux、macOS Intel 尚未运行。未签名目录不是 DMG/NSIS、未做签名公证。原生 smoke 对开发依赖树运行，包内桌面检查不替代未来真实数据库/终端业务验收。
+- 状态：B04 待开始 → 完成（检查入口与平台计划完成）。下一步：本批 V01；双平台最终验收仍归 V02/V03。
+
+## LOG-011｜V01：维护版本、许可证、原组件与兼容性评估
+
+- 日期：2026-11-21；阶段 1 / 步骤 1.5 / V01。
+- 实际完成：docs/dependency-review.md 记录全部 58 个直接依赖的实际版本/许可证、22 个范围外新版本、920 个本机安装包的许可证表达式统计、全部审计公告、兼容性与升级决策、正式发行阻断。scripts/dependency-inventory.mjs 可复现清单，不把本机清单称为跨平台或安装包 SBOM。
+- 唯一版本调整：jest-dom 6.10.0 被 npm 元数据标记为错误 minor 及破坏性变更，按上游建议改为 6.9.1，最终 package.json 和 lockfile 精确固定；没有一次性升级其他主版本。
+- 调整前验证：类型/Lint、22 项测试、生产构建、开发桌面 smoke、Electron SQLite/PTY 均通过。调整后验证：pnpm check（含 22 测试、文档、14 份原组件哈希、bundle）、开发/包内桌面 smoke、未签名目录打包、native 均退出 0；pnpm install --lockfile-only --offline --ignore-scripts --frozen-lockfile --store-dir .pnpm-store 退出 0，确认 manifest/锁文件匹配，不将此命令称为全新安装验证。
+- 来源核查：固定 vercel/ai-elements 提交 ca8be600bfd01b3131f9bf6134b51602a71f4374；5 个原 AI 文件、8 个同仓 UI、1 份 Apache-2.0 LICENSE 与允许的别名替换/格式化结果完全一致；记录 resources/vendor/ai-elements.json 的上游/本地 SHA-256，并补充 UI 来源说明。连接曾 ECONNRESET，使用 curl 缓存/重试后全部完成；离线 verify:vendor 通过。
+- 许可证核查：khroma 的元数据缺字段，但随包 license 原文为 MIT；MPL、CC-BY、Python、双许可证与最终第三方通知分别记录，未擅自选择 Devly 自身许可证，也未声称 renderer bundle 的分发通知已完整。
+- 维护风险：官方支持政策与 registry 记录确认 Electron 39、ESLint 9 已超支持范围。pnpm audit --json 调整前后均退出 1，仍为 low 4 / moderate 9 / high 7 / critical 2，共 22 项审计计数（部分公告涉及多个包或依赖路径）；没有伪称修复。升级受支持主线、处理安全公告、完整分发通知和双平台业务验收继续阻断正式发行。
+- 涉及文件：package.json、pnpm-lock.yaml、scripts/dependency-inventory.mjs、scripts/verify-vendor.mjs、resources/vendor/ai-elements.json、src/renderer/src/components/ui/SOURCE.md、docs/dependency-review.md、README/选型/阶段计划/工作表。
+- 未覆盖：没有执行 Electron/ESLint/Vitest 等新主线的兼容升级，没有 Windows 或远端 CI 成功证据，没有真实模型调用；Windows installer 构建脚本 allowlist、最终通知、签名/安装包与首装迁移仍需后续验收。
+- 状态：V01 待开始 → 完成（评估及局部修正完成，不等于全部风险消除）。阶段 1 为 4/5 项完成，保持进行中；唯一下一项为 1.1/B03，完成后复核阶段验收再进阶段 2。本批改动在本地工作区，未提交/推送 GitHub。
+
+## LOG-012｜B03：Provider/Agent 入口迁移与阶段 1 验收
+
+- 日期：2026-11-21；阶段 1 / 步骤 1.1 / B03。用户指出该项仍未完成，本轮补齐；不将此前的检查可移植性改动视为 B03 已实现。
+- 实际完成：工作台改为 Provider/Devly Agent 概念，“Provider · 未配置”为可点击入口；侧栏模型供应商、顶部设置按钮进入同一供应商状态页，标题和当前导航状态同步；返回后保留项目和环境内存状态。
+- 设置状态：明确显示供应商未配置、配置功能待接入、Agent 待接入；没有 API Key 输入、保存、连接测试、登录或安装入口，不发起模型请求。正式表单/持久化/受保护凭据/协议适配仍留在阶段 2、3。
+- 检测调整：正常环境查询不再执行 Codex 或读取 DEVLY_CODEX_PATH；环境面板第四项改为运行平台；Git 不存在时返回 null，允许继续使用工作台。保留独立 verify:codex 技术脚本及 v1 codex 字段，正常启动该字段固定为 null，不伪称已运行可选探测。
+- 边界维护：新页面沿用已有 shadcn Button/Badge、Lucide 与样式；只接收导航回调，不访问 Node/preload。扩展 WorkspaceTab/App 装配和展示层 Lint 边界，未修改原 AI Elements 源码或已确认品牌图标。
+- 主要文件：src/renderer/src/features/provider-settings/、App.tsx、store.ts、app/AppHeader.tsx、features/workspace/components/、features/environment/components/EnvironmentPanel.tsx、styles.css；src/main/index.ts、src/shared/contracts.ts、package.json、eslint.config.js；scripts/smoke-desktop.mjs、scripts/verify-no-codex.mjs、.github/workflows/check.yml；docs/provider-entry.md、工作计划/阶段计划/Renderer/检查/选型/README。
+- 自动检查：pnpm check 退出 0，类型/Lint/格式、22 项契约测试、文档结构、14 份原组件哈希、生产 bundle 通过。后续文档补充与 smoke 脚本完善后再运行 Lint/格式/文档检查，均通过；没有新增或请求模型 SDK。
+- 无 Codex 证据：pnpm verify:no-codex 退出 0；脚本为子 Electron 创建空 PATH，先实际执行 codex --version 并验证 ENOENT，再启动真实应用走 IPC/UI；环境返回 git:null、codex:null。不是直接替换环境响应，也不卸载开发机工具或修改宿主 PATH。脚本结束后清理临时目录。
+- 桌面与打包证据：正常 PATH 下 pnpm verify:desktop 退出 0；pnpm run pack --config.mac.identity=null 退出 0，更新未签名 Devly.app；DEVLY_EXECUTABLE 指向包内程序后 verify:no-codex 退出 0。覆盖三个设置入口、无密钥输入、明确待接入说明、导航返回状态、原目录选择/错误/取消、事件订阅清理和原组件预览。另检查 960×680 内容区无横向溢出，并观察实际截图；用 setContentSize 避免不同系统窗口边框造成断言偏差。
+- 截图：output/providers.png、providers-no-codex.png、providers-compact.png；已检查设置页实际渲染，截图前等待测试产生的错误 toast 隐藏，避免混淆真实页面状态。
+- 阶段 1 验收逐条复核：① 无 Codex 可启动且可进入供应商设置，未实现功能清楚标明，通过；② 类型/Lint/原有及新增契约测试/生产构建通过，非法 IPC 与订阅清理已有证据，通过；③ V01 维护、来源、许可证和平台边界有记录，通过。
+- 未覆盖与剩余风险：Windows/远端 CI 尚未运行；未签名 .app 不是正式安装包；没有 Provider 表单、真实 API、Agent、数据库或凭据业务。V01 的失维护依赖、安全公告与分发通知等发行阻断仍未解除，本轮没有将其自动关闭。全部改动仍在本地，尚未推送 GitHub。
+- 状态：B03 待开始 → 完成；阶段 1 的 B01/B02/B03/B04/V01 全部完成并验收；工作总表/阶段总览/当前执行位置同步为阶段 2 待开始。唯一下一项为 2.1/L01：建立 app userData 下的 SQLite 数据库 Worker 和迁移版本；本轮未提前实施该项。
+
+## LOG-013｜B01/B03 修正：清理工程演示内容，收敛任务首页
+
+- 日期：2026-11-21；阶段 1 已完成项 B01/B03 的用户指定界面修正；阶段 2/L01 仍待开始。
+- 用户反馈：此前只改文案和入口，界面变化不明显，无用内容过多。本次按任务操作重新组织页面，未跨到数据库或模型业务。
+- 首页：移除营销式两行大标题、英文口号、介绍段、环境面板、技术栈/阶段说明、AI 组件演示按钮；改为居中任务空状态，保留任务输入占位、项目选择、模型选择和禁用发送，仅留一条模型连接待接入提示。
+- 侧栏/框架：保留品牌、新任务、项目和底部设置；项目完整路径转为 title 提示；删除 PREVIEW/LOCAL 标签、重复工程提示及 UTF-8/TypeScript 底部状态栏。品牌资源与 Dock 图标不变，删除不用的页面样式。
+- 设置：删除大段规划说明、协议/地址/密钥介绍表和 Agent 占位大卡片，供应商只显示未配置/配置功能待接入。环境面板和原 AI Elements 预览保留在默认折叠的开发者选项，预览关闭返回设置。
+- 功能边界：新任务是回到任务空状态，不伪造持久化任务；输入与发送保持禁用，没有收集密钥、调用模型、增加数据库或冒充 Agent 可用。
+- 涉及文件：App.tsx、app/AppHeader.tsx、app/AppShell.tsx、features/workspace/components/、features/provider-settings/ProviderSettingsPage.tsx、styles.css、scripts/smoke-desktop.mjs、README.md、docs/provider-entry.md、renderer-structure.md、quality-checks.md、work-plan.md。
+- 验证：pnpm check 退出 0，类型/Lint/格式、22 项契约测试、文档、14 份原组件哈希、生产 bundle 通过。pnpm verify:desktop 退出 0；更新已有 smoke 场景而未为纯样式另写实现镜像测试，覆盖首页无工程面板、设置折叠默认关闭、折叠后环境刷新、原组件预览与返回、项目取消/失败/选择、状态保留、IPC 错误和订阅清理。
+- 打包：pnpm run pack --config.mac.identity=null 退出 0，更新 release/mac-arm64/Devly.app；DEVLY_EXECUTABLE 指向包内程序的 pnpm verify:no-codex 退出 0，实际隔离 PATH 并验证 ENOENT 后仍可启动、选项目、进入精简设置和开发者选项。
+- 视觉证据：检查 output/workspace-empty.png、workspace.png、workspace-compact.png、providers-no-codex.png 的实际渲染；960×680 内容区无横向溢出，1440×960 正常。截图中首页不含工程信息，设置默认只有供应商行和折叠项。
+- 活动实例：只读确认用户现有实例来自本项目 electron-vite dev；未强制退出用户开发服务。独立 smoke 实例和本机应用目录已更新验证，不把自动化窗口截图称为已附着检查原活动窗口。
+- 未覆盖：Windows/远端 CI 未运行，未签名目录不等于正式发行；V01 的维护/安全发行阻断仍在。改动尚未推送 GitHub。
+- 状态：B01/B03 保持完成并追加本次修正证据；唯一下一项仍是阶段 2 / 2.1 / L01，不因视觉改造标记后续业务已完成。
+
+## LOG-014｜L01：SQLite Worker、生命周期与迁移
+
+- 日期：2026-11-21；阶段 2 / 2.1 / L01。
+- 完成：app userData/storage 下 SQLite + WAL；better-sqlite3 在 worker_threads 中运行，Main 通过有界请求队列访问；15 秒超时/退出拒绝 pending，不自动重放写操作。应用单实例锁、正常退出排队关闭/checkpoint，启动失败保留旧库并向界面返回错误。
+- 迁移：v1 基础数据、v2 会话/记录/日志表；版本事务和升级前 SQLite backup；新版本数据库拒绝降级读取。保留最近 3 个迁移备份。
+- 文件：src/main/data/client.ts、database-worker.ts、migrations.ts、store.ts；src/main/index.ts、electron.vite.config.ts。
+- 验证：verify:data 在 Electron ABI 中启动真实 Worker，threadId>0；65 个会话写入期间主线程 heartbeat 持续；关闭重开后数据不丢；故意制造 v2 表冲突时版本仍为 v1、旧项目仍在、部分 DDL 回滚、备份存在，移除冲突后升级成功。命令退出 0。
+- 边界：没有验证所有进程/电源故障组合；Worker 异常不自动恢复或删库，必要时重启/人工恢复。Windows 未运行。
+- 状态：L01 待开始 → 完成；后续 L02。
+
+## LOG-015｜L02：最近项目 Repository 与持久化切换
+
+- 日期：2026-11-21；阶段 2 / 2.2 / L02。
+- 完成：目录选择后 realpath 去重入库，最近项目、活动项目持久化；侧栏显示多项目、切换、移除和路径失效状态；移除仅软隐藏记录，保留真实目录与会话，重开同目录复用项目 ID。
+- 文件：data/store.ts、service.ts、Main openProject、Renderer store.ts、use-open-project.ts、WorkspaceSidebar.tsx。
+- 验证：verify:data 的中文/空格路径、去重、失效目录、移除不删目录/重开历史通过；开发和包内 verify:persistence 验证两个真实临时项目的 IPC 选择、切换、重启及项目记录，退出 0。
+- 边界：系统目录对话框由脚本替换返回，后续真实 IPC/文件系统/DB 均执行；尚无目录移动自动追踪，不删除用户文件。
+- 状态：L02 待开始 → 完成；后续 L03。
+
+## LOG-016｜L03：Provider 元数据与系统保护凭据引用
+
+- 日期：2026-11-21；阶段 2 / 2.3 / L03。
+- 完成：Provider Repository（名称、协议、地址、模型、credential_ref）；严格拒绝明文 Key 字段及带用户名/密码/query 的 Base URL；Main Native 隐藏输入 → safeStorage → UUID 密文文件，数据库只存引用，Renderer 只收到 hasCredential/保存结果。写新文件后切换引用、删除旧文件，取消保持原值；孤立密文启动时回收。
+- 文件：data/vault.ts、native-credential.ts、service.ts、store.ts；shared/data-contracts.ts；设置页既有 Provider 的凭据操作。
+- 验证：verify:data 使用注入 AES 引擎检查保存、读取、替换、删除、原引用清理、密文文件、DB/WAL 与 DTO 不含测试明文、安全后端不可用时拒绝保存；verify:persistence 在真实 macOS Main 使用 safeStorage 加密→写盘→解密，available/roundTrip 为 true、plaintextPresent 为 false。恶意明文字段在 Renderer IPC 边界被拒绝；扫描临时 userData/日志未发现测试秘密前缀。全部退出 0。
+- 边界：上述两类证据分别成立，不把注入引擎叫作真实 Keychain。原生输入框不自动填写用户 Key，Windows 控件/DPAPI 未实测；Linux basic_text/unknown 拒绝使用。当前 Electron 39 同步 API 与 unsigned 包的钥匙串授权限制在 local-data.md 明确记录。没有 Provider 编辑表单或模型连接（仍归 P02–P04）。
+- 状态：L03 待开始 → 完成；后续 L04。
+
+## LOG-017｜L04：设置读写、主题与无凭据导出
+
+- 日期：2026-11-21；阶段 2 / 2.4 / L04。
+- 完成：Settings v1，应用默认值/项目覆盖；主题、默认供应商/模型、项目权限、Token 与费用限额。严格校验、不合法数据不替换旧值；浅色/深色/系统主题可保存并清理系统监听。Main 原生保存对话框只导出数据库中的严格 Settings，原子写文件，不导出凭据引用/密文。
+- 文件：data-contracts.ts、data/store.ts、service.ts、Main 原生保存；SettingsEditor.tsx、feature hooks、App.tsx、styles.css。
+- 验证：30 项契约测试包含非法版本/权限/负限额/秘密字段/端点拒绝；verify:data 确认失败不覆盖旧设置；开发/包内 verify:persistence 验证 A/B 默认模型隔离、Token 保存、light/dark 重启恢复和原生导出 JSON 不含凭据，退出 0。
+- 修复：首次桌面导出使用 Blob URL 未触发 Electron 下载事件（30 秒 timeout），改为受控 Main 原生保存并轮询文件原子出现，复跑通过。
+- 边界：目前限额/权限仅为已持久化策略，未接 Agent/执行器/计费，不能声称已经执行限制；系统主题改变的监听实现不等于每个桌面主题环境均已验证。
+- 状态：L04 待开始 → 完成；后续 L05。
+
+## LOG-018｜L05：会话、消息分段与执行记录结构
+
+- 日期：2026-11-21；阶段 2 / 2.5 / L05。
+- 完成：sessions、turns、messages、message_parts、tool_calls、approvals、events、blobs，采用自有 UUID；复合外键保证会话/项目、回合/消息/工具/审批/事件/日志关联不混用；消息分段和独立分页索引。
+- 文件：data/migrations.ts、store.ts、shared/data-contracts.ts。
+- 验证：verify:data 对跨项目回合、跨会话消息/工具/审批/事件的实际 SQL 写入要求 FOREIGN KEY 拒绝；分段文本写入后可分页读回，30 项边界测试及数据集成均通过。
+- 边界：只建立数据结构和受信任内部记录能力，没有模型生成消息、工具执行、审批决策或真实回合恢复；不依赖 Codex threadId。
+- 状态：L05 待开始 → 完成；后续 L06。
+
+## LOG-019｜L06：会话新建、重命名、归档、分页与恢复
+
+- 日期：2026-11-21；阶段 2 / 2.6 / L06。
+- 完成：项目内新建空会话、行内重命名、归档/恢复、活动/归档列表；按时间+UUID 的 keyset 分页，侧栏每次 20 条按需加载；每项目活动会话持久化。旧异步响应不能覆盖新的项目状态。
+- 文件：data/store.ts、data-contracts.ts、Renderer store.ts、WorkspaceSidebar.tsx、WorkspacePage.tsx。
+- 验证：verify:data 的 65 会话按 11 条遍历，数量/唯一性正确；项目越权拒绝。包内 verify:persistence 用多于 20 个临时会话实际点击“加载更多”，并检查 UI 新建/重命名/归档/恢复、重启选中元数据与两项目隔离，通过。
+- 修复：新增分页场景发现重复“加载更多”入口，删除重复按钮、重建 .app 后完整复跑通过。
+- 边界：会话仍无真实模型响应，任务输入和发送禁用；内部 fixture 数据只在临时测试 userData 中，未伪造真实会话内容。
+- 状态：L06 待开始 → 完成；后续 L07。
+
+## LOG-020｜L07：大日志与附件文件、索引、限额与清理
+
+- 日期：2026-11-21；阶段 2 / 2.7 / L07。
+- 完成：Main 原生选择授权文件，Worker 流式落盘至 UUID.bin，SQLite 只存索引；单文件 64 MiB/总索引 256 MiB，流中计数、文件同步、原子 rename/失败清理；按区间最多读 64 KiB 并返回 truncated。读路径真实目录核对与 NOFOLLOW（支持的平台）防符号链接绕行。
+- 保留策略：指定会话的未引用旧日志可 prune；附件不自动过期，消息/事件引用由外键保护。原文件不删除，孤立 .tmp/.bin 启动回收。
+- 文件：data/store.ts、service.ts、data-contracts.ts；scripts/data.integration.mjs、smoke-persistence.mjs。
+- 验证：真实数 MiB 日志流式复制、1 KiB 分段/truncated、65 MiB 文件拒绝、跨项目访问拒绝、prune/孤立文件清理与 macOS 符号链接替换拒绝通过；包内 Native 文件选择返回后走真实导入/读取，通过。
+- 修复：补充的 symlink 场景首次缺少测试脚本 rename 导入，补全后独立 verify:data 退出 0；不是产品读取逻辑失败。
+- 边界：没有附件预览、模型上传、命令日志生产或后台自动保留任务；Windows 路径/ACL/符号链接语义未实测。
+- 状态：L07 待开始 → 完成；后续阶段验收。
+
+## LOG-021｜阶段 2 验收与下一执行位置
+
+- 日期：2026-11-21；阶段 2 / L01–L07 收口。
+- 验收 ①：两个临时真实项目切换、分别保存设置/会话后关闭应用，再以同一 userData 重启；项目、模型/Token/主题和活动会话独立恢复，通过。
+- 验收 ②：凭据生命周期由注入引擎数据测试验证；真实系统 safeStorage 加密写盘/解密往返另行通过；数据库/DTO/导出与日志扫描不含保存后的测试明文。未使用用户真实凭据或请求模型，通过当前阶段的保护存储边界验收。
+- 验收 ③：Worker heartbeat、真实 SQLite 迁移失败回滚/备份与重试、65 会话 keyset 分页、UI 多页、消息分段、大日志/附件索引/限额/读取/清理，均有实际脚本记录，通过。
+- 命令：pnpm check（类型/Lint/格式、30 项契约测试、文档、14 原组件哈希、bundle、Electron verify:data）通过；最终代码后分别复核 Lint/格式、verify:data、生产构建。pnpm run pack --config.mac.identity=null 退出 0；包内 DEVLY_EXECUTABLE 的 verify:persistence 与 verify:no-codex 均退出 0，确认 Worker/原生模块可在 asar 应用内加载。
+- 截图：output/settings-persisted.png、sessions-persisted.png；实际渲染已检查。所有验收数据位于随机临时目录，正常应用仍使用 app userData，不将测试替身当真实 API 对话。
+- 文档：local-data.md 给出目录、进程、迁移、密钥、表约束、分页/配额/保留/错误边界；同步工作总表、阶段计划、README、Renderer 与检查说明。
+- 未覆盖：Windows/远端 CI 未执行；原生密钥输入框未自动填写；没有模型调用、Provider 编辑表单、Agent、真实消息生成或正式安装包；V01 的旧依赖/安全公告/分发通知和签名门槛仍未解除。没有新增依赖或推送 GitHub。
+- 最终收口复核：pnpm check 退出 0，30 项契约测试、19 份文档/106 个任务 ID/21 条日志、14 份原组件哈希、生产 bundle 与最新 verify:data 均通过；git diff --check 通过。
+- 状态：阶段 2 的 7/7 项及阶段验收通过；当前执行位置更新为阶段 3 待开始，唯一下一项 3.1/P01。未提前实施阶段 3。
+
+## LOG-022｜L04 界面补充：macOS 标题栏颜色统一
+
+- 日期：2026-11-21；用户指定的主题/窗口外观修正，阶段 3/P01 仍待开始。
+- 问题：macOS 原生浅色标题栏与深色工作区不一致，修改页面 CSS 无法影响原生条。
+- 完成：macOS BrowserWindow 使用 hidden titleBarStyle，保留原生红黄绿按钮；AppShell 增加 32px 可拖动标题行，分别复用侧栏/主区主题变量，分界与 232px/210px 响应式侧栏宽度一致。浅色/深色随已保存主题同步；窗口初始底色同步主区深色。Windows/Linux 原生标题栏配置未改。
+- 边界：preload 只读 platform 经 desktop 网关和环境 hook 传给展示层，不开放 Node 或新增任意 IPC；原生窗口控制保留，不另造窗口按钮。
+- 文件：src/main/index.ts、shared/contracts.ts、preload/index.ts、renderer/src/platform/desktop.ts、features/environment/hooks/use-environment.ts、App.tsx、app/AppShell.tsx、styles.css；工作表与 Renderer 说明。
+- 验证：typecheck、Lint、格式、build 退出 0；一次性桌面检查在开发产物和打包 .app 各退出 0。实际计算颜色为深色侧栏 rgb(21,22,24)/主区 rgb(28,29,31)，浅色侧栏 rgb(240,241,243)/主区 rgb(250,250,250)，标题栏两段与对应区域完全相同。检查 drag 区、原生按钮位置 x12/y10、movable/closable/minimizable 标志及隐藏原生条后的内容边界。
+- 检查修正：初次脚本误用不存在的 getTrafficLightPosition，按当前 Electron 类型改为 getWindowButtonPosition 后复跑通过。未为低影响样式新增永久单元测试。
+- 打包：pnpm run pack --config.mac.identity=null 退出 0，更新 release/mac-arm64/Devly.app；包内深浅主题检查通过。观察 output/titlebar-dark.png、titlebar-light.png 的实际页面渲染；页面截图不包含原生按钮图层，不把它称为原生按钮鼠标点击验收。
+- 未覆盖：未手工点测原生交通灯和 OS 拖动手势、Windows/Linux 未实测；未签名目录不是正式安装包，未推送 GitHub。
+- 状态：用户指定修正完成；阶段状态不变，唯一下一项仍为阶段 3/3.1/P01。
+
+## LOG-023｜Git 交付范围与提交前复核
+
+- 日期：2026-11-21；用户明确要求完成后提交。
+- 范围：B02/B03/B04/V01、完整阶段 2 的 L01–L07、任务首页收敛及 macOS 标题栏颜色修正，连同实现文档、工作表和验收记录一起提交；阶段 3/P01 仍待开始。
+- 仓库：Devly 独立仓库 main，origin 为 WONISHI/Devly；提交前 ls-remote 确认远端仍为 a44fe99d1ae97cac9b41d9f176ced1850daae23a，与本地基线一致，使用普通快进推送，不改写历史。
+- 本轮复核：git diff --check、check:docs、verify:vendor、30 项契约测试通过；未发现常见格式的私钥/API Token 文件。此前的 Worker/系统凭据/双项目重启/包内标题栏验证见 LOG-014–LOG-022，本轮不重复声称执行这些 GUI 场景。
+- 排除：node_modules、out、release、output、.cache、临时数据库和本地环境文件保持忽略；不提交测试用户数据、密文或构建产物。
+- 边界：本条随交付提交保存，具体提交 ID 和远端推送回执由 Git 记录及最终回复报告；Windows 与 GitHub Actions 未获得新通过状态，不改变已有发行风险记录。
+- 下一步：阶段 3 / 3.1 / P01。
+
 ## 追加记录模板
 
 ```text

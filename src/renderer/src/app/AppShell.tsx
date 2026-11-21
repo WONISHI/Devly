@@ -4,27 +4,27 @@ export function AppShell({
   sidebar,
   header,
   children,
+  isMac,
 }: {
   sidebar: ReactNode
   header: ReactNode
   children: ReactNode
+  isMac: boolean
 }) {
   return (
-    <div className="app-shell">
-      {sidebar}
-      <main className="main-area">
-        {header}
-        {children}
-        <footer className="statusbar">
-          <span className="flex items-center gap-2">
-            <span className="status-dot" />
-            工程基础已就绪
-          </span>
-          <span className="ml-auto">
-            UTF-8<span className="mx-4">TypeScript</span>Devly
-          </span>
-        </footer>
-      </main>
+    <div className="desktop-frame">
+      {isMac && (
+        <div className="window-titlebar">
+          <span>Devly</span>
+        </div>
+      )}
+      <div className="app-shell">
+        {sidebar}
+        <main className="main-area">
+          {header}
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 {
   "name": "devly",
   "version": "0.1.0",
-  "description": "A local desktop coding workspace powered by Codex",
+  "description": "A local desktop AI coding workspace with custom model providers",
   "private": true,
   "type": "module",
   "main": "./out/main/index.js",
@@ -27,7 +27,15 @@
     "dist": "pnpm build && electron-builder --config.electronDist=node_modules/electron/dist",
     "verify:native": "node scripts/verify-native.mjs",
     "verify:codex": "node scripts/verify-codex.mjs",
-    "verify:desktop": "node scripts/smoke-desktop.mjs"
+    "verify:desktop": "node scripts/smoke-desktop.mjs",
+    "check": "node scripts/check.mjs",
+    "build:bundle": "electron-vite build",
+    "audit:dependencies": "node scripts/dependency-inventory.mjs",
+    "verify:vendor": "node scripts/verify-vendor.mjs",
+    "check:docs": "node scripts/check-docs.mjs",
+    "verify:no-codex": "node scripts/verify-no-codex.mjs",
+    "verify:data": "node scripts/verify-data.mjs",
+    "verify:persistence": "node scripts/smoke-persistence.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -69,7 +77,7 @@
     "@playwright/test": "^1.56.0",
     "@tailwindcss/vite": "^4.1.0",
     "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "^16.0.0",
     "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^24.0.0",

@@ -36,7 +36,7 @@ export function EnvironmentPanel({
           ['Electron', environment?.electron],
           ['Node.js · 应用运行时', environment?.node],
           ['Git', environment?.git],
-          ['Codex CLI', environment?.codex],
+          ['运行平台', environment?.platform],
         ].map(([label, value]) => (
           <div className="environment-item" key={label}>
             <div className="environment-icon">

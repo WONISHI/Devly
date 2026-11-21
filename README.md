@@ -2,7 +2,7 @@
 
 支持第三方模型 API 的本地桌面 AI 编程工作台，目标对齐 Codex 类似的编程与任务交互能力。采用 Electron、React、TypeScript、原版 AI Elements、Tailwind CSS、Lucide React 与 Zustand；主路线为自研 Agent 与 Provider 适配层。
 
-当前已完成工程初始化、依赖安装、基础桌面界面、打开本地项目、环境检测和 AI Elements 组件预览。**第三方 API、真实 Agent 对话、工具执行、审批、编辑器和终端业务尚未接入**；相关底层依赖已安装。项目选择目前保存在内存中，尚未持久化。
+当前已有精简任务界面、最近项目、持久化会话元数据、应用/项目设置、系统保护凭据引用、日志/附件索引和开发者选项。**第三方 API、真实 Agent 对话、工具执行、审批、编辑器和终端业务尚未接入**；相关底层依赖已安装。本地数据阶段的能力与验证见 [本地数据说明](./docs/local-data.md)。
 
 ## 启动
 
@@ -17,19 +17,25 @@ pnpm dev
 
 ## 常用命令
 
-| 命令                             | 作用                                                 |
-| -------------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                       | 启动 Electron 开发应用                               |
-| `pnpm build`                     | 类型检查并构建 main、preload、renderer               |
-| `pnpm start`                     | 启动构建产物                                         |
-| `pnpm typecheck`                 | TypeScript 检查                                      |
-| `pnpm lint`                      | ESLint 检查                                          |
-| `pnpm test`                      | 基础契约测试                                         |
-| `pnpm format:check`              | 格式检查                                             |
-| `pnpm verify:native`             | 在 Electron Node 中验证 SQLite 和 PTY                |
-| `node scripts/smoke-desktop.mjs` | 启动桌面应用，检查 IPC、目录选择和 AI 组件，生成截图 |
-| `pnpm run pack`                  | 构建当前平台应用目录                                 |
-| `pnpm dist`                      | 构建当前平台安装包                                   |
+| 命令                             | 作用                                                       |
+| -------------------------------- | ---------------------------------------------------------- |
+| `pnpm dev`                       | 启动 Electron 开发应用                                     |
+| `pnpm build`                     | 类型检查并构建 main、preload、renderer                     |
+| `pnpm start`                     | 启动构建产物                                               |
+| `pnpm check`                     | 统一运行类型、Lint、格式、关键测试、文档、原组件与生产构建 |
+| `pnpm audit:dependencies`        | 生成本机安装依赖与许可证清单                               |
+| `pnpm verify:vendor`             | 离线核对原 AI Elements/UI 来源哈希                         |
+| `pnpm typecheck`                 | TypeScript 检查                                            |
+| `pnpm lint`                      | ESLint 检查                                                |
+| `pnpm test`                      | 基础契约测试                                               |
+| `pnpm format:check`              | 格式检查                                                   |
+| `pnpm verify:no-codex`           | 在隔离 PATH 中验证无 Codex 启动与 Provider 入口            |
+| `pnpm verify:data`               | Worker/SQLite 数据、迁移与存储集成检查                     |
+| `pnpm verify:persistence`        | 真实桌面双项目重启、设置与系统凭据检查                     |
+| `pnpm verify:native`             | 在 Electron Node 中验证 SQLite 和 PTY                      |
+| `node scripts/smoke-desktop.mjs` | 启动桌面应用，检查 IPC、目录选择和 AI 组件，生成截图       |
+| `pnpm run pack`                  | 构建当前平台应用目录                                       |
+| `pnpm dist`                      | 构建当前平台安装包                                         |
 
 ## 目录
 
@@ -48,10 +54,16 @@ tests/                          基础测试
 docs/                           架构、技术选型、实施计划和搭建记录
 ```
 
-Codex CLI 检测与初始化握手仅为已有的可选技术储备，第三方 API 主路线不要求安装 Codex。当前界面的 Codex 占位提示尚待迁移；下一批工作优先实现 Provider 配置、受保护凭据、API 适配与自研 Agent。
+首页已精简为任务空状态，模型选择与侧栏设置可进入供应商状态页；环境检查和原 AI 组件预览收进设置页的开发者选项。配置/Agent 功能待接入；供应商编辑表单和模型连接仍待阶段 3；凭据引用/系统保护存储已建立，现有 Provider 可通过原生输入设置或清除密钥。正常启动不探测 Codex，不要求安装 Codex 或登录 ChatGPT；独立的初始化握手脚本仅保留为可选技术储备。入口与无 Codex 验证见 [B03 记录](./docs/provider-entry.md)。
 
 后续按 [工作总表](./docs/work-plan.md) 推进，每项完成后在 [工作日志](./docs/work-log.md) 记录实现与验证；仓库执行约定见 [AGENTS.md](./AGENTS.md)。
 
 参见 [文档入口](./docs/README.md)、[搭建与验证记录](./docs/setup.md) 和 [开发计划](./docs/development-plan.md)。
 
 Renderer 的模块职责与检查范围见 [feature 边界](./docs/renderer-structure.md)。
+
+桌面通信协议见 [B02 契约](./docs/ipc-contracts.md)，本地与双平台 CI 入口见 [B04 检查计划](./docs/quality-checks.md)，维护版本、许可证与发行阻断见 [V01 依赖评估](./docs/dependency-review.md)。
+
+阶段 2 已完成：项目和空会话可新建、重命名、归档、恢复与分页，主题/默认模型/权限/限额保存并可导出；数据库运行在独立 Worker。下一项为阶段 3/P01，供应商编辑表单和真实模型调用尚未接入。
+
+阶段 2 已完成：项目和空会话可新建、重命名、归档、恢复与分页，主题/默认模型/权限/限额保存并可导出；数据库运行在独立 Worker。下一项为阶段 3/P01，供应商编辑表单和真实模型调用尚未接入。

@@ -9,6 +9,9 @@ export default tseslint.config(
       'out/**',
       'release/**',
       'node_modules/**',
+      '.cache/**',
+      '.pnpm-store/**',
+      'output/**',
       'src/renderer/src/components/ai-elements/**',
     ],
   },
@@ -43,6 +46,7 @@ export default tseslint.config(
       'src/renderer/src/app/**/*.tsx',
       'src/renderer/src/features/**/components/**/*.tsx',
       'src/renderer/src/features/component-preview/*.tsx',
+      'src/renderer/src/features/provider-settings/*.tsx',
     ],
     rules: {
       'no-restricted-imports': [

@@ -3,5 +3,10 @@ node_modules
 out
 release
 output
+.cache
+.pnpm-store
+coverage
+test-results
+playwright-report
 docs
 src/renderer/src/components/ai-elements

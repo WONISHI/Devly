@@ -44,5 +44,11 @@ export function useEnvironment() {
     }
   }, [])
 
-  return { environment, loading, environmentError, refreshEnvironment }
+  return {
+    environment,
+    loading,
+    environmentError,
+    refreshEnvironment,
+    isMac: desktop.getPlatform() === 'darwin',
+  }
 }

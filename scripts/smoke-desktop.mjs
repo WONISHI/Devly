@@ -1,50 +1,141 @@
 import { _electron as electron } from '@playwright/test'
 import assert from 'node:assert/strict'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { basename } from 'node:path'
 
 const env = { ...process.env }
 delete env.ELECTRON_RUN_AS_NODE
-const application = await electron.launch({
-  args: process.env.DEVLY_EXECUTABLE ? [] : ['.'],
-  executablePath: process.env.DEVLY_EXECUTABLE || undefined,
-  env,
-  timeout: 30000,
-})
+const noCodex = process.env.DEVLY_SMOKE_NO_CODEX === '1'
+const userData = await mkdtemp(join(tmpdir(), 'devly-desktop-'))
+env.DEVLY_USER_DATA_DIR = userData
+let isolatedPath
+if (noCodex) {
+  isolatedPath = await mkdtemp(join(tmpdir(), 'devly-no-codex-'))
+  // Only the child Electron environment changes; do not modify the developer's PATH.
+  for (const key of Object.keys(env)) if (key.toUpperCase() === 'PATH') delete env[key]
+  env.PATH = isolatedPath
+  const probe = spawnSync('codex', ['--version'], { env, timeout: 1000 })
+  assert.equal(probe.error?.code, 'ENOENT', 'Codex must actually be unavailable in this test')
+}
+let application
 try {
+  application = await electron.launch({
+    args: process.env.DEVLY_EXECUTABLE ? [] : ['.'],
+    executablePath: process.env.DEVLY_EXECUTABLE || undefined,
+    env,
+    timeout: 30000,
+  })
   const page = await application.firstWindow()
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
-  await page.getByRole('heading', { name: '从一个想法， 到下一次提交。' }).waitFor()
-  const info = await page.evaluate(() => window.devly.getEnvironment())
+  await page.getByRole('heading', { name: '今天想完成什么？' }).waitFor()
+  await page.waitForFunction(() => !document.querySelector('.nav-item')?.disabled)
+  const info = await page.evaluate(async () => {
+    const result = await window.devly.getEnvironment()
+    if (!result.ok) throw new Error(result.error.message)
+    return result.data
+  })
   assert.ok(info.electron)
-  assert.ok(info.git)
-  assert.ok(info.codex, 'Codex CLI must be detectable on this development machine')
+  assert.ok(info.git === null || typeof info.git === 'string')
+  assert.equal(info.codex, null, 'normal startup must not probe the optional Codex engine')
   assert.equal(await page.evaluate(() => typeof window.require), 'undefined')
-  await page.getByRole('button', { name: '重新检查' }).click()
-  await page.getByRole('button', { name: '重新检查' }).waitFor({ state: 'visible' })
-  await page.waitForFunction(() => !document.querySelector('.environment-section button')?.disabled)
-  assert.ok((await page.locator('.environment-grid').textContent()).includes(info.electron))
+  const events = await page.evaluate(async () => {
+    const received = []
+    const errors = []
+    const stop = window.devly.onEnvironmentChecked(
+      (event) => received.push(event),
+      (error) => errors.push(error),
+    )
+    await window.devly.getEnvironment()
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    stop()
+    const before = received.length
+    await window.devly.getEnvironment()
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    return { before, after: received.length, errors, type: received[0]?.type }
+  })
+  assert.ok(events.before > 0, 'real IPC event should reach its owner')
+  assert.equal(events.before, events.after, 'cleanup must stop callbacks immediately')
+  assert.equal(events.type, 'environment.checked')
+  assert.deepEqual(events.errors, [])
+  assert.equal(
+    await page
+      .locator('.environment-section, .milestone, .statusbar, .version-tag, .local-badge')
+      .count(),
+    0,
+  )
+  assert.equal(await page.getByRole('button', { name: '查看 AI 组件' }).count(), 0)
+  assert.equal(await page.getByRole('textbox', { name: '任务输入' }).isDisabled(), true)
+  await mkdir('output', { recursive: true })
+  await page.screenshot({ path: 'output/workspace-empty.png' })
   await application.evaluate(({ dialog }) => {
     dialog.showOpenDialog = async () => ({ canceled: true, filePaths: [] })
   })
-  await page.getByRole('button', { name: '打开本地项目' }).click()
+  await page.getByRole('button', { name: '选择项目', exact: true }).click()
   assert.equal(await page.locator('.project-item').count(), 0)
   await application.evaluate(({ dialog }) => {
     dialog.showOpenDialog = async () => {
       throw new Error('B01 dialog failure')
     }
   })
-  await page.getByRole('button', { name: '打开本地项目' }).click()
-  await page.getByText('B01 dialog failure', { exact: false }).waitFor()
+  const failure = await page.evaluate(() => window.devly.openProject())
+  assert.equal(failure.ok, false)
+  assert.equal(failure.error.code, 'INTERNAL_ERROR')
+  assert.ok(!JSON.stringify(failure).includes('B01 dialog failure'))
+  await page.getByRole('button', { name: '选择项目', exact: true }).click()
+  await page.getByText('桌面操作失败，请重试', { exact: false }).waitFor()
   const cwd = process.cwd()
   await application.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
   }, cwd)
-  await page.getByRole('button', { name: '打开本地项目' }).click()
-  await page.locator('.project-item').getByText('Devly', { exact: true }).waitFor()
+  await page.getByRole('button', { name: '选择项目', exact: true }).click()
+  await page.locator('.project-item').getByText(basename(cwd), { exact: true }).waitFor()
+  await page.getByText('桌面操作失败，请重试', { exact: false }).waitFor({ state: 'hidden' })
   await mkdir('output', { recursive: true })
   await page.screenshot({ path: 'output/workspace.png' })
-  await page.getByRole('button', { name: 'AI Elements 预览' }).click()
+  await page.getByRole('button', { name: '选择模型', exact: true }).click()
+  await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
+  await page.getByText('供应商配置待接入', { exact: true }).waitFor()
+  assert.equal(await page.locator('input[type=password]').count(), 0)
+  assert.equal(await page.getByRole('button', { name: /登录|安装 Codex|连接测试/ }).count(), 0)
+  assert.equal(await page.locator('details').getAttribute('open'), null)
+  assert.equal(await page.getByRole('button', { name: '重新检查' }).isVisible(), false)
+  await page.screenshot({
+    path: noCodex ? 'output/providers-no-codex.png' : 'output/providers.png',
+  })
+  await application.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()[0].setContentSize(960, 680),
+  )
+  await page.waitForFunction(() => window.innerWidth === 960)
+  assert.equal(
+    await page
+      .locator('.settings-page')
+      .evaluate((element) => element.scrollWidth > element.clientWidth),
+    false,
+  )
+  await page.screenshot({ path: 'output/providers-compact.png' })
+  await page.getByRole('button', { name: '返回工作台', exact: true }).click()
+  assert.equal(
+    await page
+      .locator('.task-page')
+      .evaluate((element) => element.scrollWidth > element.clientWidth),
+    false,
+  )
+  await page.screenshot({ path: 'output/workspace-compact.png' })
+  await application.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()[0].setContentSize(1440, 960),
+  )
+  await page.waitForFunction(() => window.innerWidth === 1440)
+  await page.getByRole('button', { name: '打开设置', exact: true }).click()
+  await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
+  await page.getByText('开发者选项', { exact: true }).click()
+  await page.getByRole('button', { name: '重新检查' }).click()
+  await page.waitForFunction(() => !document.querySelector('.environment-section button')?.disabled)
+  assert.ok((await page.locator('.environment-grid').textContent()).includes(info.electron))
+  await page.getByRole('button', { name: '查看 AI 组件', exact: true }).click()
   await page.getByText('chore: initialize Devly workspace', { exact: true }).waitFor()
   await page
     .getByText('这是一条组件预览消息。真实的模型对话、审批和代码修改尚未接入。', { exact: true })
@@ -55,8 +146,10 @@ try {
     .scrollIntoViewIfNeeded()
   await page.screenshot({ path: 'output/commit.png' })
   await page.getByRole('button', { name: '关闭预览' }).click()
-  await page.getByRole('heading', { name: '从一个想法， 到下一次提交。' }).waitFor()
-  await page.locator('.project-item').getByText('Devly', { exact: true }).waitFor()
+  await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
+  await page.getByRole('button', { name: '返回工作台', exact: true }).click()
+  await page.getByRole('heading', { name: '今天想完成什么？' }).waitFor()
+  await page.locator('.project-item').getByText(basename(cwd), { exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: '对话功能待接入' }).isDisabled(), true)
   assert.deepEqual(errors, [])
   console.log(
@@ -64,7 +157,14 @@ try {
       {
         passed: [
           'Electron window',
+          'minimal task workspace without engineering panels',
+          'workspace and settings fit compact viewport',
+          'Model selector and sidebar settings navigation',
+          'concise unconfigured model state',
+          'developer diagnostics folded away from the task workspace',
+          ...(noCodex ? ['startup and Provider access without Codex or Git on PATH'] : []),
           'preload IPC',
+          'owned event delivery and unsubscribe cleanup',
           'real environment checks',
           'project path validation',
           'renderer isolation',
@@ -80,5 +180,7 @@ try {
     ),
   )
 } finally {
-  await application.close()
+  await application?.close()
+  if (isolatedPath) await rm(isolatedPath, { recursive: true, force: true })
+  await rm(userData, { recursive: true, force: true })
 }

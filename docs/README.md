@@ -11,8 +11,13 @@
 
 ## 设计与搭建资料
 
-- [Renderer feature 边界](./renderer-structure.md)：B01 拆分后的模块职责、网关与验证范围。
+- [本地数据、项目与设置](./local-data.md)：阶段 2 的 Worker、迁移、凭据引用、分页、日志与验收边界。
 
+- [Provider / Agent 产品入口](./provider-entry.md)：B03 的模型/设置入口、精简任务首页、开发者折叠项与无 Codex 验证。
+- [桌面请求、事件与错误契约](./ipc-contracts.md)：B02 的归属校验、错误 DTO 和订阅清理。
+- [自动检查与平台构建计划](./quality-checks.md)：B04 的统一 check、CI 矩阵及验证边界。
+- [依赖与许可证评估](./dependency-review.md)：V01 的维护风险、原组件来源、升级前后检查和发行阻断。
+- [Renderer feature 边界](./renderer-structure.md)：B01 拆分后的模块职责、网关与验证范围。
 - [当前详细架构](./architecture.md)：第三方 API、自研 Agent、工具权限、数据与恢复的六张 Mermaid 图。
 - [技术选型与实现方式](./tech-stack.md)：已确认组件、安装状态和待增加的适配能力。
 - [工程搭建与验证记录](./setup.md)：已有工程的工具版本、历史验证及能力边界。
@@ -23,7 +28,6 @@
 以下是历史快照，不作为当前执行依据：
 
 - [原模块分组工作表](./archive/work-plan-by-module.md)。
-
 - [Codex App Server 优先架构](./archive/codex-app-server-architecture.md)。
 - [旧阶段计划](./archive/codex-app-server-development-plan.md)。
 - [旧技术选型](./archive/codex-app-server-tech-stack.md)。

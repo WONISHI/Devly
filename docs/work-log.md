@@ -363,6 +363,7 @@
 - 已验证：类型/Lint/生产构建通过；verify:desktop 退出 0，960×680 长表单实际滚轮只移动 ScrollArea、标题/侧栏坐标固定、打开/关闭主题下拉后根文档无纵横溢出、唯一主滚动条和底部开发者入口可达，原 IPC/项目/组件预览回归通过。已检查 output/settings-scrollarea-compact.png 与 workspace-compact.png 的真实渲染，无第二根窗口滚动条，工作台布局可用。
 - 边界/下一步：继续供应商表单回归与包内复核、更新本机应用；Windows/远端 CI 尚未实测，不改变真实模型或正式发行验收结论。
 - 最终交付复核：开发版 verify:provider 退出 0，密钥/测试/流式与取消等既有 26 次替身请求保持通过；pnpm run pack --config.mac.identity=null 退出 0，更新本机 Devly.app；该包内 verify:desktop 退出 0，单层 ScrollArea/固定标题与侧栏/底部可达、项目与 AI 组件预览均通过。格式、类型/Lint、18 份组件来源校验和 21 份 Markdown/106 ID/33 连续日志检查通过；按此前要求提交同步，具体 hash/回执由 Git 和最终回复报告。
+- Git 交付：修复本地提交为 7585304。三次普通快进推送（含 HTTP/1.1 重试）均因 GitHub 网络低速超时失败，错误为 Operation too slow，未获得远端成功回执；没有改写历史或回滚修复。本机新版应用与验证结果不受影响，网络恢复后执行 git push origin main 即可同步剩余提交。
 
 ## 追加记录模板
 

@@ -342,6 +342,17 @@
 - 回归与包内：verify:persistence 退出 0，双项目/会话/设置、系统保护与导出保持正确；pnpm run pack --config.mac.identity=null 退出 0，更新 release/mac-arm64/Devly.app；DEVLY_EXECUTABLE 指向该程序的 verify:provider 退出 0，包括实际 OS 密文、重启后 API 认证、清除与明文扫描。打包仍是未签名应用目录，Windows/远端 CI 未获通过状态。
 - Git 交付沿用用户此前“完成后提交”的要求；构建、测试 userData、密文及截图保持忽略。具体提交与远端回执由 Git 和最终回复报告，不把提交当成真实供应商验收。
 
+## LOG-032｜阶段 3 / P02、P05 修正：添加时设置密钥并测试连接
+
+- 日期：2026-11-21。用户指出新增表单没有测试按钮，随后追问 API Key 入口；本轮修正接入流程，阶段 3/P05 真实端点验收仍待完成。
+- 实际变更：API Key 状态与设置/替换/清除按钮移入添加表单，首次设置可自动保存元数据并进入系统原生输入；取消输入保留已有密钥。保存按钮旁增加“测试连接”，首次添加/修改后自动保存再发真实文本请求，按钮和行内结果显示运行中、成功、固定错误或取消；修改草稿后不再将旧成功当成当前配置通过。未改变配置时复用同一 Provider，不清除其他能力证据。
+- 生命周期：诊断 hook 提升到 ProviderManager，配置保存/密钥替换导致编辑器重建不会丢掉测试；切换/关闭编辑器会 reset/release，设置页卸载也会释放；异步 start 的前后均检查存活与 runId，防止卸载后的迟到请求继续轮询。原有详细流式/工具检查保留，文本成功不标记工具能力。
+- 文件：features/provider-settings/{ProviderManager.tsx,hooks.ts}、styles.css、scripts/smoke-provider.mjs、docs/provider-api.md、work-plan.md。
+- 已有验证：类型/Lint/格式与 56 项契约/Provider 测试通过；开发版 verify:provider 退出 0，覆盖新建时密钥入口、Main 原生 prompt 回调取消/设置/替换、实际 OS 密文与认证、表单自动保存测试、成功/401 失败、草稿失效、无认证端点、重复测试不重复建 Provider、原有流式/工具/模型/取消/重启。只在测试 Main 中替换原生 prompt 回调，不把明文传入 Renderer，没有增加生产测试开关；输出目录截图已实际复核。
+- 边界：上述 HTTP 端点是明确标注的本地替身，不是 DeepSeek 或用户端点实测。当前 DeepSeek 思考模式、固定 128 Token 诊断预算和 JSON Schema 差异仍需兼容工作，不把诊断失败一概当成 Key 错误；本轮没有扩大协议/参数实现范围。Windows/远端 CI 未实测。
+- 下一步：更新本机应用并复核包内流程；用户配置有效端点与受保护密钥后继续 P05 的真实文本/SSE/工具往返验收，阶段位置保持阶段 3。
+- 最终包内验证：pnpm run pack --config.mac.identity=null 退出 0；DEVLY_EXECUTABLE 指向新版 Devly.app 的 verify:provider 退出 0，覆盖 26 次本地请求、4 次关闭/取消路径，含表单“取消测试”、首次设置 Key 的取消/替换/清除及 OS 密文/认证/明文扫描；格式/类型/Lint、17 份原组件校验与文档结构检查通过。应用已更新，尚无真实供应商验收结论。
+
 ## 追加记录模板
 
 ```text

@@ -754,6 +754,53 @@ button:disabled {
 .provider-wide {
   grid-column: 1 / -1;
 }
+.provider-key-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.provider-key-field [data-slot='label'] {
+  font-size: 12px;
+  font-weight: 500;
+}
+.provider-key-field .key-status {
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.provider-key-field small {
+  flex-basis: 100%;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.provider-form > .provider-fields {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.provider-form .settings-actions {
+  flex-wrap: wrap;
+}
+.connection-test-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.connection-test-result[data-state='success'] {
+  color: var(--primary);
+}
+.connection-test-result[data-state='error'] {
+  color: var(--color-destructive);
+}
+.connection-test-result svg {
+  flex-shrink: 0;
+}
 .provider-fields small {
   color: var(--muted-foreground);
   font-size: 11px;

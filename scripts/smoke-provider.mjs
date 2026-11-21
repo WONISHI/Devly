@@ -148,62 +148,130 @@ async function setModel(model) {
 }
 try {
   await launch()
+  // Replace only Main's native prompt callback. The Renderer still uses real
+  // IPC, and the production service encrypts/reads/clears the fixture Key.
+  const credentialPrompt = await application.evaluateHandle(({ app }) => {
+    const path = process.getBuiltinModule('node:path'),
+      module = process.getBuiltinModule('node:module')
+    const source = path.join(app.getAppPath(), 'out', 'main'),
+      require = module.createRequire(path.join(source, 'index.js'))
+    const { LocalDataService } = require(path.join(source, 'data-service.js'))
+    const original = LocalDataService.prototype.execute
+    let mode = 'cancel',
+      calls = 0,
+      inspectKey,
+      secret = ''
+    LocalDataService.prototype.execute = async function (payload, ...args) {
+      if (payload.operation !== 'credentials.set') return original.call(this, payload, ...args)
+      const previous = this.prompts.credential
+      this.prompts.credential = async () => {
+        calls++
+        secret = 'devly-provider-native-fixture-' + Date.now() + '-' + calls
+        return mode === 'cancel' ? null : secret
+      }
+      inspectKey = async (providerId) => {
+        const fs = process.getBuiltinModule('node:fs/promises'),
+          ref = await this.database.execute('internal.credential.ref', { providerId })
+        const files = await fs.readdir(path.join(app.getPath('userData'), 'storage', 'credentials'))
+        return {
+          files: files.length,
+          roundTrip: (await this.vault.read(ref)) === secret,
+          plaintext: (
+            await fs.readFile(
+              path.join(app.getPath('userData'), 'storage', 'credentials', ref + '.key'),
+            )
+          ).includes(Buffer.from('devly-provider-native-fixture-')),
+        }
+      }
+      try {
+        return await original.call(this, payload, ...args)
+      } finally {
+        this.prompts.credential = previous
+      }
+    }
+    return {
+      setMode(value) {
+        mode = value
+      },
+      count() {
+        return calls
+      },
+      async proof(providerId) {
+        return inspectKey(providerId)
+      },
+      restore() {
+        LocalDataService.prototype.execute = original
+        secret = ''
+      },
+    }
+  })
   await page.getByRole('button', { name: '添加供应商', exact: true }).click()
+  await expect(page.getByRole('button', { name: '设置密钥', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '测试连接', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '测试连接', exact: true })).toBeDisabled()
   await page.getByLabel('供应商名称', { exact: true }).fill('本地协议测试替身')
   await page.getByLabel('Base URL', { exact: true }).fill(url)
   await page.getByLabel('模型 ID', { exact: true }).fill('fixture-chat')
-  await page.getByRole('button', { name: '保存供应商', exact: true }).click()
+  await page.getByRole('button', { name: '设置密钥', exact: true }).click()
+  await expect.poll(() => credentialPrompt.evaluate((fixture) => fixture.count())).toBe(1)
   await expect(page.getByRole('button', { name: '检查连接', exact: true })).toBeEnabled()
   const provider = (await data('providers.list'))[0]
   assert.equal(provider.hasCredential, false)
-  // Inject only the native prompt in Main, never a plaintext Key over Renderer IPC.
-  // Exercise the production SQLite -> encrypted file -> Main adapter path with an OS backend.
-  const keyProof = await application.evaluate(async ({ app, safeStorage }, providerId) => {
-    const path = process.getBuiltinModule('node:path'),
-      fs = process.getBuiltinModule('node:fs/promises'),
-      module = process.getBuiltinModule('node:module')
-    const source = path.join(app.getAppPath(), 'out', 'main'),
-      root = path.join(app.getPath('userData'), 'storage')
-    const require = module.createRequire(path.join(source, 'index.js'))
-    const { DatabaseClient } = require(path.join(source, 'data-client.js'))
-    const { CredentialVault } = require(path.join(source, 'vault.js'))
-    const { LocalDataService } = require(path.join(source, 'data-service.js'))
-    const database = new DatabaseClient(root)
-    let secret = 'devly-provider-native-fixture-' + Date.now()
-    const vault = new CredentialVault(path.join(root, 'credentials'), {
-      available: () => safeStorage.isEncryptionAvailable(),
-      encrypt: (value) => safeStorage.encryptString(value),
-      decrypt: (value) => safeStorage.decryptString(value),
-    })
-    const service = new LocalDataService(database, vault, {
-      credential: async () => secret,
-      file: async () => null,
-    })
-    try {
-      await service.initialize()
-      await service.execute({ operation: 'credentials.set', args: { providerId } }, () => true)
-      secret += '-replacement'
-      await service.execute({ operation: 'credentials.set', args: { providerId } }, () => true)
-      const ref = await database.execute('internal.credential.ref', { providerId }),
-        files = await fs.readdir(path.join(root, 'credentials'))
-      return {
-        files: files.length,
-        roundTrip: (await vault.read(ref)) === secret,
-        plaintext: (await fs.readFile(path.join(root, 'credentials', ref + '.key'))).includes(
-          Buffer.from('devly-provider-native-fixture-'),
-        ),
-      }
-    } finally {
-      service.close()
-      secret = ''
-      await database.close()
-    }
-  }, provider.id)
+  await credentialPrompt.evaluate((fixture) => fixture.setMode('save'))
+  await page.getByRole('button', { name: '设置密钥', exact: true }).click()
+  await expect(page.getByText('已设置 · 受系统保护', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '替换密钥', exact: true }).click()
+  await expect.poll(() => credentialPrompt.evaluate((fixture) => fixture.count())).toBe(3)
+  await expect(page.getByRole('button', { name: '替换密钥', exact: true })).toBeEnabled()
+  const keyProof = await credentialPrompt.evaluate(
+    (fixture, providerId) => fixture.proof(providerId),
+    provider.id,
+  )
   assert.deepEqual(keyProof, { files: 1, roundTrip: true, plaintext: false })
+  await credentialPrompt.evaluate((fixture) => fixture.restore())
+  await credentialPrompt.dispose()
   await page.reload()
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
   await page.getByRole('button', { name: '编辑 本地协议测试替身', exact: true }).click()
-  await expect(page.getByText('API Key · 已受系统保护保存', { exact: true })).toBeVisible()
+  await expect(page.getByText('已设置 · 受系统保护', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '测试连接', exact: true }).click()
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'success')
+  await expect(page.locator('.connection-test-result')).toContainText('连接成功')
+  await page.getByLabel('模型 ID', { exact: true }).fill('http401')
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'stale')
+  await page.getByRole('button', { name: '测试连接', exact: true }).click()
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'error')
+  await expect(page.locator('.connection-test-result')).toContainText('认证失败')
+  assert.equal((await data('providers.list'))[0].model, 'http401')
+  await page.getByLabel('模型 ID', { exact: true }).fill('fixture-chat')
+  await page.getByRole('button', { name: '测试连接', exact: true }).click()
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'success')
+  await mkdir('output', { recursive: true })
+  await page.locator('.provider-form').scrollIntoViewIfNeeded()
+  await page.screenshot({ path: 'output/provider-setup-test.png' })
+  await page.getByLabel('模型 ID', { exact: true }).fill('slow')
+  await page.getByRole('button', { name: '测试连接', exact: true }).click()
+  await page.getByRole('button', { name: '取消测试', exact: true }).click()
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'cancelled')
+  await page.getByLabel('模型 ID', { exact: true }).fill('fixture-chat')
+  await page.getByRole('button', { name: '测试连接', exact: true }).click()
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'success')
+  await page.getByRole('button', { name: '关闭', exact: true }).click()
+  // A new configuration can be saved and tested in one click, without making a duplicate.
+  await page.getByRole('button', { name: '添加供应商', exact: true }).click()
+  await page.getByLabel('供应商名称', { exact: true }).fill('无认证测试端点')
+  await page.getByLabel('Base URL', { exact: true }).fill(url)
+  await page.getByLabel('模型 ID', { exact: true }).fill('fixture-chat')
+  await page.getByRole('button', { name: '测试连接', exact: true }).click()
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'success')
+  await page.getByRole('button', { name: '测试连接', exact: true }).click()
+  await expect(page.locator('.connection-test-result')).toHaveAttribute('data-state', 'success')
+  const extras = (await data('providers.list')).filter((item) => item.id !== provider.id)
+  assert.equal(extras.length, 1)
+  await data('providers.remove', { providerId: extras[0].id })
+  await page.reload()
+  await page.getByRole('button', { name: '打开设置', exact: true }).click()
+  await page.getByRole('button', { name: '编辑 本地协议测试替身', exact: true }).click()
   await check('读取模型列表')
   await expect(page.getByRole('alert')).toContainText('可继续手工填写模型 ID')
   await check()
@@ -234,9 +302,10 @@ try {
   await page.getByRole('option', { name: 'fixture-other', exact: true }).click()
   await expect(page.getByLabel('模型 ID', { exact: true })).toHaveValue('fixture-other')
   await expect(page.getByRole('button', { name: '检查连接', exact: true })).toBeDisabled()
-  await setModel('fixture-chat')
+  await setModel('fixture-other')
   saved = (await data('providers.list'))[0]
   assert.equal(saved.report, null, 'configuration edits invalidate evidence')
+  await setModel('fixture-chat')
   await check('检查结构化输出')
   await check('检查连接')
   await mkdir('output', { recursive: true })
@@ -324,6 +393,7 @@ try {
           '401/403/429/500, disconnect, timeout, cancellation and editor cleanup',
           'revision invalidation and provider removal',
           'actual OS encrypted key replacement, Main-only native fetch auth, UI clear and no plaintext profile files',
+          'creation-form Key entry/cancel/replace, one-click save/test, inline success/auth error and stale result invalidation',
         ],
         requests: requests.length,
         aborted,

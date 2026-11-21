@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import { Plus, ChevronDown } from 'lucide-react'
+import { Plus, ChevronDown, CheckCircle2, LoaderCircle, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { SelectField } from '@/components/forms/SelectField'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useWorkspace } from '@/store'
-import type { Provider } from '@shared/data-contracts'
+import type { Provider, DataArgs } from '@shared/data-contracts'
 import {
   defaultCompatibility,
   type Compatibility,
@@ -30,16 +30,59 @@ const capabilityOptions = [
   { value: 'supported', label: '手工声明支持' },
   { value: 'unsupported', label: '不支持' },
 ]
+type SetupAction = 'save' | 'credential' | 'clear-credential' | 'test'
+type ProviderDraft = DataArgs<'providers.save'>
+function editable(provider: Provider | null) {
+  return {
+    ...(provider ? { id: provider.id } : {}),
+    name: provider?.name ?? '',
+    protocol: provider?.protocol ?? 'chat-completions',
+    baseUrl: provider?.baseUrl ?? '',
+    model: provider?.model ?? '',
+    compatibility: provider?.compatibility ?? defaultCompatibility,
+  }
+}
 
 export function ProviderManager() {
   const { providers, credentialAvailable } = useWorkspace()
   const [editing, setEditing] = useState<string | null | undefined>(undefined)
+  const [action, setAction] = useState<SetupAction | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [quickTest, setQuickTest] = useState(false)
+  const probe = useProviderProbe()
   const value = providers.find((provider) => provider.id === editing) ?? null
+  function edit(id: typeof editing) {
+    probe.reset()
+    setQuickTest(false)
+    setError(null)
+    setEditing(id)
+  }
+  async function save(draft: ProviderDraft, next: SetupAction, timeoutMs: number) {
+    setAction(next)
+    setError(null)
+    probe.reset()
+    setQuickTest(next === 'test')
+    try {
+      const saved =
+        !value || JSON.stringify(editable(value)) !== JSON.stringify(draft)
+          ? await saveProvider(draft)
+          : value
+      setEditing(saved.id)
+      if (next === 'credential') await changeCredential(saved.id)
+      else if (next === 'clear-credential') await changeCredential(saved.id, true)
+      else if (next === 'test') await probe.start(saved.id, 'text', timeoutMs)
+      else toast.success('供应商已保存')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '操作失败')
+    } finally {
+      setAction(null)
+    }
+  }
   return (
     <section className="provider-manager" aria-label="供应商管理">
       <div className="provider-list-heading">
         <p>{providers.length ? `${providers.length} 个供应商` : '添加你的第一个 API 供应商'}</p>
-        <Button variant="outline" size="sm" onClick={() => setEditing(null)}>
+        <Button variant="outline" size="sm" disabled={!!action} onClick={() => edit(null)}>
           <Plus size={14} />
           添加供应商
         </Button>
@@ -49,7 +92,8 @@ export function ProviderManager() {
           <Button
             variant="ghost"
             className="provider-select"
-            onClick={() => setEditing(provider.id)}
+            disabled={!!action}
+            onClick={() => edit(provider.id)}
             aria-pressed={editing === provider.id}
           >
             <span>
@@ -60,7 +104,7 @@ export function ProviderManager() {
               </small>
             </span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setEditing(provider.id)}>
+          <Button variant="ghost" size="sm" disabled={!!action} onClick={() => edit(provider.id)}>
             编辑 {provider.name}
           </Button>
         </div>
@@ -70,15 +114,22 @@ export function ProviderManager() {
           key={value ? `${value.id}:${value.revision}` : 'new'}
           value={value}
           credentialAvailable={credentialAvailable}
-          onSave={async (value) => {
-            const saved = await saveProvider(value)
-            setEditing(saved.id)
-            toast.success('供应商已保存')
+          action={action}
+          error={error}
+          quickTest={quickTest}
+          probe={probe}
+          onSave={save}
+          onTest={(kind, timeoutMs) => {
+            if (!value) return
+            setQuickTest(false)
+            setError(null)
+            void probe.start(value.id, kind, timeoutMs).catch(fail)
           }}
-          onClose={() => setEditing(undefined)}
+          onClose={() => edit(undefined)}
           onRemove={async () => {
+            probe.reset()
             if (value) await removeProvider(value.id)
-            setEditing(undefined)
+            edit(undefined)
           }}
         />
       )}
@@ -92,28 +143,29 @@ function ProviderEditor({
   onSave,
   onClose,
   onRemove,
+  action,
+  error,
+  quickTest,
+  probe,
+  onTest,
 }: {
   value: Provider | null
   credentialAvailable: boolean
-  onSave(value: unknown): Promise<void>
+  onSave(value: ProviderDraft, action: SetupAction, timeoutMs: number): Promise<void>
+  action: SetupAction | null
+  error: string | null
+  quickTest: boolean
+  probe: ReturnType<typeof useProviderProbe>
+  onTest(kind: ProbeKind | 'all', timeoutMs: number): void
   onClose(): void
   onRemove(): Promise<void>
 }) {
   const id = useId()
-  const initial = {
-    ...(value ? { id: value.id } : {}),
-    name: value?.name ?? '',
-    protocol: value?.protocol ?? 'chat-completions',
-    baseUrl: value?.baseUrl ?? '',
-    model: value?.model ?? '',
-    compatibility: value?.compatibility ?? defaultCompatibility,
-  }
+  const initial = editable(value)
   const [draft, setDraft] = useState(initial),
-    [saving, setSaving] = useState(false),
-    [error, setError] = useState<string | null>(null),
     [confirmRemove, setConfirmRemove] = useState(false),
     [timeoutSeconds, setTimeoutSeconds] = useState(30)
-  const probe = useProviderProbe(value?.id)
+  const saving = action !== null
   const dirty = !value || JSON.stringify(initial) !== JSON.stringify(draft)
   function option<K extends keyof Compatibility>(key: K, value: Compatibility[K]) {
     setDraft((old) => ({ ...old, compatibility: { ...old.compatibility, [key]: value } }))
@@ -126,7 +178,7 @@ function ProviderEditor({
     ...(probe.snapshot?.checks ?? []),
   ]
   const test = (kind: ProbeKind | 'all') => {
-    void probe.start(kind, timeoutSeconds * 1000).catch(fail)
+    onTest(kind, timeoutSeconds * 1000)
   }
   function capability(kind: ProbeKind) {
     const check = checks.find((check) => check.kind === kind)
@@ -145,21 +197,18 @@ function ProviderEditor({
     <div className="provider-editor">
       <form
         className="provider-form"
-        onSubmit={async (event) => {
+        onSubmit={(event) => {
           event.preventDefault()
-          setSaving(true)
-          setError(null)
-          try {
-            await onSave(draft)
-          } catch (error) {
-            setError(error instanceof Error ? error.message : '保存失败')
-          } finally {
-            setSaving(false)
-          }
+          const next = (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value')
+          void onSave(
+            draft,
+            next === 'test' || next === 'credential' ? next : 'save',
+            timeoutSeconds * 1000,
+          )
         }}
       >
         <h3>{value ? `编辑 ${value.name}` : '添加供应商'}</h3>
-        <div className="provider-fields">
+        <fieldset className="provider-fields" disabled={saving || probe.busy}>
           <div className="settings-field">
             <Label htmlFor={`${id}-name`}>供应商名称</Label>
             <Input
@@ -229,10 +278,47 @@ function ProviderEditor({
               />
             )}
           </div>
+        </fieldset>
+        <div className="provider-key-field" aria-label="API Key 配置">
+          <Label>API Key</Label>
+          <span className="key-status">
+            {value?.hasCredential ? '已设置 · 受系统保护' : '未设置'}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!credentialAvailable || saving || probe.busy}
+            onClick={(event) => {
+              if (event.currentTarget.form?.reportValidity())
+                void onSave(draft, 'credential', timeoutSeconds * 1000)
+            }}
+          >
+            {action === 'credential' ? '处理中…' : value?.hasCredential ? '替换密钥' : '设置密钥'}
+          </Button>
+          {value?.hasCredential && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={saving || probe.busy}
+              onClick={(event) => {
+                if (event.currentTarget.form?.reportValidity())
+                  void onSave(draft, 'clear-credential', timeoutSeconds * 1000)
+              }}
+            >
+              清除密钥
+            </Button>
+          )}
+          <small>
+            {credentialAvailable
+              ? '通过系统安全输入框设置；无认证端点可留空。'
+              : '系统凭据保护不可用，无法保存密钥。'}
+          </small>
         </div>
         <Collapsible className="provider-compatibility">
           <CollapsibleTrigger asChild>
-            <Button type="button" variant="ghost" size="sm">
+            <Button type="button" variant="ghost" size="sm" disabled={saving || probe.busy}>
               兼容参数
               <ChevronDown size={14} />
             </Button>
@@ -338,23 +424,50 @@ function ProviderEditor({
           </p>
         )}
         <div className="settings-actions">
-          <Button type="submit" disabled={saving || probe.busy}>
-            {saving ? '保存中…' : '保存供应商'}
+          <Button type="submit" name="action" value="save" disabled={saving || probe.busy}>
+            {action === 'save' ? '保存中…' : '保存供应商'}
           </Button>
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button
+            type="submit"
+            name="action"
+            value="test"
+            variant="outline"
+            disabled={saving || probe.busy || !supportedProtocol || !draft.model.trim()}
+            title={
+              !draft.model.trim()
+                ? '先填写模型 ID'
+                : '保存当前配置并发送固定文本测试，可能产生少量费用'
+            }
+          >
+            {quickTest && (saving || probe.busy) ? (
+              <>
+                <LoaderCircle size={14} className="animate-spin" />
+                测试中…
+              </>
+            ) : (
+              '测试连接'
+            )}
+          </Button>
+          {quickTest && probe.busy && (
+            <Button type="button" variant="ghost" onClick={() => void probe.cancel().catch(fail)}>
+              取消测试
+            </Button>
+          )}
+          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>
             关闭
           </Button>
           {value && (
             <Button
               type="button"
               variant="ghost"
-              disabled={probe.busy}
+              disabled={saving || probe.busy}
               onClick={() => setConfirmRemove(true)}
             >
               删除供应商
             </Button>
           )}
         </div>
+        {quickTest && <ConnectionTestStatus probe={probe} saving={saving} dirty={dirty} />}
         {confirmRemove && (
           <div className="provider-delete" role="alert">
             删除供应商并清除已保存密钥？
@@ -374,31 +487,6 @@ function ProviderEditor({
       </form>
       {value && (
         <>
-          <div className="provider-credentials">
-            <span>
-              API Key ·{' '}
-              {value.hasCredential ? '已受系统保护保存' : '未设置（无认证端点可直接测试）'}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!credentialAvailable || probe.busy}
-              onClick={() => void changeCredential(value.id).catch(fail)}
-            >
-              {value.hasCredential ? '替换密钥' : '设置密钥'}
-            </Button>
-            {value.hasCredential && (
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={probe.busy}
-                onClick={() => void changeCredential(value.id, true).catch(fail)}
-              >
-                清除密钥
-              </Button>
-            )}
-            {!credentialAvailable && <small>系统凭据保护不可用，无法保存密钥。</small>}
-          </div>
           <div
             className="provider-diagnostics"
             data-probe-run={probe.snapshot?.runId ?? ''}
@@ -408,7 +496,7 @@ function ProviderEditor({
             <p className="settings-footnote">
               向已保存端点发送固定测试内容，可能产生少量费用；不发送项目文件。
             </p>
-            {dirty && <p className="settings-footnote">先保存更改，再运行检查。</p>}
+            {dirty && <p className="settings-footnote">下方能力检查使用已保存配置。</p>}
             {!supportedProtocol && <p role="alert">此协议暂未接入，请切换为 Chat Completions。</p>}
             <div className="probe-actions">
               <Button disabled={!canCheck || !value.model.trim()} onClick={() => test('all')}>
@@ -506,7 +594,7 @@ function ProviderEditor({
               </p>
             )}
             {checks
-              .filter((check) => !check.ok)
+              .filter((check) => !check.ok && !(quickTest && check.kind === 'text'))
               .map((check) => (
                 <p key={check.kind} role="alert" className="error-text">
                   {kindLabels[check.kind]}：{check.error?.message}
@@ -533,6 +621,55 @@ function ProviderEditor({
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function ConnectionTestStatus({
+  probe,
+  saving,
+  dirty,
+}: {
+  probe: ReturnType<typeof useProviderProbe>
+  saving: boolean
+  dirty: boolean
+}) {
+  const check = probe.snapshot?.checks.find((check) => check.kind === 'text')
+  const busy = saving || probe.busy
+  const cancelled = probe.snapshot?.state === 'cancelled'
+  const success = !busy && !dirty && probe.snapshot?.state === 'completed' && check?.ok
+  const message = busy
+    ? '正在测试连接…'
+    : dirty
+      ? '配置已更改，请重新测试'
+      : cancelled
+        ? '测试已取消'
+        : success
+          ? '连接成功：已收到模型文本响应'
+          : (probe.error ?? check?.error?.message ?? '连接测试未完成，请重试')
+  const state = busy
+    ? 'running'
+    : dirty
+      ? 'stale'
+      : cancelled
+        ? 'cancelled'
+        : success
+          ? 'success'
+          : 'error'
+  return (
+    <div
+      className="connection-test-result"
+      data-state={state}
+      role={state === 'error' ? 'alert' : 'status'}
+    >
+      {busy ? (
+        <LoaderCircle size={16} className="animate-spin" />
+      ) : success ? (
+        <CheckCircle2 size={16} />
+      ) : state === 'error' ? (
+        <XCircle size={16} />
+      ) : null}
+      <span>{message}</span>
     </div>
   )
 }

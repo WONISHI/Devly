@@ -775,10 +775,37 @@ button:disabled {
   height: auto;
   justify-content: flex-start;
   text-align: left;
+  gap: 12px;
 }
-.provider-select span {
+.provider-select-copy {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.provider-brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+}
+.provider-brand-icon img,
+.provider-brand-icon > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+:root[data-theme='dark'] .provider-brand-mono img {
+  filter: invert(1);
+}
+.workspace-model-trigger .provider-brand-icon {
+  width: 16px;
+  height: 16px;
+}
+.workspace-model-picker .provider-brand-icon {
+  width: 24px;
+  height: 24px;
 }
 .provider-editor {
   margin-top: 18px;

@@ -34,6 +34,8 @@ pnpm dev
 | `pnpm verify:persistence`        | 真实桌面双项目重启、设置与系统凭据检查                      |
 | `pnpm verify:provider`           | Electron 供应商界面与本地 HTTP 协议替身验证（非供应商实测） |
 | `pnpm verify:model-picker`       | 首页原版模型选择、搜索、重启与项目隔离，确认不发送 API 请求 |
+| `pnpm verify:icons`              | 357 个离线品牌 SVG、目录及 MIT 通知完整性检查               |
+| `pnpm verify:provider-icons`     | 图标匹配、深浅主题、包内资源加载与零外部请求检查            |
 | `pnpm verify:native`             | 在 Electron Node 中验证 SQLite 和 PTY                       |
 | `node scripts/smoke-desktop.mjs` | 启动桌面应用，检查 IPC、目录选择和 AI 组件，生成截图        |
 | `pnpm run pack`                  | 构建当前平台应用目录                                        |
@@ -67,3 +69,5 @@ Renderer 的模块职责与检查范围见 [feature 边界](./docs/renderer-stru
 桌面通信协议见 [B02 契约](./docs/ipc-contracts.md)，本地与双平台 CI 入口见 [B04 检查计划](./docs/quality-checks.md)，维护版本、许可证与发行阻断见 [V01 依赖评估](./docs/dependency-review.md)。
 
 阶段 2 已验收。阶段 3 的代码和本地检查已落地，当前待有效端点完成真实文本、流式和工具协议验收；下一项为 3.5/P05 的真实联调，阶段 4 尚未开始。
+
+供应商列表及模型选择器包含 357 个本地品牌 SVG，按域名、名称和模型系列识别，未知配置显示通用图标；不依赖远程图片。来源和匹配边界见 [供应商图标](./docs/provider-icons.md)。

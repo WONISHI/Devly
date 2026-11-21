@@ -206,3 +206,5 @@ extract-zip 公告未提供修复版本，涉及 Electron 安装链；需跟踪�
 后续 UI 统一补充（LOG-024）：从同一个固定提交补齐 Input、Textarea、Label，当前离线来源清单为 17 份；未改动原有 14 份原组件/通知，未新增 npm 依赖。此补充不解除本文列出的维护/安全/发行风险。
 
 LOG-033/034 补充：同一固定来源增加 ScrollArea、ModelSelector、Dialog、Command，清单现为 21 份。新增 cmdk 精确锁定 1.1.1，安装包声明 MIT，React/react-dom peer 为 ^18 或 ^19（含所列 RC）；本机 React 19.3.1 类型/构建/真实 Electron 搜索和键盘检查通过。锁文件只新增 cmdk 及其对既有 Radix/React 的引用，没有升级现有依赖；安装使用 ignore-scripts，未运行无关生命周期。此为当前组合的兼容性证据，不声称是最新维护版、完成全面漏洞审计或解除上述发行门槛。
+
+LOG-035 补充：静态收集 @lobehub/icons-static-svg 1.104.0 的 357 个品牌 SVG，没有新增 npm 依赖或升级锁文件。源 tarball SHA-512、每份 SVG SHA-256、固定源码提交及 MIT 原文均保存；打包分发包含原版权通知。不需要 @lobehub/ui/新的 React peer，运行时离线加载。品牌商标权与代码许可证分别保留；不据此声称已完成全部分发许可审查。详见 [来源与更新规则](./provider-icons.md)。

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, ChevronDown, LoaderCircle, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ProviderBrandIcon } from '@/components/provider-brand-icon'
 import {
   ModelSelector,
   ModelSelectorTrigger,
@@ -39,6 +40,7 @@ export function WorkspaceModelPicker({
     (option) =>
       option.providerId === settings.defaultProviderId && option.model === settings.defaultModel,
   )
+  const selectedProvider = providers.find((provider) => provider.id === selected?.providerId)
   async function choose(option: (typeof options)[number]) {
     if (saving || option.disabled) return
     setSaving(true)
@@ -69,6 +71,9 @@ export function WorkspaceModelPicker({
           disabled={disabled || saving}
           title={selected ? `${selected.providerName} · ${selected.model}` : '选择模型'}
         >
+          {selectedProvider && (
+            <ProviderBrandIcon provider={{ ...selectedProvider, model: selected?.model || '' }} />
+          )}
           <ModelSelectorName>{selected?.model || '选择模型'}</ModelSelectorName>
           {saving ? <LoaderCircle size={12} className="animate-spin" /> : <ChevronDown size={12} />}
         </Button>
@@ -92,6 +97,7 @@ export function WorkspaceModelPicker({
                     disabled={option.disabled || saving}
                     onSelect={() => void choose(option)}
                   >
+                    <ProviderBrandIcon provider={{ ...provider, model: option.model }} />
                     <div className="workspace-model-option">
                       <ModelSelectorName>{option.model || '未设置模型'}</ModelSelectorName>
                       {option.hint && <small>{option.hint}</small>}

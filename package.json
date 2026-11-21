@@ -32,6 +32,8 @@
     "build:bundle": "electron-vite build",
     "audit:dependencies": "node scripts/dependency-inventory.mjs",
     "verify:vendor": "node scripts/verify-vendor.mjs",
+    "verify:icons": "node scripts/provider-icons.mjs",
+    "verify:provider-icons": "node scripts/smoke-provider-icons.mjs",
     "check:docs": "node scripts/check-docs.mjs",
     "verify:no-codex": "node scripts/verify-no-codex.mjs",
     "verify:data": "node scripts/verify-data.mjs",

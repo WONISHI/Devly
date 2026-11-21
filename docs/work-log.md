@@ -377,6 +377,18 @@
 - 下一步：更新本机应用并做包内选择恢复复核，然后按此前要求提交同步。真实端点验收与阶段 4 仍按工作表执行。
 - 最终交付复核：pnpm check 退出 0（类型/Lint/格式、60 项测试、21 原组件/许可证校验、21 份 Markdown/106 ID/34 连续日志、生产构建及 Worker 数据检查）。pnpm run pack --config.mac.identity=null 退出 0，更新本机 Devly.app；包内 verify:model-picker 退出 0，应用/项目选择与两次重启均通过，端点请求仍为 0。截图已复核，不把测试模型名称当成真实服务可用证明。
 
+## LOG-035｜阶段 3 / P02 界面补充：离线品牌图标与自动识别
+
+- 日期：2026-11-21。用户要求收集 AI 公司图标并在供应商列表截图 1 号位置解析显示。
+- 实现：从固定 @lobehub/icons-static-svg 1.104.0 提取 357 个品牌 SVG，每个优先彩色；设置列表名称前为 30px 图标/12px 间距，首页 ModelSelector 触发与选项复用。优先域名、再名称/中文别名、再有边界的模型系列，未知配置使用通用图标。已知 OpenRouter/SiliconFlow 等网关优先于托管模型，模型回退悬停显示“模型系列”；没有改变协议、能力、凭据或调用行为。
+- 来源：固定源码提交 5c966bad55cda839d0db663e02a2df169003ff4e、npm tarball SHA-512、各 SVG/目录/许可证 SHA-256 均保留，MIT 原文随应用 extraResources 分发。未新增 npm 包或升级锁文件，没有引入另一套 UI。资源由 Vite 打包本地 URL，彩色保持原色、单色随深浅主题调整，不请求远程图标。
+- 文件：assets/provider-icons、lib/provider-brand.ts、components/provider-brand-icon.tsx、ProviderManager/WorkspaceModelPicker/styles、资源清单/通知、provider-icons 与 smoke-provider-icons 脚本、5 项单元测试、check/CI/打包配置，以及 README/UI/依赖/检查/图标文档与计划。
+- 已验证：类型/Lint/生产构建、65/65 单元测试和 357 SVG 离线完整性检查通过；开发版 verify:provider-icons 退出 0，实际 Electron 验证本地加载、30px 宽高、DeepSeek/中文 Qwen/模型 Claude/通用回退、网关优先、编辑刷新、选择器复用及深浅主题，外部请求为 0，根文档无额外溢出。output/provider-brand-icons-dark.png 与 light.png 已实际查看，图标位于名称左侧且与两行文本居中。
+- 边界：357 个是此版本收录的品牌（含模型/应用/基础设施），不宣称全世界全部公司；目录名称可识别全部 357 ID，域名和模型规则覆盖明确列出的常用来源，未知网关可能按用户名称/模型回退。图标识别不证明端点归属或 API 能力。没有使用用户真实 Key/端点，阶段 3/P05 仍待有效端点验收；Windows/远端 CI 未验证。
+- 下一步：完成统一检查、更新本机应用并做包内图标和模型选择回归；随后按既有要求提交同步。阶段顺序保持不变。
+
+- 最终交付复核：pnpm check 退出 0（类型/Lint/格式、65 项测试、22 份 Markdown/106 ID/35 连续日志、21 份原组件校验、357 SVG/目录/MIT 校验、生产构建和 Worker 数据检查）。pnpm run pack --config.mac.identity=null 退出 0，新版 release/mac-arm64/Devly.app 的 verify:provider-icons 与 verify:model-picker 均退出 0；包内深浅主题/资源加载、选择持久化和重启回归通过，外部请求为 0，许可证原文与包内文件逐字一致。已实际复核深浅主题截图；没有新增运行时依赖、没有调用真实模型。Windows/远端 CI 与阶段 3 真实端点仍待验证。
+
 ## 追加记录模板
 
 ```text

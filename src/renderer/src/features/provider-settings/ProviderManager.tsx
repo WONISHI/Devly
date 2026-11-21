@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ProviderBrandIcon } from '@/components/provider-brand-icon'
 import { SelectField } from '@/components/forms/SelectField'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useWorkspace } from '@/store'
@@ -96,7 +97,8 @@ export function ProviderManager() {
             onClick={() => edit(provider.id)}
             aria-pressed={editing === provider.id}
           >
-            <span>
+            <ProviderBrandIcon provider={provider} />
+            <span className="provider-select-copy">
               {provider.name}
               <small>
                 {provider.model || '未选择模型'} ·{' '}

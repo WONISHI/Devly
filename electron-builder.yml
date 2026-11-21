@@ -8,6 +8,8 @@ files:
 extraResources:
   - from: build/icon.png
     to: icon.png
+  - from: resources/vendor/lobe-icons.LICENSE
+    to: licenses/lobe-icons.LICENSE
 asarUnpack:
   - '**/*.node'
   - node_modules/node-pty/**

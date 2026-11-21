@@ -1,0 +1,2512 @@
+{
+  "package": "@lobehub/icons-static-svg",
+  "version": "1.104.0",
+  "source": "https://github.com/lobehub/lobe-icons",
+  "commit": "5c966bad55cda839d0db663e02a2df169003ff4e",
+  "tarball": "https://registry.npmjs.org/@lobehub/icons-static-svg/-/icons-static-svg-1.104.0.tgz",
+  "integrity": "sha512-iIZ7qd77hIx9fsbLysXmFYHYKT+cLgSuQVb8/hOfGH06clDpcSo+u7RWcyiBeq9MAcUai+4qvCQXqVDdVe8g3Q==",
+  "license": "MIT",
+  "licenseSha256": "add9d7531d1b21646317a8958e38fc727506fa39d24bdecb44154d943c82753a",
+  "catalogSha256": "c0087c86e298c2e5f8f70daae87f27a72bff7b7cb45c1aa214e82b53bd8cfb75",
+  "icons": [
+    {
+      "id": "ace",
+      "label": "ace",
+      "color": false,
+      "upstream": "icons/ace.svg",
+      "sha256": "5250ea9e8d6df303f4c96deee7dcd154559d2102c197b412417cd16e701c1599"
+    },
+    {
+      "id": "adobe",
+      "label": "Adobe",
+      "color": true,
+      "upstream": "icons/adobe-color.svg",
+      "sha256": "d82327c1338a20375971b53a2baa96486b7de3480c98894e7fbaaac44bc9528e"
+    },
+    {
+      "id": "adobefirefly",
+      "label": "AdobeFirefly",
+      "color": true,
+      "upstream": "icons/adobefirefly-color.svg",
+      "sha256": "309ffee404f63e1076c2b20623b52199498139f0d18276945c965c53c1abdd00"
+    },
+    {
+      "id": "agentvoice",
+      "label": "AgentVoice",
+      "color": true,
+      "upstream": "icons/agentvoice-color.svg",
+      "sha256": "3cb34e4818f55827b8c32ed4c95ba73cc6dbe913fbbdacd1d3a60560bb121d86"
+    },
+    {
+      "id": "agnesai",
+      "label": "Agnes AI",
+      "color": false,
+      "upstream": "icons/agnesai.svg",
+      "sha256": "e31156bef276f57ce7655033d3a083d0c442bb1796a8df6b0db96d4fa2daa070"
+    },
+    {
+      "id": "agui",
+      "label": "AG-UI",
+      "color": false,
+      "upstream": "icons/agui.svg",
+      "sha256": "bd225584c595046906dcb131f7734b8cad4f194eae2d3a32c0f43c92f8598681"
+    },
+    {
+      "id": "ai2",
+      "label": "Ai2",
+      "color": true,
+      "upstream": "icons/ai2-color.svg",
+      "sha256": "78a7258e6b0b182f312d84c3b48a60539857fc001302ab4583ba9690624aa258"
+    },
+    {
+      "id": "ai21",
+      "label": "AI21",
+      "color": false,
+      "upstream": "icons/ai21.svg",
+      "sha256": "6c80f2c0d8b11d1bee179666049b00e0ab7f58f5ee8c307ca0dd3327bb49f282"
+    },
+    {
+      "id": "ai302",
+      "label": "302.AI",
+      "color": true,
+      "upstream": "icons/ai302-color.svg",
+      "sha256": "35ede625cfc22335fc9b252e96dc7992e4e08a399bb7a714f8570f6779d19e11"
+    },
+    {
+      "id": "ai360",
+      "label": "AI360",
+      "color": true,
+      "upstream": "icons/ai360-color.svg",
+      "sha256": "59366fe04a4336518b8277b430f4a464a91e7ec944c9cf6f40a945c74002386d"
+    },
+    {
+      "id": "aihubmix",
+      "label": "AiHubMix",
+      "color": true,
+      "upstream": "icons/aihubmix-color.svg",
+      "sha256": "e0ba11dd4b14fce9df434604cb081749b8f3347392d263d7d6f291b81f113f7f"
+    },
+    {
+      "id": "aimass",
+      "label": "AiMass",
+      "color": true,
+      "upstream": "icons/aimass-color.svg",
+      "sha256": "59eaa3bc23c72094a9adc38b252db87a53374cacae1d10e1ee69e0c499e7b1b5"
+    },
+    {
+      "id": "aimlapi",
+      "label": "AIMLAPI",
+      "color": false,
+      "upstream": "icons/aimlapi.svg",
+      "sha256": "8999a0ce43c74ba42d7bd1ab7ba403be3af9a61f9318951200e34b0a654ae7f8"
+    },
+    {
+      "id": "aionlabs",
+      "label": "AionLabs",
+      "color": true,
+      "upstream": "icons/aionlabs-color.svg",
+      "sha256": "952136a5655ac70b3c6a2c9fe93dfc9b22591d0d415b1fa9afbe618bda815b91"
+    },
+    {
+      "id": "airjelly",
+      "label": "AirJelly",
+      "color": true,
+      "upstream": "icons/airjelly-color.svg",
+      "sha256": "430bed8f8620fa38e224593dbf3c69941eee0bcdd912227995cc293235b5aafe"
+    },
+    {
+      "id": "aistudio",
+      "label": "Google AI Studio",
+      "color": false,
+      "upstream": "icons/aistudio.svg",
+      "sha256": "ca05675a319ba0b530fe396150357f5dddd7f7bbb2d15ffe5e21178e568a167c"
+    },
+    {
+      "id": "akashchat",
+      "label": "AkashChat",
+      "color": true,
+      "upstream": "icons/akashchat-color.svg",
+      "sha256": "ac00554360ea4393f95c256865edbd7f28dd0287da8334bc03c8191b57cba386"
+    },
+    {
+      "id": "alephalpha",
+      "label": "AlephAlpha",
+      "color": false,
+      "upstream": "icons/alephalpha.svg",
+      "sha256": "466340f37bb1958d24a10e5ced4d980a7a246d4f4efdc3e6bc2a206bb3dc571b"
+    },
+    {
+      "id": "alibaba",
+      "label": "Alibaba",
+      "color": true,
+      "upstream": "icons/alibaba-color.svg",
+      "sha256": "48ee796c5b1da5f5f11dbd70c5c64a3f7efcb9eeb9022ae687d81fc813e942ee"
+    },
+    {
+      "id": "alibabacloud",
+      "label": "AlibabaCloud",
+      "color": true,
+      "upstream": "icons/alibabacloud-color.svg",
+      "sha256": "73ea97baf919edb3d888a77cd45b21574e190a80124a59e199ea6953a28a959c"
+    },
+    {
+      "id": "amdradeoncloud",
+      "label": "AMD Radeon Cloud",
+      "color": true,
+      "upstream": "icons/amdradeoncloud-color.svg",
+      "sha256": "c2f14381718b04b9bcff714ec34f72f33da4b077c95354d506d4ede7a702fde6"
+    },
+    {
+      "id": "amp",
+      "label": "Amp",
+      "color": true,
+      "upstream": "icons/amp-color.svg",
+      "sha256": "6df4cced9e35703d6263d65968985e8afdff68b61358daf9cc09fa16dd9b2aad"
+    },
+    {
+      "id": "anspire",
+      "label": "Anspire",
+      "color": true,
+      "upstream": "icons/anspire-color.svg",
+      "sha256": "07f6cfff6af896ebe1a455d4d1fdd89eb42cb6569da6066795ec50a76658159a"
+    },
+    {
+      "id": "antgroup",
+      "label": "AntGroup",
+      "color": true,
+      "upstream": "icons/antgroup-color.svg",
+      "sha256": "d8ee74ad28e56310258002abf3c4194f4a962ffa51bc5e4d615818750eab04c0"
+    },
+    {
+      "id": "anthropic",
+      "label": "Anthropic",
+      "color": false,
+      "upstream": "icons/anthropic.svg",
+      "sha256": "e833fdfa7e7187a86a05b870925067556a506dcd4239089aed73e1e58c9366a3"
+    },
+    {
+      "id": "antigravity",
+      "label": "Antigravity",
+      "color": true,
+      "upstream": "icons/antigravity-color.svg",
+      "sha256": "652128cf55a28bb958563ee372d0bd00208d9e6fd446f523f77aafd811eef8ca"
+    },
+    {
+      "id": "anyscale",
+      "label": "Anyscale",
+      "color": true,
+      "upstream": "icons/anyscale-color.svg",
+      "sha256": "c0d5ba61c5248bee216d12dbbecbfdb9e8ac5a8e4718d4345794d61ae5929917"
+    },
+    {
+      "id": "apertis",
+      "label": "Apertis",
+      "color": true,
+      "upstream": "icons/apertis-color.svg",
+      "sha256": "9368f1adbcf3b3e18b96c35b085132232aa6c63bde9f72d5aa514739e1ae2e95"
+    },
+    {
+      "id": "apple",
+      "label": "Apple",
+      "color": false,
+      "upstream": "icons/apple.svg",
+      "sha256": "100637681febc38512bf8d43f7d5f79f2aa8caead15b256cd28b378b053fca69"
+    },
+    {
+      "id": "appwrite",
+      "label": "Appwrite",
+      "color": true,
+      "upstream": "icons/appwrite-color.svg",
+      "sha256": "007a345c7488131590109ba6923d9dff2f0ab451dd4ddd6f0c50f05294218200"
+    },
+    {
+      "id": "arcee",
+      "label": "Arcee",
+      "color": true,
+      "upstream": "icons/arcee-color.svg",
+      "sha256": "41a8ed8278ec89d6a12ba5c96172ee30d6fadc93474792a8c95732ad7466233e"
+    },
+    {
+      "id": "askverdict",
+      "label": "AskVerdict",
+      "color": true,
+      "upstream": "icons/askverdict-color.svg",
+      "sha256": "7d3149bab0db4230b37815521eb098162fd11e8a13f5769c045d218949223953"
+    },
+    {
+      "id": "assemblyai",
+      "label": "AssemblyAI",
+      "color": true,
+      "upstream": "icons/assemblyai-color.svg",
+      "sha256": "77b042c7432be780de00d431e27e1226f08bcc772663bd187fd05783c39fee22"
+    },
+    {
+      "id": "atlascloud",
+      "label": "Atlas Cloud",
+      "color": false,
+      "upstream": "icons/atlascloud.svg",
+      "sha256": "f4b4170259c722a970176763fd9f3b18fe34a661e063afb88ae340f4c7ff1474"
+    },
+    {
+      "id": "automatic",
+      "label": "Automatic",
+      "color": true,
+      "upstream": "icons/automatic-color.svg",
+      "sha256": "13aff3e91b732c5181c316e92a462d54a295c806fb213dc32d52bf74bb3c9555"
+    },
+    {
+      "id": "aws",
+      "label": "AWS",
+      "color": true,
+      "upstream": "icons/aws-color.svg",
+      "sha256": "b23f044479fe5c80f7df0a9515f969e5ea710c5f40d26dffa08969a0151731f3"
+    },
+    {
+      "id": "aya",
+      "label": "Aya",
+      "color": true,
+      "upstream": "icons/aya-color.svg",
+      "sha256": "b6b5e362acbac104433a32f85a5662a712eb98c7ff13143b27cc834f8ffa054e"
+    },
+    {
+      "id": "azure",
+      "label": "Azure",
+      "color": true,
+      "upstream": "icons/azure-color.svg",
+      "sha256": "abc639d094593943c1b201270f4903c74d02d2e26acf26abf592a29c222c5181"
+    },
+    {
+      "id": "azureai",
+      "label": "AzureAI",
+      "color": true,
+      "upstream": "icons/azureai-color.svg",
+      "sha256": "89bef85d67f45984dba85f8d7e6a8ed91585f706c43f7236a89590d8f4940fde"
+    },
+    {
+      "id": "baai",
+      "label": "BAAI",
+      "color": false,
+      "upstream": "icons/baai.svg",
+      "sha256": "9750791f6dd17af093c6682e03761667cab7e0f08566c79b3f54759b5f46d909"
+    },
+    {
+      "id": "baichuan",
+      "label": "Baichuan",
+      "color": true,
+      "upstream": "icons/baichuan-color.svg",
+      "sha256": "7d49311206402734850ed9dc112759780429bb363dcee31eccb5a92f428532a6"
+    },
+    {
+      "id": "baidu",
+      "label": "Baidu",
+      "color": true,
+      "upstream": "icons/baidu-color.svg",
+      "sha256": "1059750a2069aec6080ff48732931e87a99bd3d22db3e8471cebe255b6014b75"
+    },
+    {
+      "id": "baiducloud",
+      "label": "BaiduCloud",
+      "color": true,
+      "upstream": "icons/baiducloud-color.svg",
+      "sha256": "2269f4c82a3a810f42691c82d0d5086961c2b684a2dcc1e7523cd9f8564e2f35"
+    },
+    {
+      "id": "bailian",
+      "label": "BaiLian",
+      "color": true,
+      "upstream": "icons/bailian-color.svg",
+      "sha256": "5cc26dc961b2ecd0912f4e023c8ce745bcc52ac45b1c4baeadd7201f6b60de25"
+    },
+    {
+      "id": "baseten",
+      "label": "Baseten",
+      "color": false,
+      "upstream": "icons/baseten.svg",
+      "sha256": "d560883f6df500c1290b2fb2018836d853c72697c1fc252793538fabf53ff28d"
+    },
+    {
+      "id": "bedrock",
+      "label": "Bedrock",
+      "color": true,
+      "upstream": "icons/bedrock-color.svg",
+      "sha256": "a149a5678ce2b5d821759aabca7b815867027a8231a76723b3673580e8177a60"
+    },
+    {
+      "id": "bfl",
+      "label": "Black Forest Labs",
+      "color": false,
+      "upstream": "icons/bfl.svg",
+      "sha256": "c08f545c77c40f2447fb91d75f78db81dc2aeebb7291bb51ad2a982276219dc7"
+    },
+    {
+      "id": "bilibili",
+      "label": "bilibili",
+      "color": true,
+      "upstream": "icons/bilibili-color.svg",
+      "sha256": "daab1fb9ba8466de6178020db2ee7ef9fd6a01895ce383fa1c79269cc97288ff"
+    },
+    {
+      "id": "bilibiliindex",
+      "label": "bilibili index",
+      "color": false,
+      "upstream": "icons/bilibiliindex.svg",
+      "sha256": "ee84f9f23763c010164a291ec1f8a9c10e2808ec306fc0a8db6b521657055e8c"
+    },
+    {
+      "id": "bing",
+      "label": "Bing",
+      "color": true,
+      "upstream": "icons/bing-color.svg",
+      "sha256": "0690e17df0de27573b4a5aab62a7d1fa35bc2210577147c2553b1a8c041b4fd9"
+    },
+    {
+      "id": "bocha",
+      "label": "Bocha",
+      "color": true,
+      "upstream": "icons/bocha-color.svg",
+      "sha256": "bf96c5c287da443c310570db48a270121af57d559f849227aea27cc61b86f244"
+    },
+    {
+      "id": "brave",
+      "label": "Brave",
+      "color": true,
+      "upstream": "icons/brave-color.svg",
+      "sha256": "76ec345aefa225be34525da172d62c7a7ae80280bc062dc9776e24187b9d110c"
+    },
+    {
+      "id": "briaai",
+      "label": "BRIA AI",
+      "color": true,
+      "upstream": "icons/briaai-color.svg",
+      "sha256": "1adda45d2d747dbf2a463cd528f566af256c9b0f061469a564c7b76368548ed3"
+    },
+    {
+      "id": "browserless",
+      "label": "Browserless",
+      "color": false,
+      "upstream": "icons/browserless.svg",
+      "sha256": "dc7da5b3aa1f574d81f0e9994b1a7263c1e98aba77ef82a275e700782d763a4c"
+    },
+    {
+      "id": "burncloud",
+      "label": "BurnCloud",
+      "color": true,
+      "upstream": "icons/burncloud-color.svg",
+      "sha256": "d51a3c8049a0a6e20fb1b33a249aced927a8682e568b61d4b83d1ccdfc0be01b"
+    },
+    {
+      "id": "bytedance",
+      "label": "ByteDance",
+      "color": true,
+      "upstream": "icons/bytedance-color.svg",
+      "sha256": "3d37647be262c79b044e293bb1a4993202537e9f9ffdbd2bbe7e9fc5378d1005"
+    },
+    {
+      "id": "capcut",
+      "label": "CapCut",
+      "color": false,
+      "upstream": "icons/capcut.svg",
+      "sha256": "1673e8216af7746473471a277e4f640282e0d75bb886832b1634a3e4ffe09c45"
+    },
+    {
+      "id": "celestoai",
+      "label": "CelestoAI",
+      "color": true,
+      "upstream": "icons/celestoai-color.svg",
+      "sha256": "bbcc30bfdff456798508fb1aca1d48d0f22a98b07e1641eec89c520ae9106eee"
+    },
+    {
+      "id": "centml",
+      "label": "CentML",
+      "color": true,
+      "upstream": "icons/centml-color.svg",
+      "sha256": "682b135388265ae656d2a6c28400043c0f11cc5057c2a789000a261c7602e9f4"
+    },
+    {
+      "id": "cerebras",
+      "label": "Cerebras",
+      "color": true,
+      "upstream": "icons/cerebras-color.svg",
+      "sha256": "355c2225284cd06c9cf4246110b60cb21bc86039872981e1be6bb82deec2ffa7"
+    },
+    {
+      "id": "chatglm",
+      "label": "ChatGLM",
+      "color": true,
+      "upstream": "icons/chatglm-color.svg",
+      "sha256": "6e935f6ccad7a776edef259b33bbbfe5b51d6486318d4a0f423708ffe2a27287"
+    },
+    {
+      "id": "cheaperinference",
+      "label": "Cheaper Inference",
+      "color": false,
+      "upstream": "icons/cheaperinference.svg",
+      "sha256": "f55693c87d7fa84e9f70c67e3b3db8ff2d7454b0ceea5c9018921df62d2a5038"
+    },
+    {
+      "id": "cherrystudio",
+      "label": "CherryStudio",
+      "color": true,
+      "upstream": "icons/cherrystudio-color.svg",
+      "sha256": "498c8aa4500ff30354d26f689fa599014db640b28283c6c860b01c277bff32d0"
+    },
+    {
+      "id": "chutes",
+      "label": "Chutes",
+      "color": false,
+      "upstream": "icons/chutes.svg",
+      "sha256": "0fe386fe669b0902b97122d370f7031ac52d714f1ec841b3158242a2c341e0ca"
+    },
+    {
+      "id": "civitai",
+      "label": "Civitai",
+      "color": true,
+      "upstream": "icons/civitai-color.svg",
+      "sha256": "5a6f20166d590730d63269685e6f1b563fd155a550018f99a223d8fa9c4e1f60"
+    },
+    {
+      "id": "claude",
+      "label": "Claude",
+      "color": true,
+      "upstream": "icons/claude-color.svg",
+      "sha256": "a3101f3047a119aa11825ad9369510f0c472428c8c52d420e31bc62db44a8364"
+    },
+    {
+      "id": "claudecode",
+      "label": "Claude Code",
+      "color": true,
+      "upstream": "icons/claudecode-color.svg",
+      "sha256": "670b3d8d749d0815ad8f7e62a59d51cb5e2053cb19403f3541a8aed7036a877f"
+    },
+    {
+      "id": "cline",
+      "label": "Cline",
+      "color": false,
+      "upstream": "icons/cline.svg",
+      "sha256": "9003d2cdce82b016147b732abb4def60af55c348ba2cea2ba0b69a3c7d159b19"
+    },
+    {
+      "id": "clipdrop",
+      "label": "Clipdrop",
+      "color": false,
+      "upstream": "icons/clipdrop.svg",
+      "sha256": "876447210dd0f94c6ec723973867d534a5404b4fbf47597ea458d38049853618"
+    },
+    {
+      "id": "cloudflare",
+      "label": "Cloudflare",
+      "color": true,
+      "upstream": "icons/cloudflare-color.svg",
+      "sha256": "cee35d3f0ecb7925ce0a89aeaff8b907cadae7c3fe44a23e4001cc8d5ee57502"
+    },
+    {
+      "id": "codebuddy",
+      "label": "CodeBuddy",
+      "color": true,
+      "upstream": "icons/codebuddy-color.svg",
+      "sha256": "033d5da624460e686046f22b4e242b6b86484ad84ec4877e4efa15a9fb642b97"
+    },
+    {
+      "id": "codeflicker",
+      "label": "CodeFlicker",
+      "color": true,
+      "upstream": "icons/codeflicker-color.svg",
+      "sha256": "b246412582618492042abfaf8f7415f00605a9701a526a51d441cf166715b3c1"
+    },
+    {
+      "id": "codegeex",
+      "label": "CodeGeeX",
+      "color": true,
+      "upstream": "icons/codegeex-color.svg",
+      "sha256": "ccd7e2a2c5ee3c15512353d63fd10dfa3cf82b88531220bd16ccb7eacedf2249"
+    },
+    {
+      "id": "codex",
+      "label": "Codex",
+      "color": true,
+      "upstream": "icons/codex-color.svg",
+      "sha256": "4a2f43ce46b5b6e3722c95088f88d26ef91e6a8c2e598e70642a1c54367386e4"
+    },
+    {
+      "id": "cogvideo",
+      "label": "CogVideo",
+      "color": true,
+      "upstream": "icons/cogvideo-color.svg",
+      "sha256": "7350b358f815414a3700bd46bb51161b160f36ff6b8e09be9cd5ff6b0a526168"
+    },
+    {
+      "id": "cogview",
+      "label": "CogView",
+      "color": true,
+      "upstream": "icons/cogview-color.svg",
+      "sha256": "bd8ef488dac121949f20d7525919d08b137a4962e3fd4950ed74f49e520ee866"
+    },
+    {
+      "id": "cohere",
+      "label": "Cohere",
+      "color": true,
+      "upstream": "icons/cohere-color.svg",
+      "sha256": "84d0ee3cbe66f030e5a18cb2c86da9166ab2137c7a98781693bb1fbf31e392b9"
+    },
+    {
+      "id": "colab",
+      "label": "Colab",
+      "color": true,
+      "upstream": "icons/colab-color.svg",
+      "sha256": "4aaf0a2c32c0e88329b6b7240c734446917616c3942f4f23cd13e70dcf5ee2e8"
+    },
+    {
+      "id": "cometapi",
+      "label": "CometAPI",
+      "color": true,
+      "upstream": "icons/cometapi-color.svg",
+      "sha256": "069903c78f5f468da16bfb82ed1de0f74030904183f764b71deb0c7e94213c23"
+    },
+    {
+      "id": "comfyui",
+      "label": "ComfyUI",
+      "color": true,
+      "upstream": "icons/comfyui-color.svg",
+      "sha256": "2f14161b0c6ce1c314b66cac785ac81948bf2b34b784b114e5df09b6797894c6"
+    },
+    {
+      "id": "commanda",
+      "label": "CommandA",
+      "color": true,
+      "upstream": "icons/commanda-color.svg",
+      "sha256": "d4e4671d08825009f4343d92225dea51bf81535fdc25bd943af366d6a43ce57c"
+    },
+    {
+      "id": "commandcode",
+      "label": "Command Code",
+      "color": false,
+      "upstream": "icons/commandcode.svg",
+      "sha256": "0b3090f6e9194f32520e5b98ea43c5bc1a0f04644c94d1bade69fab7413e1531"
+    },
+    {
+      "id": "copilot",
+      "label": "Copilot",
+      "color": true,
+      "upstream": "icons/copilot-color.svg",
+      "sha256": "50d59ef2ab0930de15d657dbd21628536b0fee1f2c88306cfb9970cc79b45b92"
+    },
+    {
+      "id": "copilotkit",
+      "label": "CopilotKit",
+      "color": true,
+      "upstream": "icons/copilotkit-color.svg",
+      "sha256": "2fd67f304ee2f4659be9a5304870b5bf6c0c3989f0d0420875595216a15fc17b"
+    },
+    {
+      "id": "coqui",
+      "label": "Coqui",
+      "color": true,
+      "upstream": "icons/coqui-color.svg",
+      "sha256": "f2699d019796b2e96112e3a58cc4e73649457e61e5f17825549acbda0af8007d"
+    },
+    {
+      "id": "coze",
+      "label": "Coze",
+      "color": false,
+      "upstream": "icons/coze.svg",
+      "sha256": "bd0dce025396aecf8091ada8de90a0fbf5f0fa923f5ede9f3320e9bf990bc868"
+    },
+    {
+      "id": "crewai",
+      "label": "CrewAI",
+      "color": true,
+      "upstream": "icons/crewai-color.svg",
+      "sha256": "440582d092619fb31f336f3a7a323999c0f40f961b7a6c17ac8196e55d6dd0e8"
+    },
+    {
+      "id": "crusoe",
+      "label": "Crusoe",
+      "color": true,
+      "upstream": "icons/crusoe-color.svg",
+      "sha256": "4aaec4fa4b003d63d03ec9f2ab14d4c1fb94bb40d919cd57d7194f0d4f6bf2e8"
+    },
+    {
+      "id": "cursor",
+      "label": "Cursor",
+      "color": false,
+      "upstream": "icons/cursor.svg",
+      "sha256": "0cb51bddf264ae108926fd554c063ef40fc1aac3c5c921ddb39ad184e4e5d0ef"
+    },
+    {
+      "id": "cybercut",
+      "label": "CyberCut",
+      "color": false,
+      "upstream": "icons/cybercut.svg",
+      "sha256": "e63741a4e4d78065fa2d981d37fde0f68c16f7891bb321deca505f92b7fb45bf"
+    },
+    {
+      "id": "dalle",
+      "label": "DALL-E",
+      "color": true,
+      "upstream": "icons/dalle-color.svg",
+      "sha256": "842ec0b6f85fc7f26a56ef1a15dcd4cbedfc1bc930ee2b3fc155d5175a788d3c"
+    },
+    {
+      "id": "dbrx",
+      "label": "DBRX",
+      "color": true,
+      "upstream": "icons/dbrx-color.svg",
+      "sha256": "94e4d31906f8d9755c627ff11b1a0ec0a586a2221563a5b7832c9f4e5f68c6f7"
+    },
+    {
+      "id": "decart",
+      "label": "Decart",
+      "color": true,
+      "upstream": "icons/decart-color.svg",
+      "sha256": "093647ad66a06f4e731a4ae2ffdbe6498c3356aab38ea73417a7b0b6c3395b7c"
+    },
+    {
+      "id": "deepai",
+      "label": "DeepAI",
+      "color": false,
+      "upstream": "icons/deepai.svg",
+      "sha256": "153db1eefefbe6d03a42a1b2237d66c7acb8a3f5248975c8ac779ce64a5c1619"
+    },
+    {
+      "id": "deepcogito",
+      "label": "Deep Cogito",
+      "color": true,
+      "upstream": "icons/deepcogito-color.svg",
+      "sha256": "e37c10b1400026e08610ac512ef16164df5d034287d33080810c0085c6c71395"
+    },
+    {
+      "id": "deepinfra",
+      "label": "DeepInfra",
+      "color": true,
+      "upstream": "icons/deepinfra-color.svg",
+      "sha256": "bfc78853fe658f6446651d03218f3e809215fd7cb3bce841a6526de383286544"
+    },
+    {
+      "id": "deepl",
+      "label": "DeepL",
+      "color": true,
+      "upstream": "icons/deepl-color.svg",
+      "sha256": "260365ff62ba4ca1716dce5e829336af2cf1f25233d7115c175de6937bf508e8"
+    },
+    {
+      "id": "deepmind",
+      "label": "DeepMind",
+      "color": true,
+      "upstream": "icons/deepmind-color.svg",
+      "sha256": "f19b4db1fcf8660ab53743416262ee29e84856f5904c640aab1ded9c27e070bc"
+    },
+    {
+      "id": "deepseek",
+      "label": "DeepSeek",
+      "color": true,
+      "upstream": "icons/deepseek-color.svg",
+      "sha256": "deba5f98a5c1796e20fcac3149bcd7eb8a32f0bdd04d048819400b1f28bd1439"
+    },
+    {
+      "id": "devin",
+      "label": "Devin",
+      "color": true,
+      "upstream": "icons/devin-color.svg",
+      "sha256": "beb58575f94fda57a6c1f9ed5624e6407bff405f55b6258b53032b674aadd8c8"
+    },
+    {
+      "id": "dify",
+      "label": "Dify",
+      "color": true,
+      "upstream": "icons/dify-color.svg",
+      "sha256": "6c1704b6f14eb995d010549847b733dbbc54af66974a2bc62623fbdad4981c66"
+    },
+    {
+      "id": "digitalocean",
+      "label": "DigitalOcean",
+      "color": false,
+      "upstream": "icons/digitalocean.svg",
+      "sha256": "33e12e29c0cdacd1539863407d7911a82f7a5896af2d7cb9d062f1ddae5373d9"
+    },
+    {
+      "id": "doc2x",
+      "label": "Doc2X",
+      "color": true,
+      "upstream": "icons/doc2x-color.svg",
+      "sha256": "819fbb8cd9298f05537b9976e8a53239dfca1014c7c04e233cbc886e74a5ae4b"
+    },
+    {
+      "id": "docsearch",
+      "label": "DocSearch",
+      "color": true,
+      "upstream": "icons/docsearch-color.svg",
+      "sha256": "8e659166d6e574dd2eae9de004affaf0bed3d90fba153fa8b674fcb26b06548c"
+    },
+    {
+      "id": "dolphin",
+      "label": "Dolphin",
+      "color": false,
+      "upstream": "icons/dolphin.svg",
+      "sha256": "83fbb4834e9b3d442d43b8ac57b83e76d5556b6f31b7d70014e6b45421aeb2af"
+    },
+    {
+      "id": "dothoosh",
+      "label": "DotHoosh",
+      "color": true,
+      "upstream": "icons/dothoosh-color.svg",
+      "sha256": "b97ec44c90a93eaa7b1513ba7f856646eb9503ad3b56dc32e6827eed00c8ac00"
+    },
+    {
+      "id": "dotsstudio",
+      "label": "Dots Studio",
+      "color": false,
+      "upstream": "icons/dotsstudio.svg",
+      "sha256": "ed4e9c618a27ac16f2e1e8c16e6d217f3f7c01665afb068fe2f12164298b2310"
+    },
+    {
+      "id": "doubao",
+      "label": "Doubao",
+      "color": true,
+      "upstream": "icons/doubao-color.svg",
+      "sha256": "3cd31ba03ae44b8c29561597a3b863809efecb13fcdfd08407a086df86a69b55"
+    },
+    {
+      "id": "dreammachine",
+      "label": "DreamMachine",
+      "color": false,
+      "upstream": "icons/dreammachine.svg",
+      "sha256": "740b3518d0716b39906b98a0f3a3ad0426531fcbea8461453aa842bb37ae21bf"
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ElevenLabs",
+      "color": false,
+      "upstream": "icons/elevenlabs.svg",
+      "sha256": "152a4a89fd5228924b6ccc91a72675966df35e3b69d1cf93a67b6866cf846584"
+    },
+    {
+      "id": "elevenx",
+      "label": "11x",
+      "color": false,
+      "upstream": "icons/elevenx.svg",
+      "sha256": "a790de4d7be26e28fcebed70d6f40cc2459fd211a3618fe6143eb073d35f499b"
+    },
+    {
+      "id": "empiriolabs",
+      "label": "EmpirioLabs AI",
+      "color": true,
+      "upstream": "icons/empiriolabs-color.svg",
+      "sha256": "2da9806ab2e35e4fddbc554ac0e46eab1699730548717d93948193b62f717fc8"
+    },
+    {
+      "id": "essentialai",
+      "label": "Essential AI",
+      "color": true,
+      "upstream": "icons/essentialai-color.svg",
+      "sha256": "3c416089f7278f1baded02e1cd153dae4cf60338f1dfa0e2da443ccf316c23be"
+    },
+    {
+      "id": "exa",
+      "label": "Exa",
+      "color": true,
+      "upstream": "icons/exa-color.svg",
+      "sha256": "8d8113b2d6796bc680cccba6578a1487e49407adf08bbe20fccd949b59a8371a"
+    },
+    {
+      "id": "fal",
+      "label": "Fal",
+      "color": true,
+      "upstream": "icons/fal-color.svg",
+      "sha256": "577d952ac6f863d6b0dd129918597692230b2fe0633cb4ea0e0a5085aa3f8c7d"
+    },
+    {
+      "id": "fastgpt",
+      "label": "FastGPT",
+      "color": true,
+      "upstream": "icons/fastgpt-color.svg",
+      "sha256": "34bc17450f71c17f7dbe9723adf4cf0768cd18531f58f7e450ce9da85d98ca3b"
+    },
+    {
+      "id": "featherless",
+      "label": "featherless.ai",
+      "color": true,
+      "upstream": "icons/featherless-color.svg",
+      "sha256": "45efbd887b9cfbef1bcef24c202df762ea2fa71a8fa5d96903cdad72a23a0965"
+    },
+    {
+      "id": "figma",
+      "label": "Figma",
+      "color": true,
+      "upstream": "icons/figma-color.svg",
+      "sha256": "526eea0bdd16f60ca9251fd371a09a3211762a8c41e15ef085d351c2b0078c3b"
+    },
+    {
+      "id": "firecrawl",
+      "label": "Firecrawl",
+      "color": true,
+      "upstream": "icons/firecrawl-color.svg",
+      "sha256": "98993b111d1cb75edd0b1ce3a1e8bd3f85dcf5548072ffb959ac97ffe69ade59"
+    },
+    {
+      "id": "fireworks",
+      "label": "Fireworks",
+      "color": true,
+      "upstream": "icons/fireworks-color.svg",
+      "sha256": "f1c4782b86bc03a36323fd68ad6cc376c6b2ebe57b701cc958ebd6b8d37effd6"
+    },
+    {
+      "id": "fishaudio",
+      "label": "FishAudio",
+      "color": false,
+      "upstream": "icons/fishaudio.svg",
+      "sha256": "d391cb9bce59f44f99a56347f092922061d4df5ebfc53cec5bd20fc7859521f0"
+    },
+    {
+      "id": "flexai",
+      "label": "FlexAI",
+      "color": false,
+      "upstream": "icons/flexai.svg",
+      "sha256": "713dad11d236ff850071421c3c371fd26f3e44571a96fdad29b4b49048a757c1"
+    },
+    {
+      "id": "flora",
+      "label": "Flora",
+      "color": false,
+      "upstream": "icons/flora.svg",
+      "sha256": "bb45075594ad4a7a413dd7c9884ff427c765f4e4f5f5b9f34e07edeb59e856e4"
+    },
+    {
+      "id": "flowith",
+      "label": "Flowith",
+      "color": false,
+      "upstream": "icons/flowith.svg",
+      "sha256": "dc9bda469d861cc641c69ae23171ee575e89d717ae402b49b22bb4798dfbb6c2"
+    },
+    {
+      "id": "flux",
+      "label": "Flux",
+      "color": false,
+      "upstream": "icons/flux.svg",
+      "sha256": "c7d557466f39a895b1cd0d233a64c092ef61ba052160af7db20af37464a9138a"
+    },
+    {
+      "id": "friendli",
+      "label": "Friendli",
+      "color": false,
+      "upstream": "icons/friendli.svg",
+      "sha256": "0ea6e5b955988d330951c463ea99babb3292e9859008cf8b66c85bf853d4a4aa"
+    },
+    {
+      "id": "gemini",
+      "label": "Gemini",
+      "color": true,
+      "upstream": "icons/gemini-color.svg",
+      "sha256": "8ab0a9bafec11f7e69bcb9fc4ffd8f1bc927d1ddcbbb6ff36dee5ae8b5a9d602"
+    },
+    {
+      "id": "geminicli",
+      "label": "Gemini CLI",
+      "color": true,
+      "upstream": "icons/geminicli-color.svg",
+      "sha256": "c2f54ebaa4c3b9191c6a07f7b0c66bc78e4abe486003dc564469cf650672663e"
+    },
+    {
+      "id": "gemma",
+      "label": "Gemma",
+      "color": true,
+      "upstream": "icons/gemma-color.svg",
+      "sha256": "8cdc48e35113d2f76f602fc93977ce8b8eebe41bc66a65f532ed9c89f6a68e2d"
+    },
+    {
+      "id": "giteeai",
+      "label": "GiteeAI",
+      "color": false,
+      "upstream": "icons/giteeai.svg",
+      "sha256": "bff2da7cbd9839118593bb79b30fa2342425005024e06a8e1d46a4b9a123acda"
+    },
+    {
+      "id": "github",
+      "label": "Github",
+      "color": false,
+      "upstream": "icons/github.svg",
+      "sha256": "1bd763b5d53ab1618e0afce72aacffc7e93d1249c395f713b3b055c087526625"
+    },
+    {
+      "id": "githubcopilot",
+      "label": "GithubCopilot",
+      "color": false,
+      "upstream": "icons/githubcopilot.svg",
+      "sha256": "bbc7fddc13448236e5edea8c399d2072dc40aa5da5bca07f7a2f412405c500a3"
+    },
+    {
+      "id": "glama",
+      "label": "Glama",
+      "color": false,
+      "upstream": "icons/glama.svg",
+      "sha256": "ab2513d6b0833fbbe7d4106cbdf6ab5c570f312f2172c49363aabee3c57739b2"
+    },
+    {
+      "id": "glif",
+      "label": "Glif",
+      "color": false,
+      "upstream": "icons/glif.svg",
+      "sha256": "07f09164ce4c805f384bf04b1c9ad6b486ed01db8da6e178a40d935cd96bb456"
+    },
+    {
+      "id": "glmv",
+      "label": "GLM-V",
+      "color": true,
+      "upstream": "icons/glmv-color.svg",
+      "sha256": "52c829ec60d4e60ce20c4d20a0fb976bcceacd7518cbacef39c192834d1d5958"
+    },
+    {
+      "id": "gmicloud",
+      "label": "GmiCloud",
+      "color": false,
+      "upstream": "icons/gmicloud.svg",
+      "sha256": "22b0d7150d3d04fc8a498ab5de03c130b25127910c356660df913f2f769d4f61"
+    },
+    {
+      "id": "google",
+      "label": "Google",
+      "color": true,
+      "upstream": "icons/google-color.svg",
+      "sha256": "4e6aa8892ef15a6b431f40f2c9045979bf7e2357524e7bbb89b353cf4f32a5ac"
+    },
+    {
+      "id": "googlecloud",
+      "label": "GoogleCloud",
+      "color": true,
+      "upstream": "icons/googlecloud-color.svg",
+      "sha256": "c0faf37b180dfc1efe12440c039047b0e1c60a3c424cca6616e580f6f219a7dc"
+    },
+    {
+      "id": "goose",
+      "label": "Goose",
+      "color": false,
+      "upstream": "icons/goose.svg",
+      "sha256": "8779d9a61c5b0be78a3d36cab6843ba5af86218ba2ff1b18eb918c7a8d25bb99"
+    },
+    {
+      "id": "gradio",
+      "label": "Gradio",
+      "color": true,
+      "upstream": "icons/gradio-color.svg",
+      "sha256": "c3c84ed2ae264ff87c59f02a89a4de100851e8a076bd4bebc6ad31ad33bd8734"
+    },
+    {
+      "id": "greenpt",
+      "label": "GreenPT",
+      "color": true,
+      "upstream": "icons/greenpt-color.svg",
+      "sha256": "c94a93701b928fb3f15e847bc46999e40df05e9ce58b0eaf70f2869136d9fb18"
+    },
+    {
+      "id": "greptile",
+      "label": "Greptile",
+      "color": true,
+      "upstream": "icons/greptile-color.svg",
+      "sha256": "f8163e9eef7dc03ff8059e1967ce0218fa9ea301eb0aaa68f33a96f510e14a3c"
+    },
+    {
+      "id": "grok",
+      "label": "Grok",
+      "color": false,
+      "upstream": "icons/grok.svg",
+      "sha256": "9175fc90c22655160231976c849f25a03b888d7cc0e04c5f1b987b659bb07c95"
+    },
+    {
+      "id": "grokbot",
+      "label": "Grok Bot",
+      "color": false,
+      "upstream": "icons/grokbot.svg",
+      "sha256": "f9a0eb8ce13421e9b5e372b6e60401600c05484a35aaadc65a539ec7b9f891e6"
+    },
+    {
+      "id": "groq",
+      "label": "Groq",
+      "color": false,
+      "upstream": "icons/groq.svg",
+      "sha256": "078d5cf6e7a54905040c15ddacf5ea33c13042fe7739e820cedc2096e4406651"
+    },
+    {
+      "id": "hailuo",
+      "label": "Hailuo",
+      "color": true,
+      "upstream": "icons/hailuo-color.svg",
+      "sha256": "1ada279990428155c5036ac9aea6ce430c68c79483c808ca6d0b59dc0ebf4a03"
+    },
+    {
+      "id": "haiper",
+      "label": "Haiper",
+      "color": false,
+      "upstream": "icons/haiper.svg",
+      "sha256": "7ab9c847a509c42f66103f6f93be7c4a9bc80e4b7761e8fdfe0e8db944b4bbe8"
+    },
+    {
+      "id": "happyhorse",
+      "label": "HappyHorse",
+      "color": false,
+      "upstream": "icons/happyhorse.svg",
+      "sha256": "62692ad096c123661d56e3d24ae6bcb80d94c17d42d1bf1213556f06a3840faf"
+    },
+    {
+      "id": "hedra",
+      "label": "Hedra",
+      "color": false,
+      "upstream": "icons/hedra.svg",
+      "sha256": "bcc4c8aa5f062b8004cb88d1d49b7a24093a4d86afca9032e9674ba515484790"
+    },
+    {
+      "id": "hermesagent",
+      "label": "Hermes Agent",
+      "color": false,
+      "upstream": "icons/hermesagent.svg",
+      "sha256": "02d43c0a91fc2ee41f2684fc39613ff6687de29a4b079665bace5303671dd63b"
+    },
+    {
+      "id": "higress",
+      "label": "Higress",
+      "color": true,
+      "upstream": "icons/higress-color.svg",
+      "sha256": "09cf4bf0233c6c5434da8c64e76cbd57f1c9ec2b1c85b427b9108692aeee5ca1"
+    },
+    {
+      "id": "huawei",
+      "label": "Huawei",
+      "color": true,
+      "upstream": "icons/huawei-color.svg",
+      "sha256": "ca9af4229ba3d538811cad7939b5f3f9edc87ec9448eae579506c659cd133d4a"
+    },
+    {
+      "id": "huaweicloud",
+      "label": "HuaweiCloud",
+      "color": true,
+      "upstream": "icons/huaweicloud-color.svg",
+      "sha256": "8a5e4cb6452046ecaf3a500e3a89955efdf54bfd0bed46a9c364fbd5f13290e4"
+    },
+    {
+      "id": "huggingface",
+      "label": "HuggingFace",
+      "color": true,
+      "upstream": "icons/huggingface-color.svg",
+      "sha256": "5d39d66bb6c9b026d3cb5de7bd9978dad3906570df2aca8f00078a6f8a3d0f5e"
+    },
+    {
+      "id": "hunyuan",
+      "label": "Hunyuan",
+      "color": true,
+      "upstream": "icons/hunyuan-color.svg",
+      "sha256": "510e7bb438506b5aadfaf8b9551d1606efd5b4171161a64a64204c72a453658a"
+    },
+    {
+      "id": "hyperbolic",
+      "label": "Hyperbolic",
+      "color": true,
+      "upstream": "icons/hyperbolic-color.svg",
+      "sha256": "459ebd5a986f2ba3dded01c29b97fb708893064ba64f5aa2131fd9690b32f503"
+    },
+    {
+      "id": "ibm",
+      "label": "IBM",
+      "color": false,
+      "upstream": "icons/ibm.svg",
+      "sha256": "62c37af8c3f191572921197a29c90687079e62d3033f503faae59cdc96af0fb2"
+    },
+    {
+      "id": "ideogram",
+      "label": "Ideogram",
+      "color": false,
+      "upstream": "icons/ideogram.svg",
+      "sha256": "4025876b532d087ddecdaac90deef5a48addde8ca14bbdd408970ac395992103"
+    },
+    {
+      "id": "iflytekcloud",
+      "label": "iFlyTekCloud",
+      "color": true,
+      "upstream": "icons/iflytekcloud-color.svg",
+      "sha256": "0012c7c24cf8d987a9e2fd17e9b555ff8082e4a7369b3e57dc0a827146bb0868"
+    },
+    {
+      "id": "inception",
+      "label": "Inception",
+      "color": false,
+      "upstream": "icons/inception.svg",
+      "sha256": "aa491f544e8b77f520e7d7d1dc2362a2212dc6cd1a9373b97bb447c3f848d213"
+    },
+    {
+      "id": "inceptron",
+      "label": "Inceptron",
+      "color": true,
+      "upstream": "icons/inceptron-color.svg",
+      "sha256": "46c010306ab7c6f4d6728959160cc8c59e10f050b7cd90da7c0f9ed16d44d191"
+    },
+    {
+      "id": "inference",
+      "label": "Inference",
+      "color": false,
+      "upstream": "icons/inference.svg",
+      "sha256": "289a6a94c69929eb55a47ddc5652fbdfa2b60a0914cdddf5ed432f978fbc080c"
+    },
+    {
+      "id": "infermatic",
+      "label": "Infermatic",
+      "color": true,
+      "upstream": "icons/infermatic-color.svg",
+      "sha256": "cf4fb5e51f4f70c37f14b17f29c683c825db0d5d66ea1b7b01d8b427cc1c6393"
+    },
+    {
+      "id": "infinigence",
+      "label": "Infinigence",
+      "color": true,
+      "upstream": "icons/infinigence-color.svg",
+      "sha256": "4b9f3e7da2bfa38bfad46906c821520d6dfc36f77886d746a4b40a0cc9b60f84"
+    },
+    {
+      "id": "inflection",
+      "label": "Inflection",
+      "color": false,
+      "upstream": "icons/inflection.svg",
+      "sha256": "d835b74982956f822c07c25351bc681cd17937e8382a2305c1c37b634c84c9b4"
+    },
+    {
+      "id": "internlm",
+      "label": "InternLM",
+      "color": true,
+      "upstream": "icons/internlm-color.svg",
+      "sha256": "0e84741d3fb76e65fd86a57d18b6e31f31fa2e6156166c4bfa2487db894221a6"
+    },
+    {
+      "id": "ionet",
+      "label": "IoNet",
+      "color": false,
+      "upstream": "icons/ionet.svg",
+      "sha256": "016951c6aaa2f29ee71885048a802da71ce46b03882418d3d83e85655609fb7a"
+    },
+    {
+      "id": "jimeng",
+      "label": "Jimeng",
+      "color": true,
+      "upstream": "icons/jimeng-color.svg",
+      "sha256": "a9afc64b9afae1990e3c9fa967b349927c3f6a148647ac5c6f016b1a31b39167"
+    },
+    {
+      "id": "jina",
+      "label": "Jina",
+      "color": false,
+      "upstream": "icons/jina.svg",
+      "sha256": "dbb78d6217774ddde8c57a6f5c94a3294c59e99c4a1e6ec786e409648b9bdb84"
+    },
+    {
+      "id": "junie",
+      "label": "Junie",
+      "color": true,
+      "upstream": "icons/junie-color.svg",
+      "sha256": "cec54c8be10ba733af250feb2bd78523d2aa2bab6b3599f0717faf1a740bb031"
+    },
+    {
+      "id": "kagi",
+      "label": "Kagi",
+      "color": false,
+      "upstream": "icons/kagi.svg",
+      "sha256": "8ce5fee709556d7b37f2194df569c3693578cd864502879e59472dbe2342f9b6"
+    },
+    {
+      "id": "kilocode",
+      "label": "Kilo Code",
+      "color": false,
+      "upstream": "icons/kilocode.svg",
+      "sha256": "a2aef0e0bb992ebe768bfb8c3a3ab6ff2c2638448b09dd88db27877de1c07a22"
+    },
+    {
+      "id": "kimi",
+      "label": "Kimi",
+      "color": true,
+      "upstream": "icons/kimi-color.svg",
+      "sha256": "0bdb95375d7c6e90a1850e91cd36770da2bc98fa33ec2d783f4a8fed027da85f"
+    },
+    {
+      "id": "kiro",
+      "label": "Kiro",
+      "color": true,
+      "upstream": "icons/kiro-color.svg",
+      "sha256": "4eae4d6e818da7342c32c7d443ab7c97b93c544db9af379d5b5bf7f0a3127d66"
+    },
+    {
+      "id": "kling",
+      "label": "Kling",
+      "color": true,
+      "upstream": "icons/kling-color.svg",
+      "sha256": "a8aa4def0eb1c3ca0f0528597d28fa495249aa710aa403d3c571c47c81c6150c"
+    },
+    {
+      "id": "kluster",
+      "label": "Kluster",
+      "color": true,
+      "upstream": "icons/kluster-color.svg",
+      "sha256": "dc4ae673ebd04f1b68245f188778fc7c086bd76328dba6f0feb1c1a29080b305"
+    },
+    {
+      "id": "kolors",
+      "label": "Kolors",
+      "color": true,
+      "upstream": "icons/kolors-color.svg",
+      "sha256": "4eae03ff55034b7d47b741c98691d95f950aa529a1511a13b2eee4f9e0c5799c"
+    },
+    {
+      "id": "krea",
+      "label": "Krea",
+      "color": false,
+      "upstream": "icons/krea.svg",
+      "sha256": "05d722278e4fcca5f24a3919241beabf7b9f3e233a1e6bd9a47028e116aa7832"
+    },
+    {
+      "id": "kwaikat",
+      "label": "KwaiKAT",
+      "color": false,
+      "upstream": "icons/kwaikat.svg",
+      "sha256": "2f5fe0a9822c55b150239a94bde1e5a82f1c19937ca425f85be3c09f6f0b0407"
+    },
+    {
+      "id": "kwaipilot",
+      "label": "Kwaipilot",
+      "color": true,
+      "upstream": "icons/kwaipilot-color.svg",
+      "sha256": "e7efea61732c878fd6e0862883b23b07756e8a1406f910ad703f5732eb284d8b"
+    },
+    {
+      "id": "lambda",
+      "label": "Lambda",
+      "color": false,
+      "upstream": "icons/lambda.svg",
+      "sha256": "0fda3913e9969665646d82752c785189fa07c851c90272ff93f68139d369d3b5"
+    },
+    {
+      "id": "langchain",
+      "label": "LangChain",
+      "color": true,
+      "upstream": "icons/langchain-color.svg",
+      "sha256": "1130bf9624e0dea6e275ce6edfce83056ab7ec6522e24d0dd4670b7d4352fea8"
+    },
+    {
+      "id": "langfuse",
+      "label": "Langfuse",
+      "color": true,
+      "upstream": "icons/langfuse-color.svg",
+      "sha256": "620f1d64b782c6f828024f7ff2aad9f3210c38b99d2f529f62e9d0da694686e8"
+    },
+    {
+      "id": "langgraph",
+      "label": "LangGraph",
+      "color": true,
+      "upstream": "icons/langgraph-color.svg",
+      "sha256": "63ae8f41f2b67a3ffac19797aff76e3bc64c3c88d62bd3afb962707c5fbf219b"
+    },
+    {
+      "id": "langsmith",
+      "label": "LangSmith",
+      "color": true,
+      "upstream": "icons/langsmith-color.svg",
+      "sha256": "7cb7852a25becfaf3b7bbe6179b379352be5efdd347546adc6b09059b1d35cfe"
+    },
+    {
+      "id": "leptonai",
+      "label": "LeptonAI",
+      "color": true,
+      "upstream": "icons/leptonai-color.svg",
+      "sha256": "7e74337360b476dfec2e4cf88d16971d83033d17a1c99169885a3d86672d4111"
+    },
+    {
+      "id": "lg",
+      "label": "LG AI",
+      "color": true,
+      "upstream": "icons/lg-color.svg",
+      "sha256": "379fdab6494a237f6ab61053d3a9b28bab724164f33de08018bbb945ed46415e"
+    },
+    {
+      "id": "lightricks",
+      "label": "Lightricks",
+      "color": false,
+      "upstream": "icons/lightricks.svg",
+      "sha256": "0adb5ec7fa5a522dbcd7bc74d56aa7abb7a5bad2bba2bdca9c22830b4e47eeca"
+    },
+    {
+      "id": "ling",
+      "label": "Ling",
+      "color": true,
+      "upstream": "icons/ling-color.svg",
+      "sha256": "312e3603256b1fe1199aff23c34cd3f57eca0305e8df60150cfda22db5059390"
+    },
+    {
+      "id": "liquid",
+      "label": "Liquid",
+      "color": false,
+      "upstream": "icons/liquid.svg",
+      "sha256": "4727b1cbd33bd256aca5be79a7d91a4f2753b2feb0dcfbb7b9fb3f23928c2467"
+    },
+    {
+      "id": "livekit",
+      "label": "LiveKit",
+      "color": true,
+      "upstream": "icons/livekit-color.svg",
+      "sha256": "fce504fed88184b6993548e2fb1e28d0c93d0401441acec2c1da6cdf0ec732af"
+    },
+    {
+      "id": "llamaindex",
+      "label": "LlamaIndex",
+      "color": true,
+      "upstream": "icons/llamaindex-color.svg",
+      "sha256": "3cf3cfd62c9ad6b687f9486dc0403d74de4b0a6616190297255b32764e2248cd"
+    },
+    {
+      "id": "llava",
+      "label": "LLaVA",
+      "color": true,
+      "upstream": "icons/llava-color.svg",
+      "sha256": "1e97b5a38b2b64f9daf7a77dd6905ce6a677b41f6652deeb160e12ab018f3b6e"
+    },
+    {
+      "id": "llmapi",
+      "label": "LLM API",
+      "color": true,
+      "upstream": "icons/llmapi-color.svg",
+      "sha256": "56dacb19a1416b2e90488a190e9af9c73f33e7cdd7227072170affd89e31ca3c"
+    },
+    {
+      "id": "llmgateway",
+      "label": "LLM Gateway",
+      "color": false,
+      "upstream": "icons/llmgateway.svg",
+      "sha256": "494679b76df710115dbd9007d43b87c1b89122d7d73e61dd99785e0d6fa99ca3"
+    },
+    {
+      "id": "lmstudio",
+      "label": "LM Studio",
+      "color": false,
+      "upstream": "icons/lmstudio.svg",
+      "sha256": "4a575e8382b52ce742ac5d21d361a7d2a08cea7c12390ee1bbb755ef7d3cc25b"
+    },
+    {
+      "id": "lobehub",
+      "label": "LobeHub",
+      "color": true,
+      "upstream": "icons/lobehub-color.svg",
+      "sha256": "c1f8c90779d60a1d6da2d9153d33dfa2f53754c70e2b9d9ad3ed1a30437f6249"
+    },
+    {
+      "id": "longcat",
+      "label": "LongCat",
+      "color": true,
+      "upstream": "icons/longcat-color.svg",
+      "sha256": "227f808520d700bc4dc762d8978a737ab149fb53cecb581d71548bacfd26722a"
+    },
+    {
+      "id": "lovable",
+      "label": "Lovable",
+      "color": true,
+      "upstream": "icons/lovable-color.svg",
+      "sha256": "ab3b36b92ef69561b00f963eb3edaef9afdd598d67424991d74157419cd1d44e"
+    },
+    {
+      "id": "lovart",
+      "label": "Lovart",
+      "color": false,
+      "upstream": "icons/lovart.svg",
+      "sha256": "3abd5929fa7037149168130a2f31ffb9ca4677e65bd2ea2d72b72d1ad0660180"
+    },
+    {
+      "id": "luma",
+      "label": "Luma",
+      "color": true,
+      "upstream": "icons/luma-color.svg",
+      "sha256": "84b5c8214fd89a8b46e33eeb15f02d266c3d49e0716664a82fb2e3711e1ceec6"
+    },
+    {
+      "id": "magic",
+      "label": "Magic",
+      "color": false,
+      "upstream": "icons/magic.svg",
+      "sha256": "cd78409948fc159aab7821ba82da1165b93484bdd87ea0bb1374f9504e4e947a"
+    },
+    {
+      "id": "magpie",
+      "label": "Magpie",
+      "color": false,
+      "upstream": "icons/magpie.svg",
+      "sha256": "2fed57d84a2d2711bee9e5afa50ac218e09e0b536c6107c556095bb83ee58679"
+    },
+    {
+      "id": "make",
+      "label": "Make",
+      "color": true,
+      "upstream": "icons/make-color.svg",
+      "sha256": "d259980db0fe9cf65fc592779942f7bb411f33f636c8ca5ffd0801dc04837dbf"
+    },
+    {
+      "id": "manus",
+      "label": "Manus",
+      "color": false,
+      "upstream": "icons/manus.svg",
+      "sha256": "8f70464df09b5b9e1643dcb7c0f2c6a2cfe3322b965b35d8e78b041f858b81b0"
+    },
+    {
+      "id": "mastra",
+      "label": "Mastra",
+      "color": false,
+      "upstream": "icons/mastra.svg",
+      "sha256": "e235d4f4920b0cd1a4e050bc79aa79eedb0ed459e5321a1c5a6e72966ad5f816"
+    },
+    {
+      "id": "mcp",
+      "label": "ModelContextProtocol",
+      "color": false,
+      "upstream": "icons/mcp.svg",
+      "sha256": "8670df38c9558de3cdd98d8b39ee6cbaf1c929377cffc5952e9b02f9bf9429b3"
+    },
+    {
+      "id": "mcpso",
+      "label": "MCP.so",
+      "color": true,
+      "upstream": "icons/mcpso-color.svg",
+      "sha256": "1633b2298955969982f898729caea55c22452205b44ba304a718abb0e18a781d"
+    },
+    {
+      "id": "menlo",
+      "label": "MENLO",
+      "color": true,
+      "upstream": "icons/menlo-color.svg",
+      "sha256": "1ae89562836a8bd8bc364a6e8b55c624c1289eee225b9be992d1b30bf4564ef6"
+    },
+    {
+      "id": "meshy",
+      "label": "Meshy",
+      "color": true,
+      "upstream": "icons/meshy-color.svg",
+      "sha256": "2e5ae17b98777ed8fc850ab7b9c8f4bfbf2cc1dcb1627dc9695a25056e2cd786"
+    },
+    {
+      "id": "meta",
+      "label": "Meta",
+      "color": true,
+      "upstream": "icons/meta-color.svg",
+      "sha256": "adf9f2c1a646ccd3a37ca8c2e7e5985d64630cd633f4b95fba393d1d44e0578c"
+    },
+    {
+      "id": "metaai",
+      "label": "MetaAI",
+      "color": true,
+      "upstream": "icons/metaai-color.svg",
+      "sha256": "5a2c8b2c71ddb4d6a44daee712cb6be02a09a29d649d21e0af1454bc331055b5"
+    },
+    {
+      "id": "metagpt",
+      "label": "MetaGPT",
+      "color": false,
+      "upstream": "icons/metagpt.svg",
+      "sha256": "ee21d4455bffd576b2f53c299ee509a6f9f4c787f4b843329084c909c4832454"
+    },
+    {
+      "id": "microsoft",
+      "label": "Azure",
+      "color": true,
+      "upstream": "icons/microsoft-color.svg",
+      "sha256": "5cfb0ffa3231313c2968b5e3fedfcce8e2e96c61bde4572384c3889a77a80350"
+    },
+    {
+      "id": "midjourney",
+      "label": "Midjourney",
+      "color": false,
+      "upstream": "icons/midjourney.svg",
+      "sha256": "e09640ccbf6f643b4624e540f198cd704a6bf3d75dc43b0938628caf4e98c30b"
+    },
+    {
+      "id": "minimax",
+      "label": "Minimax",
+      "color": true,
+      "upstream": "icons/minimax-color.svg",
+      "sha256": "7f7187fa6d9b341ac5f22f6c5a970523afb439dc45566d64eb4f4b9b604d6b01"
+    },
+    {
+      "id": "mistral",
+      "label": "Mistral",
+      "color": true,
+      "upstream": "icons/mistral-color.svg",
+      "sha256": "722f74b289d95486b43662fe24fa883b333701296f618406cd0ed502299170b6"
+    },
+    {
+      "id": "modelscope",
+      "label": "ModelScope",
+      "color": true,
+      "upstream": "icons/modelscope-color.svg",
+      "sha256": "21841ddba0c560ad44c4def00a66f2a9b31703438ba390ea0b8e01cfbf39b5e4"
+    },
+    {
+      "id": "monica",
+      "label": "Monica",
+      "color": true,
+      "upstream": "icons/monica-color.svg",
+      "sha256": "9e36f56b2691e107773e3c86f8e6a0152886210cf216817e04dcad6964ae97a7"
+    },
+    {
+      "id": "moonshot",
+      "label": "MoonshotAI",
+      "color": false,
+      "upstream": "icons/moonshot.svg",
+      "sha256": "435f41b74e6a87639b6bf860e9628f20cbe7d6229bece412d548f4cea3081852"
+    },
+    {
+      "id": "morph",
+      "label": "Morph",
+      "color": true,
+      "upstream": "icons/morph-color.svg",
+      "sha256": "994eb5b52da00eca9f4fa4d4c11a7fa1c1fa37dd9f58f9a97b951f0ea23a9f59"
+    },
+    {
+      "id": "moxt",
+      "label": "Moxt",
+      "color": true,
+      "upstream": "icons/moxt-color.svg",
+      "sha256": "48f149a3df5c31ce0bf622279b76c341a6d4e13a3f9aee2e4f9c3c36dd54044a"
+    },
+    {
+      "id": "muse",
+      "label": "Muse",
+      "color": true,
+      "upstream": "icons/muse-color.svg",
+      "sha256": "c39c74b14ec4c5be771f75a45bf9d34c2e5fd99fe7aefedcb0fd409c3e6ac621"
+    },
+    {
+      "id": "myshell",
+      "label": "MyShell",
+      "color": true,
+      "upstream": "icons/myshell-color.svg",
+      "sha256": "f61b03aaaa0fee3b22b3fac1a72a3848d058bc2623731b29362d8192a222b391"
+    },
+    {
+      "id": "n8n",
+      "label": "n8n",
+      "color": true,
+      "upstream": "icons/n8n-color.svg",
+      "sha256": "057fc9acfc04cecffd8ca7fe3cf7cb3a48c0ba972a56a5c23f4389b3d612b689"
+    },
+    {
+      "id": "nanobanana",
+      "label": "NanoBanana",
+      "color": true,
+      "upstream": "icons/nanobanana-color.svg",
+      "sha256": "1fd02b099e6d07d6d4f4281c9c167a0d712ddc2fd4ee52ac4687477c402c254e"
+    },
+    {
+      "id": "nebius",
+      "label": "Nebius",
+      "color": false,
+      "upstream": "icons/nebius.svg",
+      "sha256": "4213ea25ec4c782688a7dafdad4bb828096151639077001c4df9c10a315f1af1"
+    },
+    {
+      "id": "newapi",
+      "label": "New API",
+      "color": true,
+      "upstream": "icons/newapi-color.svg",
+      "sha256": "b54496a735b49c4e5d7d1b5f00be9f33e0e4ef3f04a7c4c167dc9209dcae334b"
+    },
+    {
+      "id": "nextbit",
+      "label": "Nextbit",
+      "color": true,
+      "upstream": "icons/nextbit-color.svg",
+      "sha256": "735a931e730733f949d3251ff9cf7a268307ccaf1b72cec7b68c14dd19c35dd4"
+    },
+    {
+      "id": "notebooklm",
+      "label": "NotebookLM",
+      "color": false,
+      "upstream": "icons/notebooklm.svg",
+      "sha256": "971c294f2ea030da8d322d30cb9ced3440939e4108457c789b710857a55debca"
+    },
+    {
+      "id": "notion",
+      "label": "Notion",
+      "color": false,
+      "upstream": "icons/notion.svg",
+      "sha256": "8ada8628489d6e2900ebf21d3643fe5d4566d0e59aba95a3df15b710caa00743"
+    },
+    {
+      "id": "nousresearch",
+      "label": "NousResearch",
+      "color": false,
+      "upstream": "icons/nousresearch.svg",
+      "sha256": "4dc3c7cdf13d2f0bdf16b872d76293f048010a00f580df68a85e1f9c4e500e5d"
+    },
+    {
+      "id": "nova",
+      "label": "Nova",
+      "color": true,
+      "upstream": "icons/nova-color.svg",
+      "sha256": "be29ee23bbfb36cba87d8dee84d563f81f15290bfef8cef8c96a5996d2e7526c"
+    },
+    {
+      "id": "novelai",
+      "label": "NovelAI",
+      "color": false,
+      "upstream": "icons/novelai.svg",
+      "sha256": "324e3586cd93459ed95d3d9bda9949835f20dcffe5507faf7458a28c83e744ab"
+    },
+    {
+      "id": "novita",
+      "label": "Novita AI",
+      "color": true,
+      "upstream": "icons/novita-color.svg",
+      "sha256": "e41321ff6a421b958c7f402f11ffcf44dbcef9c703c952736bcc92c0fd6624c4"
+    },
+    {
+      "id": "nplcloud",
+      "label": "NPLCloud",
+      "color": true,
+      "upstream": "icons/nplcloud-color.svg",
+      "sha256": "c77cd413880fbfb1a1cf5115d1b75959de9805b6db6af3ce81b106e267d84069"
+    },
+    {
+      "id": "nvidia",
+      "label": "Nvidia",
+      "color": true,
+      "upstream": "icons/nvidia-color.svg",
+      "sha256": "8c941e4eb8b782eccaaea1240c059d20be33ab8eda28d7c9ed9b53ac802fe683"
+    },
+    {
+      "id": "obsidian",
+      "label": "Obsidian",
+      "color": true,
+      "upstream": "icons/obsidian-color.svg",
+      "sha256": "cb8d13afbcc2817956725f7ec4d3c2e9173c79988d178e0b7138b7595c13d261"
+    },
+    {
+      "id": "ollama",
+      "label": "Ollama",
+      "color": false,
+      "upstream": "icons/ollama.svg",
+      "sha256": "3a268218fb2e6e81fa31df70f70b51331625047794db81db21d35359428fae7a"
+    },
+    {
+      "id": "openai",
+      "label": "OpenAI",
+      "color": false,
+      "upstream": "icons/openai.svg",
+      "sha256": "a595df6b423920c67a7f8f73c063e4bfb72d415948097b6cac063a2366bb5186"
+    },
+    {
+      "id": "openchat",
+      "label": "OpenChat",
+      "color": true,
+      "upstream": "icons/openchat-color.svg",
+      "sha256": "4fc9b6878c5029410734ea2bc606823911eb7e9b3a58f10c81c36640c26753b2"
+    },
+    {
+      "id": "openclaw",
+      "label": "OpenClaw",
+      "color": true,
+      "upstream": "icons/openclaw-color.svg",
+      "sha256": "4123c0c75dda5b28e3e0d38075514085bf546178a620776344813c08fa41277c"
+    },
+    {
+      "id": "opencode",
+      "label": "opencode",
+      "color": false,
+      "upstream": "icons/opencode.svg",
+      "sha256": "7cfa6e9d6726f7c9fa26c7d9aef0dfec52d20a137380454340f30f12ccbfd302"
+    },
+    {
+      "id": "openhands",
+      "label": "OpenHands",
+      "color": true,
+      "upstream": "icons/openhands-color.svg",
+      "sha256": "bd25a937147d458634203f802bb3d92a361696b3e62d9e77dd23a3682c048b02"
+    },
+    {
+      "id": "openhuman",
+      "label": "OpenHuman",
+      "color": false,
+      "upstream": "icons/openhuman.svg",
+      "sha256": "16f13d8456932ec7778a7ab421eff72aeeff457d223c17d63781d7121cd51238"
+    },
+    {
+      "id": "openrouter",
+      "label": "OpenRouter",
+      "color": true,
+      "upstream": "icons/openrouter-color.svg",
+      "sha256": "17bede1b89166f824ee06753dc526a3f5e18b769706deaab09d04a3a98de1a78"
+    },
+    {
+      "id": "openwebui",
+      "label": "OpenWebUI",
+      "color": false,
+      "upstream": "icons/openwebui.svg",
+      "sha256": "9cbf7a1105e51029762678e6def27b2e95fb0ec83ff7827b2c75d11aa8c3c4d7"
+    },
+    {
+      "id": "palm",
+      "label": "PaLM",
+      "color": true,
+      "upstream": "icons/palm-color.svg",
+      "sha256": "4d3a7b91d653020bcab5968904590a1274da7f684a2ef036288c8b4356471ee1"
+    },
+    {
+      "id": "parasail",
+      "label": "Parasail",
+      "color": false,
+      "upstream": "icons/parasail.svg",
+      "sha256": "0083857f48835c3c4f83bc4263331cfdbebdb6e4768e200e0279c1d152972231"
+    },
+    {
+      "id": "perceptron",
+      "label": "Perceptron",
+      "color": false,
+      "upstream": "icons/perceptron.svg",
+      "sha256": "a4e8b5f06318c9027f62874fb0a125b9d10eceda3fe2e3acd85faf7b6a5b9c26"
+    },
+    {
+      "id": "perplexity",
+      "label": "Perplexity",
+      "color": true,
+      "upstream": "icons/perplexity-color.svg",
+      "sha256": "8353f3ab20822f1a933224b0ea32cc39f0c32d5740f4af8c254b0f418e0a3a70"
+    },
+    {
+      "id": "phala",
+      "label": "Phala",
+      "color": true,
+      "upstream": "icons/phala-color.svg",
+      "sha256": "9cfa328bd89f4038a137f8327e98a8e248649a10f87a98725a65b80602664f9d"
+    },
+    {
+      "id": "phidata",
+      "label": "Phidata",
+      "color": true,
+      "upstream": "icons/phidata-color.svg",
+      "sha256": "f6c0c2b415bf9a77033b41d18dc399b88ddf8f81128d6bc48127c96dbf3396f8"
+    },
+    {
+      "id": "phind",
+      "label": "phind",
+      "color": false,
+      "upstream": "icons/phind.svg",
+      "sha256": "1c79c51bc75b77d2a951c803fa2e037a95d4e0139142409a61325962efccd9a6"
+    },
+    {
+      "id": "pi",
+      "label": "Pi",
+      "color": false,
+      "upstream": "icons/pi.svg",
+      "sha256": "d82978781b824273c55473822c1f243a6ed34fc6e8c2dbfe1a90dfc66ae43ee8"
+    },
+    {
+      "id": "pika",
+      "label": "Pika",
+      "color": false,
+      "upstream": "icons/pika.svg",
+      "sha256": "3bafa1b7df7d42043a706df18b4d32f64f0dd6a82f4e4c780934b03a368227a2"
+    },
+    {
+      "id": "pixverse",
+      "label": "PixVerse",
+      "color": true,
+      "upstream": "icons/pixverse-color.svg",
+      "sha256": "48f2fdfa9b77845257cde932ea4c04895088e145bb61d94b309d5ef3b2751bdc"
+    },
+    {
+      "id": "player2",
+      "label": "Player2",
+      "color": true,
+      "upstream": "icons/player2-color.svg",
+      "sha256": "4ec87e3efb6aeb8d3a87b8438b884059ef5cd17e9081faa16bfc66bd4e89d050"
+    },
+    {
+      "id": "poe",
+      "label": "Poe",
+      "color": true,
+      "upstream": "icons/poe-color.svg",
+      "sha256": "8a4b64f95c4c8d05eb90fbdd489acab747de6dfa2cf7b9c6f0ab28ea531939ac"
+    },
+    {
+      "id": "pollinations",
+      "label": "Pollinations",
+      "color": false,
+      "upstream": "icons/pollinations.svg",
+      "sha256": "f1a4a256ed110b13eb3cfb5dfda889ff1a91e5014fdff8e4862026f3950df53b"
+    },
+    {
+      "id": "poolside",
+      "label": "Poolside",
+      "color": true,
+      "upstream": "icons/poolside-color.svg",
+      "sha256": "5df24fb33e364f9762952088b1ffd9b537dd3ddb6d3e1e5fec6893898eb29667"
+    },
+    {
+      "id": "ppio",
+      "label": "PPIO",
+      "color": true,
+      "upstream": "icons/ppio-color.svg",
+      "sha256": "a1735277c456430e099bdc397b29e817c27c3890a7d072926be3125812ce0942"
+    },
+    {
+      "id": "prunaai",
+      "label": "PrunaAI",
+      "color": true,
+      "upstream": "icons/prunaai-color.svg",
+      "sha256": "a460ffc988060c6a4d82b67a5a9615ecd0dd6a06a9ccb6198908707ecfc9a609"
+    },
+    {
+      "id": "pydanticai",
+      "label": "PydanticAI",
+      "color": true,
+      "upstream": "icons/pydanticai-color.svg",
+      "sha256": "c01456b3818dffe22efc16362575f3ff61ff0b29f2ffb583c6f37dad2a3eca9e"
+    },
+    {
+      "id": "qingyan",
+      "label": "Qingyan",
+      "color": true,
+      "upstream": "icons/qingyan-color.svg",
+      "sha256": "fc4c9dc628acbfdc18626fd04ae3192f049faf894ad2e342c84338f6ecfe7741"
+    },
+    {
+      "id": "qiniu",
+      "label": "Qiniu",
+      "color": true,
+      "upstream": "icons/qiniu-color.svg",
+      "sha256": "a3b7b47f1127448d32efee0abc38b495ed183518fb9847905fcad7b05839ba53"
+    },
+    {
+      "id": "qoder",
+      "label": "Qoder",
+      "color": true,
+      "upstream": "icons/qoder-color.svg",
+      "sha256": "396596d247477e2a036c141a16ec266df7b14c0130b777a68fd04bc89af50bc8"
+    },
+    {
+      "id": "qwen",
+      "label": "Qwen",
+      "color": true,
+      "upstream": "icons/qwen-color.svg",
+      "sha256": "a158a0e3ed5b541e4f91384ece02c3acf0a0d81b7b11a46d77bafb248b09e32c"
+    },
+    {
+      "id": "railway",
+      "label": "Railway",
+      "color": false,
+      "upstream": "icons/railway.svg",
+      "sha256": "caa276064b3fd60a871f8054024ce946911887cecc8bd04fca590f888eb6a946"
+    },
+    {
+      "id": "recraft",
+      "label": "Recraft",
+      "color": false,
+      "upstream": "icons/recraft.svg",
+      "sha256": "e4e0c1843c4fd5bfc6550bbddf6ebce3e73e5091f7b7741c08c3dd5bc5a6143c"
+    },
+    {
+      "id": "reflection",
+      "label": "Reflection",
+      "color": true,
+      "upstream": "icons/reflection-color.svg",
+      "sha256": "f4bdde62f6961de4d032afbe070e77293a888c54e15020627765f1121af154a9"
+    },
+    {
+      "id": "reka",
+      "label": "Reka",
+      "color": false,
+      "upstream": "icons/reka.svg",
+      "sha256": "533ae212f32db47ffc179c272fb6c7fb0cc71e516a68ad3b58c435b0e8f20063"
+    },
+    {
+      "id": "relace",
+      "label": "Relace",
+      "color": false,
+      "upstream": "icons/relace.svg",
+      "sha256": "06f3327a757c927e828f9328b8587f38aa350b3582ba62bcbf8371243e05a6f6"
+    },
+    {
+      "id": "replicate",
+      "label": "Replicate",
+      "color": false,
+      "upstream": "icons/replicate.svg",
+      "sha256": "ff02158db5bc4a693d7f690c36cd7d547b8ca3313accba0783b2d3af28dae1e6"
+    },
+    {
+      "id": "replit",
+      "label": "Replit",
+      "color": true,
+      "upstream": "icons/replit-color.svg",
+      "sha256": "7d803ffdfc0d46aec134f656fd3c8815ee936a6726295eea5173d7122007eae5"
+    },
+    {
+      "id": "reve",
+      "label": "Reve",
+      "color": false,
+      "upstream": "icons/reve.svg",
+      "sha256": "5ba4a5b7e1c0e0d5abee8857f36b37ec9a2241309aa68face6b3279bd34bfa75"
+    },
+    {
+      "id": "roocode",
+      "label": "RooCode",
+      "color": false,
+      "upstream": "icons/roocode.svg",
+      "sha256": "34904d40bfd976b5c1c7495d2fdfdca1c137cb416bff2000184e0ee27bfb5161"
+    },
+    {
+      "id": "rsshub",
+      "label": "RSSHub",
+      "color": true,
+      "upstream": "icons/rsshub-color.svg",
+      "sha256": "7d4ad11817542a92b09cda185bb20157625ab58828a9024f2d0a678bc54abd9f"
+    },
+    {
+      "id": "runway",
+      "label": "Runway",
+      "color": false,
+      "upstream": "icons/runway.svg",
+      "sha256": "dba3459264af7b4fffb5c4bfc909748e1ec1f122ffcaf0a8fbb626781888eaf2"
+    },
+    {
+      "id": "rwkv",
+      "label": "RWKV",
+      "color": true,
+      "upstream": "icons/rwkv-color.svg",
+      "sha256": "8b30f80caa9b57e5ff9e471aa7068f0b93d785bf47c0427ba48d8de32d841d0f"
+    },
+    {
+      "id": "sakana",
+      "label": "sakana.ai",
+      "color": true,
+      "upstream": "icons/sakana-color.svg",
+      "sha256": "a635d8f584502c97d16b7682664c2420331c770445ae181f1c2673d6d97d0f38"
+    },
+    {
+      "id": "sambanova",
+      "label": "SambaNova",
+      "color": true,
+      "upstream": "icons/sambanova-color.svg",
+      "sha256": "411ab881318738b7689e5fc6c4e0879a22913aabb9bc2125e3fc03f24e3214d5"
+    },
+    {
+      "id": "search1api",
+      "label": "Search1API",
+      "color": true,
+      "upstream": "icons/search1api-color.svg",
+      "sha256": "4cbb94ff861a06d447808d8746f230d244733857d465feaa0a80022ed6339f6e"
+    },
+    {
+      "id": "searchapi",
+      "label": "SearchApi",
+      "color": false,
+      "upstream": "icons/searchapi.svg",
+      "sha256": "23c8ca301e5dd89b931846e6b3fb71a769c99ec16da8ee68552555a4925bf5b5"
+    },
+    {
+      "id": "searxng",
+      "label": "SearXNG",
+      "color": true,
+      "upstream": "icons/searxng-color.svg",
+      "sha256": "4a2fec312abb559030f07fd53a3b8e6ffcd93d32ec0f8cf7ad12b79a3cead88f"
+    },
+    {
+      "id": "sensenova",
+      "label": "SenseNova",
+      "color": true,
+      "upstream": "icons/sensenova-color.svg",
+      "sha256": "bd2e0f8e310ff6a5edcc56a85560221923262767ba76b660a193f45c40c123fa"
+    },
+    {
+      "id": "siliconcloud",
+      "label": "SiliconCloud",
+      "color": true,
+      "upstream": "icons/siliconcloud-color.svg",
+      "sha256": "a02d8d7ccb81739fbc720e2e5daaf149013dd5088605dc2dce1b71df0784d424"
+    },
+    {
+      "id": "sillytavern",
+      "label": "SillyTavern",
+      "color": true,
+      "upstream": "icons/sillytavern-color.svg",
+      "sha256": "cf1f4c9c70da131dcae40e0d2b76db619091b56c5c1e225c4233863a9fc729eb"
+    },
+    {
+      "id": "skywork",
+      "label": "Skywork",
+      "color": true,
+      "upstream": "icons/skywork-color.svg",
+      "sha256": "fd389cf920bc9e81866d468f008e6571a02ca8c0dbf3db799041dc7905913ac8"
+    },
+    {
+      "id": "slock",
+      "label": "Slock",
+      "color": false,
+      "upstream": "icons/slock.svg",
+      "sha256": "6aa5e17e17c38539ce43f6bfc2c82729a692d7bd0024b5c3cd56e3e93f50bacc"
+    },
+    {
+      "id": "smithery",
+      "label": "Smithery",
+      "color": true,
+      "upstream": "icons/smithery-color.svg",
+      "sha256": "cd3dedb10ebf2a07076dabba08eb2b4489b7b13084b8fd01171da9d47341b188"
+    },
+    {
+      "id": "snowflake",
+      "label": "Snowflake",
+      "color": true,
+      "upstream": "icons/snowflake-color.svg",
+      "sha256": "f9e4d625d1563a0228fc738e3903c72a200da1aa75d156dac46c31067be0b314"
+    },
+    {
+      "id": "sophnet",
+      "label": "SophNet",
+      "color": true,
+      "upstream": "icons/sophnet-color.svg",
+      "sha256": "ef90bf51bc6c55ca1208973e4e6bdc4690e949c4ee6d71d4c494eeb2372e56d2"
+    },
+    {
+      "id": "sora",
+      "label": "Sora",
+      "color": true,
+      "upstream": "icons/sora-color.svg",
+      "sha256": "edf77877e8abbb7d80ae07858d2905c21b390fed16fb73c133a891b2f5347bb1"
+    },
+    {
+      "id": "spark",
+      "label": "Spark",
+      "color": true,
+      "upstream": "icons/spark-color.svg",
+      "sha256": "4068581452b808e4d9f8c5b43b42d324512d6801de26e57cf848125c28db85bc"
+    },
+    {
+      "id": "speedai",
+      "label": "SpeedAI",
+      "color": true,
+      "upstream": "icons/speedai-color.svg",
+      "sha256": "e8b83b79a07e1cd9496dd1afc9125f7156e1db9a4ba757bad80f1bacc5d694af"
+    },
+    {
+      "id": "stability",
+      "label": "Stability",
+      "color": true,
+      "upstream": "icons/stability-color.svg",
+      "sha256": "61c4593effe20b4fa1f0811861bb6ac199348d955b21a5c3f719bc07c9d27d3a"
+    },
+    {
+      "id": "statecloud",
+      "label": "StateCloud",
+      "color": true,
+      "upstream": "icons/statecloud-color.svg",
+      "sha256": "cb789480d4394c856cef6c857a6b0243be0dceb3d82c87997378be20fa9c6fa0"
+    },
+    {
+      "id": "stepfun",
+      "label": "Stepfun",
+      "color": true,
+      "upstream": "icons/stepfun-color.svg",
+      "sha256": "f55afc0e6004c8854f76bd5bbcc0fce9fc0ed9316691d54fb02d088c24fab40d"
+    },
+    {
+      "id": "straico",
+      "label": "Straico",
+      "color": true,
+      "upstream": "icons/straico-color.svg",
+      "sha256": "590fc23e586e03b8026c993e1694045044d7c84b3b09261c872c4bd1178c8a2b"
+    },
+    {
+      "id": "streamlake",
+      "label": "StreamLake",
+      "color": true,
+      "upstream": "icons/streamlake-color.svg",
+      "sha256": "29d922732dd3e5c1ebdc83829e03f6502ecf00d341bdc96f9ba066c9b3e65e03"
+    },
+    {
+      "id": "sub2api",
+      "label": "Sub2API",
+      "color": true,
+      "upstream": "icons/sub2api-color.svg",
+      "sha256": "9abd0ad54fba3284d0fb8add6f5c2f10a19e2b7825e167a65a84f3f88c9f3762"
+    },
+    {
+      "id": "submodel",
+      "label": "SubModel",
+      "color": true,
+      "upstream": "icons/submodel-color.svg",
+      "sha256": "de65dab573c676c9ece150bff30f5c8fe01856f6ee5e7f8264d26ee5b3ba9811"
+    },
+    {
+      "id": "suno",
+      "label": "Suno",
+      "color": false,
+      "upstream": "icons/suno.svg",
+      "sha256": "591debb0ed912ff6cb89fc66a05f58e3291eb383c691c9dbf717927559d4eafc"
+    },
+    {
+      "id": "sync",
+      "label": "Sync",
+      "color": false,
+      "upstream": "icons/sync.svg",
+      "sha256": "65ec91771fa6e3f6e9023008dada6c3da36a154121a40526b0dd9daaf853fd19"
+    },
+    {
+      "id": "tabbit",
+      "label": "Tabbit",
+      "color": true,
+      "upstream": "icons/tabbit-color.svg",
+      "sha256": "339ea5d38fcc2089b09f11cf315f8f206a09452e0c41091a9a2f22958f8de25c"
+    },
+    {
+      "id": "targon",
+      "label": "Targon",
+      "color": true,
+      "upstream": "icons/targon-color.svg",
+      "sha256": "d85515dc087e2cea571054111c9965f03281fc81e14bb5c961d52b13852fbcd0"
+    },
+    {
+      "id": "tavily",
+      "label": "Tavily",
+      "color": true,
+      "upstream": "icons/tavily-color.svg",
+      "sha256": "2dec98b9ce5a9dd1edc52d4f8a4de7bbabe82f710dd224931f19c6bf5e3ccaff"
+    },
+    {
+      "id": "tencent",
+      "label": "Tencent",
+      "color": true,
+      "upstream": "icons/tencent-color.svg",
+      "sha256": "7c370ad4b75e3f30d0fa7da71f90466a0ee95a887189479aa9df414079b50eb6"
+    },
+    {
+      "id": "tencentcloud",
+      "label": "TencentCloud",
+      "color": true,
+      "upstream": "icons/tencentcloud-color.svg",
+      "sha256": "f860dae064a3afd24970efd2bc5892f39438526bf52c3a9748f61fc05c1cfd58"
+    },
+    {
+      "id": "tiangong",
+      "label": "Tiangong",
+      "color": true,
+      "upstream": "icons/tiangong-color.svg",
+      "sha256": "3b0ba724337004a51acbdb5bebd6bf5af58a538edf0c826d90067ac85f71641b"
+    },
+    {
+      "id": "tii",
+      "label": "Technology Innovation Institute",
+      "color": true,
+      "upstream": "icons/tii-color.svg",
+      "sha256": "9d44157df5d74cbccd44c183ab979d860e1b44c1b2ba90705622da44ca1500dd"
+    },
+    {
+      "id": "together",
+      "label": "together.ai",
+      "color": true,
+      "upstream": "icons/together-color.svg",
+      "sha256": "27ccaf118a431c386b88418a34a4346afd9638dde10e3f2295db2eec1fa5898a"
+    },
+    {
+      "id": "topazlabs",
+      "label": "TopazLabs",
+      "color": false,
+      "upstream": "icons/topazlabs.svg",
+      "sha256": "f02f3efa2649aafb29fe153bdef7091ba78a88218b3e64c4957a045beffda2eb"
+    },
+    {
+      "id": "trae",
+      "label": "TRAE",
+      "color": true,
+      "upstream": "icons/trae-color.svg",
+      "sha256": "e7aca314ce71b8fa0a7aece005d585772bac24266fc6688cf398e622d4acaf02"
+    },
+    {
+      "id": "tripo",
+      "label": "Tripo",
+      "color": true,
+      "upstream": "icons/tripo-color.svg",
+      "sha256": "3c7b94874e10fd41031f9d9554b3d1dfa0f310820d3a3c53463c7d66f45c7a4f"
+    },
+    {
+      "id": "turix",
+      "label": "TuriX",
+      "color": false,
+      "upstream": "icons/turix.svg",
+      "sha256": "9978c1db8c436f6fa9b0a2b6a27b3b8a9c1216de0822dd8afe8ab6605ad5e71a"
+    },
+    {
+      "id": "typesafeai",
+      "label": "TypeSafe AI",
+      "color": false,
+      "upstream": "icons/typesafeai.svg",
+      "sha256": "774171d3a45ce20a1ca2287efffa574e5d7f85d83fa52fff47eed0035a2242de"
+    },
+    {
+      "id": "udio",
+      "label": "Udio",
+      "color": true,
+      "upstream": "icons/udio-color.svg",
+      "sha256": "3f704a24b7d74b0451ee5442bee5056abf558693a635bf3291fbd01abc04378f"
+    },
+    {
+      "id": "unionalpha",
+      "label": "UnionAlpha",
+      "color": true,
+      "upstream": "icons/unionalpha-color.svg",
+      "sha256": "62ce83c1aea00a5f89f3c6ebfd9959cefbd62b5f720f450fa49e91a8ded6ec33"
+    },
+    {
+      "id": "unsloth",
+      "label": "Unsloth",
+      "color": true,
+      "upstream": "icons/unsloth-color.svg",
+      "sha256": "068c4d17e21e2008a8660637177c061f6dddf36c1bac590d46617f01e48b0ef3"
+    },
+    {
+      "id": "unstructured",
+      "label": "Unstructured",
+      "color": true,
+      "upstream": "icons/unstructured-color.svg",
+      "sha256": "0687e41907b5bfe2bd008c55ccc4071a1f7ea0aa486d2a59df53554f5c48ca1a"
+    },
+    {
+      "id": "upstage",
+      "label": "Upsate",
+      "color": true,
+      "upstream": "icons/upstage-color.svg",
+      "sha256": "206e23f9143cd308998cddae36b674651d7435eebc357c596dacb2b39228a485"
+    },
+    {
+      "id": "v0",
+      "label": "V0",
+      "color": false,
+      "upstream": "icons/v0.svg",
+      "sha256": "fc253b71563a3a4db26ebc5a7b5402b30fb52d3f1f600025381e4f734ef1a2c3"
+    },
+    {
+      "id": "vectorizerai",
+      "label": "Vectorizer.AI",
+      "color": false,
+      "upstream": "icons/vectorizerai.svg",
+      "sha256": "2b9d89c9bff5ba6813b7fb3b4192564b421c67d6e8634ec33d38108fcba61b17"
+    },
+    {
+      "id": "venice",
+      "label": "Venice",
+      "color": true,
+      "upstream": "icons/venice-color.svg",
+      "sha256": "a4a909b289b05d3b4cc716452d0c744619b23e110d2853bafd81bfba7c8c165f"
+    },
+    {
+      "id": "vercel",
+      "label": "Vercel",
+      "color": false,
+      "upstream": "icons/vercel.svg",
+      "sha256": "4874d52d8b2ce7c309cbd10c424fee123b2c9483e76d76ad0dca41794483eb24"
+    },
+    {
+      "id": "vertexai",
+      "label": "VertexAI",
+      "color": true,
+      "upstream": "icons/vertexai-color.svg",
+      "sha256": "40f8bb6f7aca8d80ce2b0bd0d976e8e3ddeada3719758d262ea20075c11ad764"
+    },
+    {
+      "id": "vidu",
+      "label": "Vidu",
+      "color": true,
+      "upstream": "icons/vidu-color.svg",
+      "sha256": "66024ae1b72a813287a82bd02ee218258265386ef350c3995ca7bd966e36ec56"
+    },
+    {
+      "id": "viggle",
+      "label": "Viggle",
+      "color": false,
+      "upstream": "icons/viggle.svg",
+      "sha256": "61dad4ea5544950b798b436daf795c3364780f76018af655f4c2559c93632e37"
+    },
+    {
+      "id": "vllm",
+      "label": "vLLM",
+      "color": true,
+      "upstream": "icons/vllm-color.svg",
+      "sha256": "3f837bad8d7f85d19e860a089639289ddd7492e67dc1ac7bd0f129f8f19b8ae6"
+    },
+    {
+      "id": "volcengine",
+      "label": "Volcengine",
+      "color": true,
+      "upstream": "icons/volcengine-color.svg",
+      "sha256": "84f9e2cd1da7e73dc6c9a0f2521745d39cae96c008752cdb1baf57a8c94393a1"
+    },
+    {
+      "id": "voyage",
+      "label": "Voyage",
+      "color": true,
+      "upstream": "icons/voyage-color.svg",
+      "sha256": "96423656ee32fb76eba43b9030612c997889b056912ddbc9b249f960adb2e333"
+    },
+    {
+      "id": "wafer",
+      "label": "Wafer",
+      "color": false,
+      "upstream": "icons/wafer.svg",
+      "sha256": "65916125f3dbca81322350287b290d884a7cd5c4b7d6a14c2959d136bd1460c6"
+    },
+    {
+      "id": "wandb",
+      "label": "Weights & Biases",
+      "color": true,
+      "upstream": "icons/wandb-color.svg",
+      "sha256": "4da001d982e61c4bd49b1f7e86d218defa1b01231b9e0762fb7359a3b7bc691b"
+    },
+    {
+      "id": "wavespeed",
+      "label": "WaveSpeed",
+      "color": false,
+      "upstream": "icons/wavespeed.svg",
+      "sha256": "841382cf03f135e5eb3ac8e34f94165c74a74d402ec2af315f7b3ecf97d7ef6e"
+    },
+    {
+      "id": "wenxin",
+      "label": "Wenxin",
+      "color": true,
+      "upstream": "icons/wenxin-color.svg",
+      "sha256": "9fb88d8b6f7be470ddb07f0574ec276b08a35ba96d73ec5f2f3b6fc338da5cb6"
+    },
+    {
+      "id": "windsurf",
+      "label": "Windsurf",
+      "color": false,
+      "upstream": "icons/windsurf.svg",
+      "sha256": "e3c836aae05a3741e33d5c5a38d4167aacfbb69e480d098b8b94cad8c90e0d08"
+    },
+    {
+      "id": "workbuddy",
+      "label": "WorkBuddy",
+      "color": true,
+      "upstream": "icons/workbuddy-color.svg",
+      "sha256": "dd8aa855627024a5217836cdaebecb8adf220e84cb6b50fec2dbac115abb326c"
+    },
+    {
+      "id": "workersai",
+      "label": "WorkersAI",
+      "color": true,
+      "upstream": "icons/workersai-color.svg",
+      "sha256": "22617d11289857c70fe9d626e1622e0eb77f53a875177d866ffc3f95def6ab7e"
+    },
+    {
+      "id": "worldrouter",
+      "label": "WorldRouter",
+      "color": false,
+      "upstream": "icons/worldrouter.svg",
+      "sha256": "d2eb2ef74b6c342f106ce90dd7a088d42adab616cfd09b69e941ed2f342dba75"
+    },
+    {
+      "id": "xai",
+      "label": "Grok",
+      "color": false,
+      "upstream": "icons/xai.svg",
+      "sha256": "89eb7de9f0d02a41cfecd9109e253d7fd3529e27467dee4254faa67f3ac21451"
+    },
+    {
+      "id": "xiaomimimo",
+      "label": "XiaomiMiMo",
+      "color": false,
+      "upstream": "icons/xiaomimimo.svg",
+      "sha256": "b04ad7dad52af2212c4567daf0ee6856f2c4625c92c680a27f9880295d558b71"
+    },
+    {
+      "id": "xinference",
+      "label": "Xinference",
+      "color": true,
+      "upstream": "icons/xinference-color.svg",
+      "sha256": "9fb12f4b6b3451a6295ce66d3596c8b36249077ad24d7b817b70ef0171529007"
+    },
+    {
+      "id": "xpay",
+      "label": "xpay",
+      "color": true,
+      "upstream": "icons/xpay-color.svg",
+      "sha256": "634be769ac7109a06f7301ab0b6653edb7d827de26079da93e17cfd78c3b94ed"
+    },
+    {
+      "id": "xuanyuan",
+      "label": "轩辕",
+      "color": true,
+      "upstream": "icons/xuanyuan-color.svg",
+      "sha256": "552323e43e7fa11e1835b5f633094f581695b9bf55ce280700f68ee7b08d83e0"
+    },
+    {
+      "id": "yandex",
+      "label": "Yandex",
+      "color": false,
+      "upstream": "icons/yandex.svg",
+      "sha256": "390d3758093817548b39bc60f9400369708c290093059796b25d4604813d3450"
+    },
+    {
+      "id": "yi",
+      "label": "Yi",
+      "color": true,
+      "upstream": "icons/yi-color.svg",
+      "sha256": "d78b1ce0eeb7a7d1a6132785dfa0218be48d6d1ccd3751ca3f9240a2e3b38756"
+    },
+    {
+      "id": "youmind",
+      "label": "YouMind",
+      "color": false,
+      "upstream": "icons/youmind.svg",
+      "sha256": "998a1bba13972fde41842c10b167f14e9bedfdd1ea6e123ef63bdfdbe71ed2c6"
+    },
+    {
+      "id": "yuanbao",
+      "label": "Yuanbao",
+      "color": true,
+      "upstream": "icons/yuanbao-color.svg",
+      "sha256": "522b9c3ee6f4136b3dd2f5e844a2273b6d599ae614329dbcaf96c74375b0fdd5"
+    },
+    {
+      "id": "zai",
+      "label": "Z.ai",
+      "color": false,
+      "upstream": "icons/zai.svg",
+      "sha256": "e748cb5108ce37b116d7a5ba97d37e0ae97eadf6849b0de11afb248e244a01e1"
+    },
+    {
+      "id": "zapier",
+      "label": "Zapier",
+      "color": true,
+      "upstream": "icons/zapier-color.svg",
+      "sha256": "01e577361dfd6afbd34f1f16c8c69b76ae671abcd0e0b26a148addab151fe6fd"
+    },
+    {
+      "id": "zeabur",
+      "label": "Zeabur",
+      "color": true,
+      "upstream": "icons/zeabur-color.svg",
+      "sha256": "feb6f31ea95dc3640340a8fa996aa5e3d32a8557d03dba9541d989a7d5450be2"
+    },
+    {
+      "id": "zencoder",
+      "label": "Zencoder",
+      "color": true,
+      "upstream": "icons/zencoder-color.svg",
+      "sha256": "59a1ece5ae555efa54ada5b0aaf32a6a3123d0f0550e0aed713d7594c0176173"
+    },
+    {
+      "id": "zenmux",
+      "label": "ZenMux",
+      "color": false,
+      "upstream": "icons/zenmux.svg",
+      "sha256": "1f9fab4e48601ca583e44ff06f22040a8b40f8952bc6bd67e67b065bef00b4b5"
+    },
+    {
+      "id": "zeroone",
+      "label": "01.AI",
+      "color": true,
+      "upstream": "icons/zeroone-color.svg",
+      "sha256": "d28b873a212c497e64aa555eb70383128e13570865f61a2f010c7a7cb8621ebd"
+    },
+    {
+      "id": "zhipu",
+      "label": "Zhipu",
+      "color": true,
+      "upstream": "icons/zhipu-color.svg",
+      "sha256": "8174e65ff71647d5c705c920c953a82bd723d9e3e42887bdd4ffc9dfe51207a0"
+    }
+  ]
+}

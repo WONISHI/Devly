@@ -22,6 +22,7 @@ shadcn/ui 采用源码放进项目的方式，所以 components/ui 中可以看�
 - 工作台：Button + Textarea；输入/发送仍按真实能力禁用。
 - 开发者选项：Collapsible + CollapsibleTrigger/Content，默认折叠，使用 aria-expanded/data-state 表达状态。
 - 错误重试：Button，不再直接书写原生交互控件。
+- 品牌识别：ProviderBrandIcon 使用 357 个固定来源的本地 SVG，设置列表及原 ModelSelector 的组合层复用；详见 [供应商图标](./provider-icons.md)，没有改动 AI Elements 原文件。
 
 未配置供应商使用明确的非空 Select 值 none 映射到数据库 null，避免 Radix SelectItem 空值限制；UI 中的选择范围/主题状态仍映射到原来的严格契约。
 

@@ -45,6 +45,8 @@ jobs:
         run: pnpm verify:provider
       - name: Check saved model selection and project isolation without API requests
         run: pnpm verify:model-picker
+      - name: Check local brand icons, matching and themes without remote images
+        run: pnpm verify:provider-icons
       - name: Check startup and Provider entry without Codex
         run: pnpm verify:no-codex
       - name: Check project persistence and system credential backend

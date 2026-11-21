@@ -57,3 +57,5 @@ V02/V03 仍需在已安装应用中验证业务能力、原生模块、中文/�
 阶段 3 新增 `pnpm verify:provider` 与 CI 步骤：真实 Electron、临时 userData、loopback HTTP 协议替身，覆盖供应商 CRUD、模型列表 404/手工兜底、SSE 增量、工具往返、独立能力、401/403/429/500、超时/断流/取消及报告重启/失效。这里的“CI 不请求模型”指不请求外部模型；替身不构成真实供应商接通证据。支持 DEVLY_EXECUTABLE 指向包内程序。`pnpm test` 当前为 56 项，新增适配器与生命周期测试见 tests/providers.test.ts。真实端点验收单独记录，见 [Provider API](./provider-api.md)。
 
 首页选择修正新增 `pnpm verify:model-picker` 与 CI 步骤：原版选择器、搜索/键盘、应用/双项目默认选择和重启、编辑/删除后的选择处理，验证端点收到请求数为 0。支持包内 DEVLY_EXECUTABLE。新增 4 项模型选项边界测试后 pnpm test 共 60 项。
+
+LOG-035 新增 pnpm verify:icons，纳入 pnpm check，离线检查 357 个 SVG、目录和 MIT 通知。新增 5 项匹配测试后 pnpm test 共 65 项。pnpm verify:provider-icons 已加入 CI，使用隔离资料目录核对实际 SVG 加载、30px 尺寸、中文名称/模型回退/未知图标、深浅主题、网关优先与编辑刷新、选择器图标和零外部请求；支持 DEVLY_EXECUTABLE 指向包内应用。本机结果见工作日志，Windows/远端 CI 仍待实际验证。

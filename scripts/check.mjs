@@ -8,6 +8,7 @@ for (const script of [
   'test',
   'check:docs',
   'verify:vendor',
+  'verify:icons',
   'build:bundle',
   'verify:data',
 ]) {

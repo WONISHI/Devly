@@ -10,3 +10,4 @@ test-results
 playwright-report
 docs
 src/renderer/src/components/ai-elements
+src/renderer/src/assets/provider-icons

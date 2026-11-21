@@ -278,6 +278,70 @@
 - 未覆盖：Windows/远端 CI 未运行；没有推进 API/Agent 或 Prompt Input 业务，没有改动品牌/标题栏配色或解除已有发行风险。
 - 状态：本次 UI 统一修正完成；按用户此前要求提交本次修正，具体哈希与推送回执见 Git 和最终回复。唯一下一项仍为阶段 3/P01。
 
+## LOG-025｜阶段 3 / 3.1 / P01：统一 Provider 契约
+
+- 日期：2026-11-21。状态：完成。
+- 变更：新增 ProviderAdapter、统一消息/图片/工具调用与结果、用量、Completion 和 text/tool/usage/finish 流事件；能力可为 unknown/supported/unsupported，未知用量为 null。业务组件只接收标准检查 DTO，不使用供应商 choices/delta/function 结构。
+- 文件：src/shared/provider-contracts.ts、data-contracts.ts、src/main/providers、feature hooks。
+- 验证：pnpm typecheck、pnpm lint 退出 0；pnpm test 56/56 通过，其中 26 项新增 Provider 测试覆盖参数边界及响应归一化。没有新增 npm 依赖或改动原 AI Elements/UI 源码。
+- 边界/下一步：本阶段 Renderer 使用有界快照轮询展示诊断流，尚未接入任务聊天消息；继续 P02。
+
+## LOG-026｜阶段 3 / 3.2 / P02：供应商编辑与安全凭据操作
+
+- 日期：2026-11-21。状态：完成。
+- 变更：供应商增删改、名称/协议/Base URL/手工模型 ID，删除二次确认，已有系统原生密钥设置/替换/清除接入编辑页。Base URL 拒绝非 HTTP(S)、URL 账号、查询和片段；输入说明明确 API 根路径与 HTTP 明文影响。Responses/Anthropic 明确暂未接入。
+- 文件：features/provider-settings/{ProviderManager,ProviderSettingsPage,hooks}、styles.css、shared/data-contracts、data/{service,store,migrations}。
+- UI：基础控件复用现有 shadcn/ui + Radix；兼容参数默认折叠，保留精简工作台与开发者选项。没有把 Key 输入放进 Renderer。
+- 验证：verify:provider 在真实 Electron 中完成新建/编辑/保留删除/确认删除、模型手工兜底、重启读取；verify:data 完成密钥设置/替换/清除、引用与报告失效检查。OS 保护的独立验证见既有 verify:persistence；本轮不会用注入 AES 冒充真实 Keychain。
+- 边界/下一步：Windows 密钥输入控件未实测；继续 P03。
+
+## LOG-027｜阶段 3 / 3.3 / P03：Chat Completions 适配器
+
+- 日期：2026-11-21。状态：完成（本地协议验证），真实供应商仍待阶段验收。
+- 变更：Main 原生 fetch，实现非流式文本、SSE、多个交错工具调用分片、工具结果 ID 映射、finish/usage 标准化；JSON Schema 和图片块按显式兼容声明映射。要求完整 finish + [DONE]，拒绝不完整工具 JSON、重复/缺失 ID 和超限响应。
+- 文件：src/main/providers/chat-completions.ts、shared/provider-contracts.ts、tests/providers.test.ts。
+- 验证：56 项测试通过，覆盖 UTF-8 每字节分片、CRLF/注释、交错工具、usage 尾帧、非流式多工具与结果、截断/坏 JSON/HTML/2 MiB 上限；verify:provider 通过实际 loopback fetch 与桌面增量渲染、固定诊断工具结果往返。
+- 边界/下一步：工具探测没有运行本地文件或命令；不是 Agent 循环。没有有效供应商/模型通过证据，不声称已接通真实服务；继续 P04。
+
+## LOG-028｜阶段 3 / 3.4 / P04：网络生命周期和归属清理
+
+- 日期：2026-11-21。状态：完成（本地 HTTP 验证）。
+- 变更：每个 runId 绑定窗口 document owner，Abort 总超时、用户取消、组件卸载 release、页面导航/销毁取消和配置更换取消；区分认证/权限/限流/服务错误、网络/断流/超时/取消。解析 Retry-After，不自动重试、重定向或切供应商。
+- 限制：4 个并发、单供应商 1 个、32 个有界快照；结束记录 10 分钟后在新检查时清理。输出不含原始错误正文/异常，Key 回显在诊断输出过滤。Main 不打印请求头或秘密。
+- 文件：providers/{runtime,errors,chat-completions}、request-router、main/index、data/service、feature hooks。
+- 验证：单测跨 owner 读取/取消拒绝、重复 start/并发竞争、owner 销毁取消、timeout/cancel/config changed 与旧响应写回拦截通过；真实 Electron/本地 HTTP 的 401/403/429/500、断流、1 秒超时、用户取消和关闭编辑器通过，19 个请求中观测 3 个关闭/取消路径。错误正文没有进入页面。
+- 边界/下一步：真实服务的网络差异仍需联调；没有回放副作用或 Agent 取消实现；继续 P05。
+
+## LOG-029｜阶段 3 / 3.5 / P05：连接、模型列表与独立探测
+
+- 日期：2026-11-21。状态：待验证，代码与本地检查已完成，缺有效端点实测。
+- 变更：连接检查依次验证文本、流式、工具请求及固定结果回传；每种能力有独立证据，文本成功不推导工具/流式。模型列表 GET /models 尝试失败后可手工模型 ID，单独结构化输出检查。流式预览最多 4096 字符，检查时可取消。
+- 持久化：SQLite v3 增加兼容配置/修订号/检查报告；修改模型、URL、参数或凭据会清空证据。WHERE revision 条件写回拒绝陈旧结果；报告保存时间、协议所在配置、模型、固定错误和真实用量，不保存响应正文/Key。
+- 验证：verify:provider 退出 0，覆盖模型列表 404 后手工文本成功、独立能力、JSON Schema、报告重启持久化和修改后的失效；verify:data 退出 0，v2→v3 保留旧模型/密钥引用，ALTER 中途失败整次回滚、版本/旧行/备份保持且可重试。
+- 用户条件：用户已回复有有效端点和模型，会稍后在 Devly 内配置并联调；没有要求将 Key 发到聊天。当前本地服务明确命名“本地协议测试替身”，不能作为真实供应商通过记录。
+- 下一步：完成本轮 P06 和本地收尾后，等待用户在应用内配置并对有效端点执行文本/SSE/工具往返，记录协议/模型/时间/结果；P05 仍待验证。
+
+## LOG-030｜阶段 3 / 3.6 / P06：兼容参数与能力表
+
+- 日期：2026-11-21。状态：完成（本地检查），阶段关闭仍依赖 P05 真实验收。
+- 变更：显式选择 max_tokens / max_completion_tokens / 不发送、可空 Temperature、include_usage、工具开关、视觉/结构化输出声明和上下文数值；手工声明与测试结果区别显示。工具禁用时直接拒绝，不静默删除 tools/tool_choice；未声明视觉支持时拒绝图片；结构化输出“不支持”时禁止检查。
+- 文件：ProviderManager、provider-contracts、ChatCompletionsAdapter、ProviderRuntime、数据库 v3。
+- 验证：兼容参数请求正文检查、禁用能力在 fetch 前拒绝、未知能力保持未知、结构化探测与报告分离通过；实际 UI 持续使用现有组件，无新 vendored 源码或依赖组合。
+- 边界：视觉与上下文窗口本阶段不做真实能力推断；手工声明不是实测。P06 的本地检查可独立完成，不绕过 P05 的真实验收条件；下一步阶段 3 核对。
+
+## LOG-031｜阶段 3：本地收尾与待真实端点验收
+
+- 日期：2026-11-21。状态：待验证，不进入阶段 4。
+- 已有证据：类型/Lint/生产构建通过；56/56 测试、SQLite/Worker 数据检查、Electron Provider 本地 HTTP 检查通过。实际截图 output/provider-local-fixture.png 已复核，展示独立能力表、手工未知项和诊断预览；截图属于替身测试数据。
+- 自动检查：新增 pnpm verify:provider 和 CI 对应步骤；用独立用户目录与 loopback HTTP 服务，不依赖外部模型、用户目录或真实凭据。异步 smoke 通过新 runId 和状态等待结束，避免将点击后尚未运行当成成功。
+- 文档：新增 docs/provider-api.md（实际数据流图、能力表、错误表、协议边界与使用步骤），同步工作总表/阶段计划、README、入口、通信、本地数据、架构和技术选型。
+- 交付：本机未签名 Devly.app 已生成；最终静态/回归/包内检查结果在本条继续补录。Windows/远端 CI 尚未执行，不消除既有依赖维护和发行阻断。
+- 未完成验收：尚无有效第三方端点文本、SSE 与工具调用/结果的实测通过记录，不能把本地固定响应当作接通。用户稍后在 Devly 内配置端点/模型/系统保护密钥后继续 P05，完成真实验收后再将阶段 3 改为完成并定位阶段 4/P07。
+- 补充加密链路：verify:provider 已通过实际 OS safeStorage 加密/替换测试密钥，Main 通过 SQLite 引用读取密文并为原生 fetch 认证，重启后继续认证，最终通过 UI 清除；扫描整个隔离 userData 不含测试密钥前缀明文。只有 Main 的原生 prompt 回调使用固定测试注入，Renderer 从未接收明文，真实 OS 输入交互由用户配置时联调。
+- 最终本地检查：pnpm check 退出 0（类型、Lint、格式、56 项测试、21 份 Markdown/106 唯一任务 ID/31 连续日志、17 原组件文件、生产构建、Worker 数据）；verify:desktop 退出 0，原 AI Elements 预览、IPC 归属/订阅、紧凑窗口、项目与设置导航无回退。
+- 回归与包内：verify:persistence 退出 0，双项目/会话/设置、系统保护与导出保持正确；pnpm run pack --config.mac.identity=null 退出 0，更新 release/mac-arm64/Devly.app；DEVLY_EXECUTABLE 指向该程序的 verify:provider 退出 0，包括实际 OS 密文、重启后 API 认证、清除与明文扫描。打包仍是未签名应用目录，Windows/远端 CI 未获通过状态。
+- Git 交付沿用用户此前“完成后提交”的要求；构建、测试 userData、密文及截图保持忽略。具体提交与远端回执由 Git 和最终回复报告，不把提交当成真实供应商验收。
+
 ## 追加记录模板
 
 ```text

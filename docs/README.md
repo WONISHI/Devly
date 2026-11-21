@@ -11,6 +11,8 @@
 
 ## 设计与搭建资料
 
+- [第三方 Provider API](./provider-api.md)：P01–P06 的实现、数据流、协议规则、能力表、错误/取消和真实验收操作。
+
 - [UI 与 AI 组件使用](./ui-components.md)：基础控件统一、原 AI Elements 的分工与来源约束。
 
 - [本地数据、项目与设置](./local-data.md)：阶段 2 的 Worker、迁移、凭据引用、分页、日志与验收边界。

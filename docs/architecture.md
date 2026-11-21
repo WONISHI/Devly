@@ -1,6 +1,6 @@
 # Devly 当前架构：第三方 API 与本地 Agent
 
-本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前只有基础工程，图中多数服务仍待实现；实现状态以 [工作总表](./work-plan.md) 为准。
+本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前已实现本地数据、会话元数据、设置与 Chat Completions 供应商诊断；阶段 3 真实端点待验收，图中的 Agent 与大部分工具服务仍待后续实现。实际状态以 [工作总表](./work-plan.md) 为准，已落地的 Provider 数据流见 [Provider API](./provider-api.md)。
 
 旧的 Codex App Server 优先方案保存在 [历史架构](./archive/codex-app-server-architecture.md)，不再作为主路线。它的初始化握手验证可保留，但不等于自研 Agent 已经实现。
 
@@ -279,7 +279,7 @@ erDiagram
     }
 ```
 
-这是目标逻辑模型，目前没有对应迁移或 Repository。API Key 不存在 Provider 或消息表里，SECRET_REF 只保存保护存储引用。用量缺失与零区分，费用未知不编造。消息和事件以 Devly ID 为主，外部模型/可选引擎 ID 只是关联字段。原始大日志与附件落盘，SQLite 保存索引；外框截图等本机产物不等于云端历史。
+这是目标逻辑模型；阶段 2 的 v1/v2 迁移已覆盖项目、配置、会话、消息/工具/事件等基础实体，阶段 3 的 v3 增加 Provider 兼容配置、版本和检查证据，Agent 上下文/执行恢复仍待后续。API Key 不存在 Provider 或消息表里，SECRET_REF 只保存保护存储引用。用量缺失与零区分，费用未知不编造。消息和事件以 Devly ID 为主，外部模型/可选引擎 ID 只是关联字段。原始大日志与附件落盘，SQLite 保存索引；外框截图等本机产物不等于云端历史。阶段 3 的实际数据流、生命周期与验证边界见 [Provider API](./provider-api.md)。
 
 ## 7. 任务状态与恢复
 

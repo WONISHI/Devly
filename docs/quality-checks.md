@@ -53,3 +53,5 @@ DEVLY_EXECUTABLE=release/mac-arm64/Devly.app/Contents/MacOS/Devly pnpm verify:de
 V02/V03 仍需在已安装应用中验证业务能力、原生模块、中文/空格路径、首次启动和迁移；V04 负责签名、公证和安装包；B04 的基础 smoke 不能代替上述验收。依赖安全与许可证发行门槛见 [V01 评估](./dependency-review.md)。
 
 阶段 2 增加 `pnpm verify:persistence`，在隔离的临时 userData 检查真实窗口的多项目重启、会话、设置/主题、系统 safeStorage 与原生导出；可以用 DEVLY_EXECUTABLE 指向打包应用。系统安全后端不可用时明确失败，不回退明文。CI 与平台结果仍需实际执行，见 [本地数据说明](./local-data.md)。
+
+阶段 3 新增 `pnpm verify:provider` 与 CI 步骤：真实 Electron、临时 userData、loopback HTTP 协议替身，覆盖供应商 CRUD、模型列表 404/手工兜底、SSE 增量、工具往返、独立能力、401/403/429/500、超时/断流/取消及报告重启/失效。这里的“CI 不请求模型”指不请求外部模型；替身不构成真实供应商接通证据。支持 DEVLY_EXECUTABLE 指向包内程序。`pnpm test` 当前为 56 项，新增适配器与生命周期测试见 tests/providers.test.ts。真实端点验收单独记录，见 [Provider API](./provider-api.md)。

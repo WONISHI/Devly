@@ -70,9 +70,10 @@ const router = new RequestRouter({
     await database.execute('internal.project.upsert', { path })
     return { path, name: basename(path) }
   },
-  data: (payload, isActive) => {
+  clearOwner: (owner) => localData?.clearOwner(owner),
+  data: (payload, isActive, owner) => {
     if (!localData) throw new ContractError(failure('STORAGE_UNAVAILABLE'))
-    return localData.execute(payload, isActive)
+    return localData.execute(payload, isActive, owner)
   },
 })
 function registerIPC(): void {
@@ -198,6 +199,7 @@ let quitReady = false
 app.on('before-quit', (event) => {
   if (quitReady || !database) return
   event.preventDefault()
+  localData?.close()
   void database
     .close()
     .catch(() => log.error('Local storage shutdown failed'))

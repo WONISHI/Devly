@@ -51,7 +51,7 @@ export function WorkspacePage({
             </div>
           </div>
         </div>
-        <p className="task-availability">模型连接功能待接入</p>
+        <p className="task-availability">可在设置中检查模型连接，聊天功能待接入</p>
       </div>
     </section>
   )

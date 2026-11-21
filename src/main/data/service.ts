@@ -10,6 +10,7 @@ import {
 import { ContractError, failure } from '../../shared/contracts'
 import type { DatabaseClient } from './client'
 import type { CredentialVault } from './vault'
+import { ProviderRuntime } from '../providers/runtime'
 
 type Prompts = {
   credential(): Promise<string | null>
@@ -18,11 +19,20 @@ type Prompts = {
 }
 export class LocalDataService {
   private promptingCredential = false
+  private providers: ProviderRuntime
   constructor(
     private database: DatabaseClient,
     private vault: CredentialVault,
     private prompts: Prompts,
-  ) {}
+  ) {
+    this.providers = new ProviderRuntime(database, vault)
+  }
+  clearOwner(owner: string): void {
+    this.providers.clearOwner(owner)
+  }
+  close(): void {
+    this.providers.close()
+  }
   async initialize(): Promise<void> {
     await this.database.ready
     await this.vault.initialize()
@@ -31,111 +41,126 @@ export class LocalDataService {
   async execute(
     payload: { operation: string; args: unknown },
     isActive: () => boolean,
+    owner = 'local',
   ): Promise<{ operation: string; data: unknown }> {
     if (!(payload.operation in operationArgs)) throw new ContractError(failure('INVALID_REQUEST'))
     const operation = payload.operation as DataOperation
     const args = operationArgs[operation].parse(payload.args) as Record<string, unknown>
     if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
     let data: unknown
-    switch (operation) {
-      case 'settings.export': {
-        const path = await this.prompts.export?.()
-        if (!path) {
-          data = { saved: false }
+    if (operation.startsWith('providers.probe.')) {
+      data = await this.providers.execute(operation, args, owner, isActive)
+    } else
+      switch (operation) {
+        case 'providers.save': {
+          if (args.id) this.providers.clearProvider(String(args.id))
+          data = await this.database.execute(operation, args)
           break
         }
-        if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
-        const settings = await this.database.execute('settings.get', args)
-        const temporary = join(dirname(path), `.devly-settings-${randomUUID()}.tmp`)
-        try {
-          await writeFile(temporary, JSON.stringify(settings, null, 2) + '\n', {
-            flag: 'wx',
-            mode: 0o600,
-            flush: true,
-          })
-          await rename(temporary, path)
-        } catch {
-          await unlink(temporary).catch(() => {})
-          throw new ContractError(failure('STORAGE_UNAVAILABLE'))
-        }
-        data = { saved: true }
-        break
-      }
-      case 'credentials.set': {
-        if (this.promptingCredential) throw new ContractError(failure('LIMIT_EXCEEDED'))
-        this.promptingCredential = true
-        try {
-          const providerId = String(args.providerId)
-          await this.database.execute('internal.credential.ref', { providerId })
-          if (!this.vault.available()) throw new ContractError(failure('CREDENTIAL_UNAVAILABLE'))
-          let secret = await this.prompts.credential()
-          if (secret === null) {
+        case 'settings.export': {
+          const path = await this.prompts.export?.()
+          if (!path) {
             data = { saved: false }
             break
           }
-          if (!isActive()) {
-            secret = ''
-            throw new ContractError(failure('FORBIDDEN'))
-          }
-          let reference: string
+          if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
+          const settings = await this.database.execute('settings.get', args)
+          const temporary = join(dirname(path), `.devly-settings-${randomUUID()}.tmp`)
           try {
-            reference = await this.vault.put(secret)
-          } finally {
-            secret = ''
-          }
-          try {
-            const previous = await this.database.execute<string | null>('internal.credential.ref', {
-              providerId,
-              ref: reference,
+            await writeFile(temporary, JSON.stringify(settings, null, 2) + '\n', {
+              flag: 'wx',
+              mode: 0o600,
+              flush: true,
             })
-            await this.vault.remove(previous)
+            await rename(temporary, path)
           } catch {
-            const current = await this.database
-              .execute<string | null>('internal.credential.ref', { providerId })
-              .catch(() => null)
-            if (current !== reference) await this.vault.remove(reference)
-            throw new ContractError(failure('CREDENTIAL_UNAVAILABLE'))
+            await unlink(temporary).catch(() => {})
+            throw new ContractError(failure('STORAGE_UNAVAILABLE'))
           }
           data = { saved: true }
           break
-        } finally {
-          this.promptingCredential = false
         }
-      }
-      case 'credentials.clear': {
-        const previous = await this.database.execute<string | null>('internal.credential.ref', {
-          providerId: args.providerId,
-          ref: null,
-        })
-        await this.vault.remove(previous)
-        data = { removed: previous !== null }
-        break
-      }
-      case 'providers.remove': {
-        const previous = await this.database.execute<string | null>('internal.credential.ref', {
-          providerId: args.providerId,
-        })
-        data = await this.database.execute(operation, args)
-        await this.vault.remove(previous)
-        break
-      }
-      case 'blobs.import': {
-        await this.database.execute('sessions.get', {
-          projectId: args.projectId,
-          sessionId: args.sessionId,
-        })
-        const path = await this.prompts.file()
-        if (!path) {
-          data = null
+        case 'credentials.set': {
+          if (this.promptingCredential) throw new ContractError(failure('LIMIT_EXCEEDED'))
+          this.promptingCredential = true
+          try {
+            const providerId = String(args.providerId)
+            await this.database.execute('internal.credential.ref', { providerId })
+            if (!this.vault.available()) throw new ContractError(failure('CREDENTIAL_UNAVAILABLE'))
+            let secret = await this.prompts.credential()
+            if (secret === null) {
+              data = { saved: false }
+              break
+            }
+            if (!isActive()) {
+              secret = ''
+              throw new ContractError(failure('FORBIDDEN'))
+            }
+            let reference: string
+            try {
+              reference = await this.vault.put(secret)
+            } finally {
+              secret = ''
+            }
+            try {
+              this.providers.clearProvider(providerId)
+              const previous = await this.database.execute<string | null>(
+                'internal.credential.ref',
+                {
+                  providerId,
+                  ref: reference,
+                },
+              )
+              await this.vault.remove(previous)
+            } catch {
+              const current = await this.database
+                .execute<string | null>('internal.credential.ref', { providerId })
+                .catch(() => null)
+              if (current !== reference) await this.vault.remove(reference)
+              throw new ContractError(failure('CREDENTIAL_UNAVAILABLE'))
+            }
+            data = { saved: true }
+            break
+          } finally {
+            this.promptingCredential = false
+          }
+        }
+        case 'credentials.clear': {
+          this.providers.clearProvider(String(args.providerId))
+          const previous = await this.database.execute<string | null>('internal.credential.ref', {
+            providerId: args.providerId,
+            ref: null,
+          })
+          await this.vault.remove(previous)
+          data = { removed: previous !== null }
           break
         }
-        if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
-        data = await this.database.execute('internal.blob.put', { ...args, sourcePath: path })
-        break
+        case 'providers.remove': {
+          this.providers.clearProvider(String(args.providerId))
+          const previous = await this.database.execute<string | null>('internal.credential.ref', {
+            providerId: args.providerId,
+          })
+          data = await this.database.execute(operation, args)
+          await this.vault.remove(previous)
+          break
+        }
+        case 'blobs.import': {
+          await this.database.execute('sessions.get', {
+            projectId: args.projectId,
+            sessionId: args.sessionId,
+          })
+          const path = await this.prompts.file()
+          if (!path) {
+            data = null
+            break
+          }
+          if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
+          data = await this.database.execute('internal.blob.put', { ...args, sourcePath: path })
+          break
+        }
+        default:
+          data = await this.database.execute(operation, args)
       }
-      default:
-        data = await this.database.execute(operation, args)
-    }
     if (operation === 'projects.list') data = await this.projects(data as RecentProject[])
     if (operation === 'bootstrap') {
       const result = data as {

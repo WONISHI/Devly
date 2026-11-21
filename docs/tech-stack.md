@@ -21,14 +21,14 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 | 状态管理       | Zustand                                                                 | 目前只有项目与页签内存状态，真实任务投影待实现                                                |
 | 通知           | Sonner                                                                  | 已接入，审批与任务结果不只依赖短暂 toast                                                      |
 | 面板与长列表   | react-resizable-panels、TanStack Virtual                                | 已安装，未形成完整布局或性能验收                                                              |
-| 运行时校验     | Zod + 共享契约                                                          | 已用于路径契约；Provider、事件与工具契约待扩展                                                |
+| 运行时校验     | Zod + 共享契约                                                          | 已覆盖版本化 IPC、数据操作、Provider 配置/诊断；Agent 工具注册契约待后续                       |
 | Markdown       | react-markdown、remark-gfm、rehype-sanitize；原 Message 配套 Streamdown | 已安装；选定一条正文渲染路径并复核原始 HTML/链接/资源处理                                     |
 | 代码与 Diff    | Monaco + React 封装                                                     | 已安装，Worker、本地资源、文件模型和业务待实现                                                |
 | 交互终端       | xterm.js + addon-fit + node-pty                                         | 已安装，PTY 技术验证通过；交互界面与服务待实现                                                |
 | 数据           | better-sqlite3 + SQLite Worker + SQL 迁移                               | 只验证了原生查询；数据库文件、Worker、表和 Repository 待实现                                  |
 | 凭据           | Electron 主进程及系统保护存储                                           | 待实现；保护能力不可用时明确失败，不明文兜底                                                  |
 | Agent          | 自研 Node 后台运行时                                                    | 待实现；负责上下文、工具循环、预算、审批、取消、恢复                                          |
-| API 适配       | ProviderAdapter；优先 Chat Completions 兼容协议                         | 待实现；Base URL/Key/model 可配置；现有 ai 依赖不等于网络适配已完成                           |
+| API 适配       | ProviderAdapter + Main 原生 fetch；Chat Completions 兼容协议           | 非流式/SSE/工具归一化、诊断和能力表已实现，本地检查通过，真实端点待验收；未增加 Provider SDK |
 | 其他协议       | Responses、Anthropic Messages 独立适配器                                | 待实现；每种协议单独验证流式与工具调用                                                        |
 | HTTP 与 SDK    | 首个适配器优先评估 openai SDK，保留统一接口                             | 尚未声明 openai 或 Anthropic SDK 为直接依赖；实现任务时按需安装并锁版本，禁止在 Renderer 调用 |
 | Git            | Node child_process 调 Git CLI                                           | 目前仅检测版本，真实 status/diff/log/提交待实现                                               |
@@ -91,5 +91,7 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 当前锁定版本的维护状态、许可证与来源以 [V01 评估](./dependency-review.md) 为准。本轮仅将误发的 jest-dom 6.10.0 固定为 6.9.1；Electron 39、ESLint 9 仍属失维护版本，未进行全面主版本升级，不可将工程检查通过解释为可正式发行。通信层已使用统一 v1 契约、错误 DTO 和带清理的事件接口，见 [B02](./ipc-contracts.md)；自动检查与 CI 计划见 [B04](./quality-checks.md)。
 
 B03 已将工作台迁移为 Provider/Devly Agent 概念，并提供明确待接入状态的设置入口。正常启动不探测 Codex，无需 ChatGPT 登录；原握手脚本独立保留，不代表第三方 API 或 Agent 已实现。见 [产品入口与验证](./provider-entry.md)。
+
+阶段 3 已把该入口接入供应商 CRUD、受保护凭据操作、Main 原生 fetch Chat Completions 适配与连接/能力检查，不增加 SDK 依赖；原握手脚本仍不参与主路线。当前本地验证通过，真实供应商验收待完成，见 [Provider API](./provider-api.md)。
 
 阶段 2 使用现有 better-sqlite3 和 Node worker_threads，不增加数据库或凭据依赖；Electron 39 的 safeStorage 由 Main 使用，密文落盘且 DB 只存 UUID 引用，缺少安全后端时拒绝保存。详见 [本地数据架构](./local-data.md)。

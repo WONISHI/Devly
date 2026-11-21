@@ -14,7 +14,12 @@ import {
 type Services = {
   environment(): Promise<EnvironmentInfo>
   openProject(isActive: () => boolean): Promise<Project | null>
-  data?(payload: { operation: string; args: unknown }, isActive: () => boolean): Promise<unknown>
+  data?(
+    payload: { operation: string; args: unknown },
+    isActive: () => boolean,
+    owner: string,
+  ): Promise<unknown>
+  clearOwner?(owner: string): void
 }
 type Subscription = { owner: string; sequence: number; send: (event: EnvironmentEvent) => void }
 
@@ -25,6 +30,7 @@ export class RequestRouter {
   constructor(private services: Services) {}
 
   clearOwner(owner: string): void {
+    this.services.clearOwner?.(owner)
     for (const [id, subscription] of this.subscriptions) {
       if (subscription.owner === owner) this.subscriptions.delete(id)
     }
@@ -61,7 +67,7 @@ export class RequestRouter {
           break
         case 'data.execute':
           if (!this.services.data) return reject('STORAGE_UNAVAILABLE')
-          data = await this.services.data(request.payload, isActive)
+          data = await this.services.data(request.payload, isActive, owner)
           break
         case 'events.subscribe': {
           if ([...this.subscriptions.values()].filter((item) => item.owner === owner).length >= 32)

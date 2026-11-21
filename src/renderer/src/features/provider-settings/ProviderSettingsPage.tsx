@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { SettingsEditor } from './SettingsEditor'
-import { savePreferences, changeCredential, exportPreferences } from './hooks'
+import { savePreferences, exportPreferences } from './hooks'
+import { ProviderManager } from './ProviderManager'
 import { useWorkspace } from '@/store'
-import { toast } from 'sonner'
 import { ArrowLeft, Blocks, ChevronRight, PlugZap } from 'lucide-react'
 import { SelectField } from '@/components/forms/SelectField'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
@@ -38,43 +38,11 @@ export function ProviderSettingsPage({
         </div>
         <div>
           <h2 id="provider-title">模型供应商</h2>
-          <p>
-            {state.providers.length ? `${state.providers.length} 个供应商` : '供应商配置待接入'}
-          </p>
+          <p>OpenAI-compatible Chat Completions</p>
         </div>
         <span className="setting-state">{state.providers.length ? '已保存' : '未配置'}</span>
       </section>
-      {state.providers.map((provider) => (
-        <div className="provider-row" key={provider.id}>
-          <span>
-            {provider.name}
-            <small>{provider.hasCredential ? '密钥已保存' : '未设置密钥'}</small>
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!state.credentialAvailable}
-            onClick={() =>
-              void changeCredential(provider.id).catch((error) => toast.error(error.message))
-            }
-          >
-            {provider.hasCredential ? '替换密钥' : '设置密钥'}
-          </Button>
-          {provider.hasCredential && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                void changeCredential(provider.id, true).catch((error) =>
-                  toast.error(error.message),
-                )
-              }
-            >
-              清除密钥
-            </Button>
-          )}
-        </div>
-      ))}
+      <ProviderManager />
       <div className="settings-scope">
         <h2>偏好设置</h2>
         <SelectField

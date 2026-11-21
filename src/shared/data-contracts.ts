@@ -1,4 +1,10 @@
 import { z } from 'zod'
+import {
+  compatibilitySchema,
+  providerReportSchema,
+  probeKind,
+  probeSnapshotSchema,
+} from './provider-contracts'
 
 export const entityId = z.uuid()
 const text = z.string().trim().min(1).max(200)
@@ -52,11 +58,26 @@ export const providerInputSchema = z
         )
       }, 'Invalid API endpoint'),
     model: z.string().max(200),
+    compatibility: compatibilitySchema.optional(),
   })
   .strict()
 export const providerSchema = providerInputSchema
   .omit({ id: true })
-  .extend({ id: entityId, hasCredential: z.boolean() })
+  .extend({
+    id: entityId,
+    hasCredential: z.boolean(),
+    revision: z.number().int().positive().default(1),
+    compatibility: compatibilitySchema.default({
+      tokenParameter: 'max_tokens',
+      temperature: null,
+      streamUsage: false,
+      tools: 'auto',
+      vision: 'unknown',
+      structuredOutput: 'unknown',
+      contextWindow: null,
+    }),
+    report: providerReportSchema.nullable().default(null),
+  })
   .strict()
 export type Provider = z.infer<typeof providerSchema>
 export const sessionSchema = z
@@ -96,6 +117,17 @@ export const operationArgs = {
   'providers.list': z.object({}).strict(),
   'providers.save': providerInputSchema,
   'providers.remove': z.object({ providerId: entityId }).strict(),
+  'providers.probe.start': z
+    .object({
+      providerId: entityId,
+      runId: entityId,
+      kind: z.union([probeKind, z.literal('all')]),
+      timeoutMs: z.number().int().min(1000).max(120000).default(30000),
+    })
+    .strict(),
+  'providers.probe.read': z.object({ runId: entityId }).strict(),
+  'providers.probe.cancel': z.object({ runId: entityId }).strict(),
+  'providers.probe.release': z.object({ runId: entityId }).strict(),
   'credentials.set': z.object({ providerId: entityId }).strict(),
   'credentials.clear': z.object({ providerId: entityId }).strict(),
   'settings.export': z.object({ projectId: entityId.nullable() }).strict(),
@@ -166,6 +198,10 @@ export const operationResults = {
   'providers.list': z.array(providerSchema),
   'providers.save': providerSchema,
   'providers.remove': ack,
+  'providers.probe.start': z.object({ runId: entityId }).strict(),
+  'providers.probe.read': probeSnapshotSchema,
+  'providers.probe.cancel': ack,
+  'providers.probe.release': ack,
   'credentials.set': z.object({ saved: z.boolean() }).strict(),
   'credentials.clear': ack,
   'settings.export': z.object({ saved: z.boolean() }).strict(),

@@ -44,7 +44,7 @@ turn/tool/approval/event 表只建立数据结构。没有模型或工具执行�
 
 ## Provider 与凭据
 
-Provider Repository 支持名称、协议、Base URL、模型与凭据引用；Base URL 拒绝非 HTTP(S)、URL 内用户名/密码、query 和 fragment，元数据严格拒绝 apiKey 等额外字段。设置页面显示已有 Provider 的凭据状态，Provider 编辑表单和连接验证仍由阶段 3/P02–P04 完成，不在本轮提前实现。
+Provider Repository 支持名称、协议、Base URL、模型与凭据引用；Base URL 拒绝非 HTTP(S)、URL 内用户名/密码、query 和 fragment，元数据严格拒绝 apiKey 等额外字段。阶段 3 已增加供应商编辑和诊断，见 [Provider API](./provider-api.md)。v3 迁移新增 compatibility、revision、report；配置或凭据修改递增版本并清空证据，报告条件写回防止旧响应覆盖新配置。旧 v1/v2 迁移保持不变。
 
 为了遵守 API Key 不进入 Renderer 的仓库约定，credentials.set 只接受 providerId。Main 弹原生隐藏输入框（macOS osascript / Windows 原生控件），主进程接收输入，调用系统 safeStorage 加密后保存到 UUID 文件；不将明文放入命令行参数、数据库、日志或 Renderer DTO。取消不覆盖已有密钥，保存后的列表只有 hasCredential。替换先写新密文再切换数据库引用，旧密文随后删除；未引用密文在下次启动清理。原生凭据输入串行处理。
 

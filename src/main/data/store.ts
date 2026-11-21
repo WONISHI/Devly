@@ -13,6 +13,7 @@ import {
 } from '../../shared/data-contracts'
 import { ContractError, failure } from '../../shared/contracts'
 import { applyMigrations, migrations } from './migrations'
+import { compatibilitySchema, providerReportSchema } from '../../shared/provider-contracts'
 
 type Row = Record<string, unknown>
 export class DataStore {
@@ -79,6 +80,9 @@ export class DataStore {
       baseUrl: row.base_url,
       model: row.model,
       hasCredential: row.credential_ref !== null,
+      revision: Number(row.revision),
+      compatibility: compatibilitySchema.parse(JSON.parse(String(row.compatibility ?? '{}'))),
+      report: row.report ? providerReportSchema.parse(JSON.parse(String(row.report))) : null,
     }
   }
   private session(row: Row) {
@@ -165,13 +169,39 @@ export class DataStore {
       const row = this.one('SELECT credential_ref FROM providers WHERE id=?', providerId)
       if (!row) throw new ContractError(failure('NOT_FOUND'))
       if (ref !== undefined)
-        this.run('UPDATE providers SET credential_ref=? WHERE id=?', ref, providerId)
+        this.run(
+          'UPDATE providers SET credential_ref=?, revision=revision+1, report=NULL WHERE id=?',
+          ref,
+          providerId,
+        )
       return row.credential_ref
     }
     if (operation === 'internal.credential.refs')
       return this.all('SELECT credential_ref FROM providers WHERE credential_ref IS NOT NULL').map(
         (row) => row.credential_ref,
       )
+    if (operation === 'internal.provider.config') {
+      const { providerId } = raw as { providerId: string }
+      const row = this.one('SELECT * FROM providers WHERE id=?', providerId)
+      if (!row) throw new ContractError(failure('NOT_FOUND'))
+      return { ...this.provider(row), credentialRef: row.credential_ref, revision: row.revision }
+    }
+    if (operation === 'internal.provider.report') {
+      const { providerId, revision, report } = raw as {
+        providerId: string
+        revision: number
+        report: unknown
+      }
+      return {
+        saved:
+          this.run(
+            'UPDATE providers SET report=? WHERE id=? AND revision=?',
+            JSON.stringify(providerReportSchema.parse(report)),
+            providerId,
+            revision,
+          ).changes > 0,
+      }
+    }
     if (operation === 'internal.records.append') return this.appendRecord(raw)
     if (operation === 'internal.status') return { schemaVersion: migrations.length }
     if (!(operation in operationArgs)) throw new ContractError(failure('INVALID_REQUEST'))
@@ -220,12 +250,18 @@ export class DataStore {
         if (args.id && !this.one('SELECT id FROM providers WHERE id=?', id))
           throw new ContractError(failure('NOT_FOUND'))
         this.run(
-          'INSERT INTO providers(id,name,protocol,base_url,model,credential_ref) VALUES(?,?,?,?,?,NULL) ON CONFLICT(id) DO UPDATE SET name=excluded.name,protocol=excluded.protocol,base_url=excluded.base_url,model=excluded.model',
+          'INSERT INTO providers(id,name,protocol,base_url,model,credential_ref,compatibility) VALUES(?,?,?,?,?,NULL,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,protocol=excluded.protocol,base_url=excluded.base_url,model=excluded.model,compatibility=excluded.compatibility,revision=providers.revision+1,report=NULL',
           id,
           String(args.name),
           String(args.protocol),
           String(args.baseUrl),
           String(args.model),
+          JSON.stringify(
+            args.compatibility ??
+              (args.id
+                ? this.provider(this.one('SELECT * FROM providers WHERE id=?', id)!).compatibility
+                : compatibilitySchema.parse({})),
+          ),
         )
         return this.provider(this.one('SELECT * FROM providers WHERE id=?', id)!)
       }

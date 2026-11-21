@@ -98,7 +98,7 @@ try {
   await page.screenshot({ path: 'output/workspace.png' })
   await page.getByRole('button', { name: '选择模型', exact: true }).click()
   await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
-  await page.getByText('供应商配置待接入', { exact: true }).waitFor()
+  await page.getByRole('button', { name: '添加供应商', exact: true }).waitFor()
   assert.equal(await page.locator('input[type=password]').count(), 0)
   assert.equal(await page.getByRole('button', { name: /登录|安装 Codex|连接测试/ }).count(), 0)
   assert.equal(

@@ -1,6 +1,6 @@
 # B02：桌面通信契约与订阅清理
 
-实施日期：2026-11-21。范围为现有环境检测、目录选择和 `environment.checked` 事件；不包含 Provider、Agent、文件写入、命令执行或任务取消。
+实施日期：2026-11-21。基础范围为环境检测、目录选择和 `environment.checked` 事件；后续通过版本化 data.execute 扩展本地数据及 Provider 诊断。阶段 3 的 start/read/cancel/release 使用同一归属与严格校验入口，具体见 [Provider API](./provider-api.md)。Agent/命令执行取消属于后续阶段。
 
 ## 调用边界
 

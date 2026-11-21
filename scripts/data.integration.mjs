@@ -294,8 +294,37 @@ try {
   assert.equal((await set()).data.saved, true)
   const firstRef = await client.execute('internal.credential.ref', { providerId: provider.id })
   assert.equal(await vault.read(firstRef), secret)
+  const beforeReplace = await client.execute('internal.provider.config', {
+    providerId: provider.id,
+  })
+  const diagnosticReport = {
+    checks: [{ kind: 'text', ok: true, checkedAt: Date.now(), error: null, usage: null }],
+  }
+  assert.equal(
+    (
+      await client.execute('internal.provider.report', {
+        providerId: provider.id,
+        revision: beforeReplace.revision,
+        report: diagnosticReport,
+      })
+    ).saved,
+    true,
+  )
   secret = 'replacement-' + randomUUID()
   await set()
+  const afterReplace = await client.execute('internal.provider.config', { providerId: provider.id })
+  assert.equal(afterReplace.report, null)
+  assert.ok(afterReplace.revision > beforeReplace.revision)
+  assert.equal(
+    (
+      await client.execute('internal.provider.report', {
+        providerId: provider.id,
+        revision: beforeReplace.revision,
+        report: diagnosticReport,
+      })
+    ).saved,
+    false,
+  )
   assert.equal((await readdir(join(storage, 'credentials'))).length, 1)
   const secondRef = await client.execute('internal.credential.ref', { providerId: provider.id })
   assert.notEqual(firstRef, secondRef)
@@ -325,6 +354,30 @@ try {
     true,
   )
   assert.equal((await readdir(join(storage, 'credentials'))).length, 0)
+  const revision = (await client.execute('providers.list'))[0].revision
+  const edited = await service.execute(
+    {
+      operation: 'providers.save',
+      args: {
+        id: provider.id,
+        name: 'Edited fixture',
+        protocol: 'chat-completions',
+        baseUrl: 'https://example.invalid/v1',
+        model: 'new-model',
+        compatibility: {
+          tokenParameter: 'max_completion_tokens',
+          streamUsage: true,
+          tools: 'disabled',
+          vision: 'unsupported',
+          contextWindow: 32000,
+        },
+      },
+    },
+    active,
+  )
+  assert.ok(edited.data.revision > revision)
+  assert.equal(edited.data.report, null)
+  assert.equal(edited.data.compatibility.contextWindow, 32000)
   const unavailable = new CredentialVault(join(storage, 'credentials'), {
     ...encryption,
     available: () => false,
@@ -380,6 +433,62 @@ try {
   await repaired.close()
   passed.push(
     'migration failure rolls back DDL/version with old rows and pre-migration backup intact; retry upgrades successfully',
+  )
+  const v2Root = join(root, 'migration-v2-v3')
+  await mkdir(v2Root)
+  let v2 = new SQLite(join(v2Root, 'devly.sqlite'))
+  v2.exec(migrations[0].sql)
+  v2.exec(migrations[1].sql)
+  v2.pragma('user_version = 2')
+  const legacyProvider = randomUUID(),
+    legacyRef = randomUUID()
+  v2.prepare(
+    'INSERT INTO providers(id,name,protocol,base_url,model,credential_ref) VALUES(?,?,?,?,?,?)',
+  ).run(
+    legacyProvider,
+    'v2 provider',
+    'chat-completions',
+    'https://example.invalid/v1',
+    'v2-model',
+    legacyRef,
+  )
+  // Force the second ALTER to fail. The first ALTER must roll back as well.
+  v2.exec('ALTER TABLE providers ADD COLUMN revision INTEGER')
+  v2.close()
+  const conflict = new DatabaseClient(v2Root)
+  await rejects(conflict.ready, 'STORAGE_UNAVAILABLE')
+  await conflict.close()
+  v2 = new SQLite(join(v2Root, 'devly.sqlite'))
+  assert.equal(v2.pragma('user_version', { simple: true }), 2)
+  assert.equal(
+    v2
+      .prepare('PRAGMA table_info(providers)')
+      .all()
+      .some((column) => column.name === 'compatibility'),
+    false,
+  )
+  assert.equal(
+    v2.prepare('SELECT credential_ref FROM providers WHERE id=?').get(legacyProvider)
+      .credential_ref,
+    legacyRef,
+  )
+  v2.exec('ALTER TABLE providers DROP COLUMN revision')
+  v2.close()
+  const upgraded = new DatabaseClient(v2Root)
+  await upgraded.ready
+  const migrated = (await upgraded.execute('providers.list'))[0]
+  assert.equal(migrated.model, 'v2-model')
+  assert.equal(migrated.hasCredential, true)
+  assert.equal(migrated.report, null)
+  assert.equal(migrated.compatibility.vision, 'unknown')
+  assert.equal((await upgraded.execute('internal.status')).schemaVersion, 3)
+  assert.equal(
+    await upgraded.execute('internal.credential.ref', { providerId: legacyProvider }),
+    legacyRef,
+  )
+  await upgraded.close()
+  passed.push(
+    'v2 → v3 preserves provider and credential references; transactional ALTER rollback/backup; compatibility and revision-scoped evidence invalidation',
   )
   console.log(JSON.stringify({ passed }, null, 2))
 } finally {

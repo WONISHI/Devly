@@ -28,6 +28,12 @@ export const migrations = [
     CREATE TABLE events(id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE, turn_id TEXT, sequence INTEGER NOT NULL, type TEXT NOT NULL, summary TEXT NOT NULL, blob_id TEXT, created_at INTEGER NOT NULL, FOREIGN KEY(turn_id,session_id) REFERENCES turns(id,session_id), FOREIGN KEY(blob_id,session_id) REFERENCES blobs(id,session_id), UNIQUE(session_id,sequence));
   `,
   },
+  {
+    version: 3,
+    sql: `ALTER TABLE providers ADD COLUMN compatibility TEXT NOT NULL DEFAULT '{}';
+    ALTER TABLE providers ADD COLUMN revision INTEGER NOT NULL DEFAULT 1;
+    ALTER TABLE providers ADD COLUMN report TEXT;`,
+  },
 ] as const
 export async function applyMigrations(db: Database.Database, backups: string): Promise<void> {
   let version = db.pragma('user_version', { simple: true }) as number

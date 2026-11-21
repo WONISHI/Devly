@@ -1,6 +1,6 @@
 # Renderer feature 边界（B01）
 
-本文记录 B01 建立的展示与桌面访问边界。后续 B02 补充通信契约；B03 增加 Provider 设置入口与未配置状态，详见 [入口说明](./provider-entry.md)。真实配置、模型请求、会话持久化和 Agent 业务尚未实现。
+本文记录 B01 建立的展示与桌面访问边界。后续 B02 补充通信契约；B03 增加 Provider 设置入口，阶段 2 增加会话元数据持久化，阶段 3 增加 ProviderManager/Editor 和 useProviderProbe。界面使用 shared 类型与 feature hooks，网络/密钥仍在 Main；真实供应商待验收，任务聊天与 Agent 尚未实现。详见 [入口说明](./provider-entry.md) 与 [Provider API](./provider-api.md)。
 
 ## 目录与职责
 

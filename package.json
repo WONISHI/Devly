@@ -35,7 +35,8 @@
     "check:docs": "node scripts/check-docs.mjs",
     "verify:no-codex": "node scripts/verify-no-codex.mjs",
     "verify:data": "node scripts/verify-data.mjs",
-    "verify:persistence": "node scripts/smoke-persistence.mjs"
+    "verify:persistence": "node scripts/smoke-persistence.mjs",
+    "verify:provider": "node scripts/smoke-provider.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

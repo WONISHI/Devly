@@ -6,13 +6,9 @@ import { AppShell } from '@/app/AppShell'
 import { ComponentPreviewPage } from '@/features/component-preview'
 import { ProviderSettingsPage } from '@/features/provider-settings'
 import { useEnvironment } from '@/features/environment'
-import {
-  WorkspacePage,
-  WorkspaceSidebar,
-  WorkspaceModelPicker,
-  useOpenProject,
-} from '@/features/workspace'
+import { WorkspaceSidebar, useOpenProject } from '@/features/workspace'
 import { useWorkspace } from '@/store'
+import { ChatWorkspace } from '@/features/chat'
 
 export function App() {
   const state = useWorkspace()
@@ -46,6 +42,7 @@ export function App() {
   return (
     <AppShell
       scrollKey={tab}
+      chatLayout={tab === 'workspace'}
       isMac={environmentState.isMac}
       sidebar={<WorkspaceSidebar state={state} openProject={openProject} run={run} />}
       header={<AppHeader project={project} tab={tab} />}
@@ -59,20 +56,9 @@ export function App() {
         </div>
       )}
       {tab === 'workspace' ? (
-        <WorkspacePage
-          sessionTitle={state.activeSession?.title}
-          project={project}
+        <ChatWorkspace
+          key={`${project?.id || 'none'}:${state.activeSession?.id || 'new'}`}
           openProject={openProject}
-          modelPicker={
-            <WorkspaceModelPicker
-              providers={state.providers}
-              settings={project ? state.projectSettings : state.settings}
-              scopeLabel={project ? '当前项目' : '应用默认'}
-              disabled={state.loading || !!state.loadError}
-              onSelect={state.selectModel}
-              onManage={() => setTab('providers')}
-            />
-          }
         />
       ) : tab === 'providers' ? (
         <ProviderSettingsPage

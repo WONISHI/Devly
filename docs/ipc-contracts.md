@@ -89,3 +89,5 @@ useEffect(() => {
 - `pnpm verify:desktop`：真实 Electron bridge、错误 DTO、事件投递/停止回调及既有界面回归。目录选择的对话框返回由测试替换，其后的文件系统与 IPC 使用真实实现。
 
 阶段 2 补充：固定 data.execute 只接受 shared/data-contracts.ts 的操作白名单，Renderer 不能发送 SQL、原始 Key 或任意文件路径。项目/会话 ID 必须配对，分页和分段读取有上限；结果仍通过 v1 requestId 和 operation 两层归属校验。新增错误码 NOT_FOUND、PROJECT_UNAVAILABLE、STORAGE_UNAVAILABLE、CREDENTIAL_UNAVAILABLE、LIMIT_EXCEEDED，均只带固定消息。原生对话框返回后再次检查页面归属，未开始的旧页面操作拒绝执行；已提交的持久化写入不承诺因页面切换自动撤销。详见 [本地数据说明](./local-data.md)。
+
+阶段 4 增加严格的 sessions.bind、chat.start/read/cancel；发送只接受项目/会话/回合 UUID 和有界文本，不接受 Renderer 提供的 Key、端点或供应商替换。会话绑定另行明确操作，有历史时需要 allowHistory。取消核对项目/会话/回合，错误返回固定 DTO；已接受回合的主进程生命周期独立于窗口订阅，页面卸载只清理可见快照轮询。详情见 [聊天契约与恢复](./chat.md)。

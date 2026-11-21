@@ -1,5 +1,12 @@
 import { z } from 'zod'
 import {
+  chatSnapshotSchema,
+  chatTurnSchema,
+  chatErrorSchema,
+  turnStateSchema,
+} from './chat-contracts'
+import { usageSchema } from './provider-contracts'
+import {
   compatibilitySchema,
   providerReportSchema,
   probeKind,
@@ -87,6 +94,9 @@ export const sessionSchema = z
     title: text,
     archived: z.boolean(),
     updatedAt: z.number().int(),
+    providerId: entityId.nullable().default(null),
+    model: z.string().max(200).default(''),
+    hasMessages: z.boolean().default(false),
   })
   .strict()
 export type Session = z.infer<typeof sessionSchema>
@@ -139,7 +149,25 @@ export const operationArgs = {
   'sessions.archive': session.extend({ archived: z.boolean() }).strict(),
   'sessions.get': session,
   'sessions.select': session,
+  'sessions.bind': session
+    .extend({
+      providerId: entityId,
+      model: z.string().trim().min(1).max(200),
+      allowHistory: z.boolean().default(false),
+      setDefault: z.boolean().default(false),
+    })
+    .strict(),
   'sessions.messages': session.extend(page).strict(),
+  'chat.start': session
+    .extend({
+      turnId: entityId,
+      text: z.string().trim().min(1).max(32768),
+      expectedProviderId: entityId,
+      expectedModel: z.string().trim().min(1).max(200),
+    })
+    .strict(),
+  'chat.read': session,
+  'chat.cancel': session.extend({ turnId: entityId }).strict(),
   'blobs.import': session.extend({ kind: z.enum(['log', 'attachment']) }).strict(),
   'blobs.list': session.extend(page).strict(),
   'blobs.read': session
@@ -161,6 +189,13 @@ export const messageSchema = z
     sessionId: entityId,
     role: z.enum(['user', 'assistant', 'tool']),
     createdAt: z.number().int(),
+    turnId: entityId.nullable().default(null),
+    state: turnStateSchema.nullable().default(null),
+    error: chatErrorSchema.nullable().default(null),
+    usage: usageSchema.nullable().default(null),
+    finish: z.string().nullable().default(null),
+    providerId: entityId.nullable().default(null),
+    model: z.string().max(200).default(''),
     parts: z.array(
       z
         .object({
@@ -189,6 +224,7 @@ export const bootstrapSchema = z
   })
   .strict()
 export type Bootstrap = z.infer<typeof bootstrapSchema>
+export type ChatMessage = z.infer<typeof messageSchema>
 const ack = z.object({ removed: z.boolean() }).strict()
 export const operationResults = {
   bootstrap: bootstrapSchema,
@@ -213,6 +249,10 @@ export const operationResults = {
   'sessions.archive': sessionSchema,
   'sessions.get': sessionSchema,
   'sessions.select': sessionSchema,
+  'sessions.bind': sessionSchema,
+  'chat.start': chatTurnSchema,
+  'chat.read': chatSnapshotSchema,
+  'chat.cancel': ack,
   'sessions.messages': z
     .object({ items: z.array(messageSchema), nextCursor: cursorSchema.nullable() })
     .strict(),

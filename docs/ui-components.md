@@ -13,13 +13,13 @@
 
 shadcn/ui 采用源码放进项目的方式，所以 components/ui 中可以看到底层 HTML 或 Radix primitive；判断是否复用要看业务页的组件导入和调用，不能以最终 DOM 是否出现 button/input 判断。当前业务交互控件已经统一，正常 form/div/section 等结构元素继续用于布局和原生表单语义。
 
-原版 AI Elements ModelSelector 已用于首页：搜索/按供应商分组/键盘选择、应用或项目默认值持久化。其余 AI 组件主要在开发者预览中；真实模型消息、Prompt Input、工具执行等 UI 随对应业务阶段引入，不把选择模型称为已经接通聊天。没有迁移到新版 Base UI 或其他 AI patterns。
+原版 AI Elements ModelSelector 已用于首页：搜索/按供应商分组/键盘选择、应用或项目默认值持久化。阶段 4 已复用原 PromptInput、Conversation 和 Message 接入普通文本聊天；Tool/Commit/Code Block 等仍用于明确标识的演示或后续业务，不把选择模型称为已经接通聊天。没有迁移到新版 Base UI 或其他 AI patterns。
 
 ## 当前映射
 
 - 设置编辑：Input、Label、Radix Select；项目/应用范围选择复用 SelectField；数值范围、必填和服务器校验保留。
 - 项目/会话侧栏：Button；会话行内重命名用 Input；保留紧凑布局和现有持久化动作。
-- 工作台：Button + Textarea；输入/发送仍按真实能力禁用。
+- 工作台：原 PromptInput/Submit + ModelSelector、Conversation/Message；空输入/缺项目或模型不能发送，生成时锁定输入并支持停止；附件入口明确禁用。
 - 开发者选项：Collapsible + CollapsibleTrigger/Content，默认折叠，使用 aria-expanded/data-state 表达状态。
 - 错误重试：Button，不再直接书写原生交互控件。
 - 品牌识别：ProviderBrandIcon 使用 357 个固定来源的本地 SVG，设置列表及原 ModelSelector 的组合层复用；详见 [供应商图标](./provider-icons.md)，没有改动 AI Elements 原文件。
@@ -30,7 +30,7 @@ shadcn/ui 采用源码放进项目的方式，所以 components/ui 中可以看�
 
 新增 Input、Textarea、Label 来自与现有组件相同的 vercel/ai-elements 固定提交 ca8be600bfd01b3131f9bf6134b51602a71f4374 中 packages/shadcn-ui/components/ui，沿用 Apache-2.0 原通知，只改本地路径别名并使用既有 Prettier 格式。原有五个 AI 组件没有修改。
 
-当前 vendor 清单为 21 份：6 个 AI、14 个配套 UI、1 个 LICENSE；上游/本地 SHA-256 见 resources/vendor/ai-elements.json。ModelSelector 与配套 Dialog/Command、ScrollArea 均来自同一固定提交，只改路径别名和既有格式化。Command 新增 cmdk 1.1.1（MIT，支持 React 18/19）；其余沿用现有 radix-ui。pnpm verify:vendor 离线验证。SelectField/WorkspaceModelPicker 是本项目组合组件，不冒称原仓文件。
+当前 vendor 清单为 26 份：7 个 AI、18 个配套 UI、1 个 LICENSE；上游/本地 SHA-256 见 resources/vendor/ai-elements.json。ModelSelector 与配套 Dialog/Command、ScrollArea 均来自同一固定提交，只改路径别名和既有格式化。Command 新增 cmdk 1.1.1（MIT，支持 React 18/19）；其余沿用现有 radix-ui。pnpm verify:vendor 离线验证。SelectField/WorkspaceModelPicker 是本项目组合组件，不冒称原仓文件。
 
 AGENTS.md 和 ESLint 已约束 App/features 不直接书写 button/input/textarea/select/option/label/details/summary；组件实现层和源自上游的组件不受此业务层限制。新增控件先检查 components/ui，补组件时同步来源。
 
@@ -44,4 +44,6 @@ AppShell 的标题栏和侧栏固定，主内容区统一由原版 ScrollArea �
 
 运行类型/Lint/构建与原组件哈希检查；已有桌面脚本改为操作真实 combobox/option 和 Collapsible，验证选择、折叠、保存、重命名、持久化、Escape 关闭与焦点恢复，不通过 DOM 改值绕过交互。
 
-实际命令/结果见 LOG-024；Windows 和远端 CI 不因本机通过自动获得通过状态。本次没有实现阶段 3/P01 或其他新的 AI 业务。
+实际命令/结果见 LOG-024；Windows 和远端 CI 不因本机通过自动获得通过状态。阶段 4 普通聊天另见 LOG-036–LOG-039；Agent 工具循环没有因组件引入自动实现。
+
+阶段 4 原 Prompt Input 及 DropdownMenu/HoverCard/InputGroup/Spinner 来自同一固定提交，只改既定别名与 UI 格式；新增 nanoid 直接依赖锁定既有 3.3.20（MIT），未升级依赖树。ChatHistory 使用 Conversation 的底部跟随上下文配合 Radix ScrollArea/同源 ScrollBar，未改原 Conversation/Message。Apache-2.0 通知随应用打包。

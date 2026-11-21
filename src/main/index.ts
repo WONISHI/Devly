@@ -199,9 +199,8 @@ let quitReady = false
 app.on('before-quit', (event) => {
   if (quitReady || !database) return
   event.preventDefault()
-  localData?.close()
-  void database
-    .close()
+  void Promise.resolve(localData?.close())
+    .then(() => database!.close())
     .catch(() => log.error('Local storage shutdown failed'))
     .finally(() => {
       quitReady = true

@@ -1,6 +1,6 @@
 # Renderer feature 边界（B01）
 
-本文记录 B01 建立的展示与桌面访问边界。后续 B02 补充通信契约；B03 增加 Provider 设置入口，阶段 2 增加会话元数据持久化，阶段 3 增加 ProviderManager/Editor 和 useProviderProbe。界面使用 shared 类型与 feature hooks，网络/密钥仍在 Main；真实供应商待验收，任务聊天与 Agent 尚未实现。详见 [入口说明](./provider-entry.md) 与 [Provider API](./provider-api.md)。
+本文记录 B01 建立的展示与桌面访问边界。后续 B02 补充通信契约；B03 增加 Provider 设置入口，阶段 2 增加会话元数据持久化，阶段 3 增加 ProviderManager/Editor 和 useProviderProbe。界面使用 shared 类型与 feature hooks，网络/密钥仍在 Main；真实供应商待验收，阶段 4 普通聊天已实现，Agent 仍未实现。详见 [入口说明](./provider-entry.md) 与 [Provider API](./provider-api.md)。
 
 ## 目录与职责
 
@@ -10,15 +10,15 @@
 | App.tsx                                              | 读取应用状态，装配 shell 与当前页面                    | 不直接调 preload，不包含具体展示内容       |
 | app/AppShell.tsx                                     | 页面框架与 slot 装配；不显示工程状态栏                 | 接收 ReactNode，不访问系统能力             |
 | app/AppHeader.tsx                                    | 当前项目与页签标题                                     | 只接收 project/tab                         |
-| features/workspace/components/                       | 项目侧栏、任务空状态、禁用输入占位与项目/模型选择按钮  | 只接收数据和回调                           |
+| features/workspace/components/                       | 项目侧栏、任务/聊天布局和项目/模型选择组合  | 只接收数据和回调                           |
 | features/workspace/hooks/use-open-project.ts         | 目录选择、取消、错误提示与当前项目更新                 | 调 platform 网关，使用 Zustand 状态        |
 | features/environment/components/EnvironmentPanel.tsx | 环境值、加载、错误和重新检查按钮                       | 只展示 hook 返回值并调用回调               |
 | features/environment/hooks/use-environment.ts        | 初次检查、刷新、失败、过期响应与卸载清理               | 调 platform 网关；只接收当前有效请求的结果 |
-| features/provider-settings/                          | 精简供应商状态、返回操作及开发者折叠区；暂无表单或保存 | 纯展示，通过回调导航，不收集密钥           |
+| features/provider-settings/                          | 供应商元数据编辑、模型检查、受保护密钥操作与设置 | 纯展示，通过回调导航，不收集密钥           |
 | features/component-preview/                          | 原 AI Elements 的演示页面与关闭操作                    | 保留原组件和明确的演示说明                 |
 | features/*/index.ts                                  | 各 feature 的公开入口                                  | 其他模块通过入口使用其组件与 hooks         |
 | platform/desktop.ts                                  | window.devly 的薄封装及桌面能力缺失错误                | 不新增 IPC，不改变主进程权限               |
-| store.ts                                             | 当前项目与页面状态                                     | 内存存储，未增加持久化                     |
+| store.ts                                             | 项目/会话分页、默认设置与 Provider DTO 状态 | 经 desktop 网关读写持久化数据                     |
 
 当前环境 hook 在 App 装配层调用，因此切换预览或供应商设置不会丢弃已读取环境状态。请求版本号避免较早的刷新结果覆盖较新请求，也避免卸载后处理过期结果。
 
@@ -28,7 +28,7 @@ ESLint 禁止 Renderer 导入 Node 或 Electron。App、shell 和展示组件进
 
 这只是 B01 的 feature 边界，不代替 B02 的统一事件、错误格式、请求关联及可清理订阅契约。
 
-## 验证范围
+## B01 首次验证范围
 
 - TypeScript、ESLint、格式、现有 1 项契约测试和生产构建通过。
 - 桌面 smoke 验证真实环境检测与刷新、目录选择成功、取消保持空状态、目录选择错误提示、原组件预览与关闭、返回工作台后保留当前项目、发送按钮仍禁用。
@@ -43,8 +43,8 @@ ESLint 禁止 Renderer 导入 Node 或 Electron。App、shell 和展示组件进
 
 阶段 2：store.ts 负责 bootstrap 与项目/会话分页状态及过期响应保护；侧栏通过回调进行持久化操作。SettingsEditor 展示应用/项目范围设置，feature hooks 调 desktop.data 网关。主题监听有清理。原始 Key 不经过 Renderer，凭据入口仅发送 providerId 到 Main 原生输入。数据与失败边界见 [本地数据说明](./local-data.md)。
 
-阶段 2：store.ts 负责 bootstrap 与项目/会话分页状态及过期响应保护；侧栏通过回调进行持久化操作。SettingsEditor 展示应用/项目范围设置，feature hooks 调 desktop.data 网关。主题监听有清理。原始 Key 不经过 Renderer，凭据入口仅发送 providerId 到 Main 原生输入。数据与失败边界见 [本地数据说明](./local-data.md)。
-
 标题栏修正（LOG-022）：macOS 使用 Electron hidden 原生标题栏，保留红黄绿按钮；AppShell 的 32px 可拖动行分别使用侧栏和主区的现有主题变量，随侧栏响应宽度与深浅主题同步。平台标识由 preload 只读暴露，经 platform 网关/环境 hook 传入展示层，不依赖异步环境检查后才决定布局。其他系统保留原生标题栏。实现依据 [Electron 自定义标题栏文档](https://www.electronjs.org/docs/latest/tutorial/custom-title-bar)。
 
 交互控件统一（LOG-024）：业务页复用 Button/Input/Textarea/Label/Radix Select/Collapsible，SelectField 仅组合已有基础组件；ESLint 禁止业务层直接重写原生交互控件。具体映射和校验见 [UI 组件说明](./ui-components.md)。
+
+阶段 4：features/chat/ChatWorkspace 组合原 PromptInput、ModelSelector 和切换历史确认；use-chat 管理可见会话快照/分页、迟到响应保护和卸载清理，ChatHistory 只展示数据并组合原 Conversation/Message 与 Radix ScrollArea。真正的网络、解密和生成生命周期位于 Main 的 chat/，不会因 React 页面卸载转移会话归属。见 [聊天说明](./chat.md)。

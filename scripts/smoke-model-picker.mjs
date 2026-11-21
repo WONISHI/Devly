@@ -179,7 +179,7 @@ try {
   await expect(page.getByRole('button', { name: '选择模型', exact: true })).toHaveText('选择模型')
   assert.equal((await data('settings.get', { projectId: aId })).defaultProviderId, null)
   assert.equal((await data('settings.get', { projectId: bId })).defaultProviderId, pb.id)
-  await expect(page.getByRole('button', { name: '对话功能待接入', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: '发送消息', exact: true })).toBeDisabled()
   assert.equal(
     requests,
     0,
@@ -194,7 +194,7 @@ try {
           'newly saved providers selectable without reload; duplicate model IDs remain distinct',
           'global and per-project selections survive two restarts without mixing',
           'missing model and unsupported protocol disabled; provider edit/removal remain explicit',
-          'selection causes zero network requests; chat availability unchanged',
+          'selection causes zero network requests; empty/unconfigured chat cannot send',
         ],
         requests,
       },

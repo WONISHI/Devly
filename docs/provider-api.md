@@ -1,6 +1,6 @@
 # 第一个第三方 API：实现与验收（P01–P06）
 
-更新：2026-11-21。代码及本地 HTTP/桌面验证已落地；**真实供应商验收待完成，阶段 3 保持待验证**。用户已表示会在 Devly 中配置有效端点和模型；本文和工作日志不保存密钥。
+更新：2026-11-22。代码及本地 HTTP/桌面验证已落地；**真实供应商验收待完成，阶段 3 保持待验证**。已确认保存了 DeepSeek 配置，但隔离验收无法读取原密钥；本文和工作日志不保存秘密。
 
 ## 使用方式
 
@@ -13,7 +13,7 @@
 
 保存模型 ID 后，返回工作台点击“选择模型”即可选择。首页使用原版 ModelSelector，按供应商分组，可搜索；选择保存到应用默认或当前项目，重启保留。此处展示已保存的模型 ID（及明确保留的当前自定义 ID），不是自动发现端点全部模型；更多模型可在管理供应商中读取列表或手工填写。选择不发模型请求、不转发项目内容，也不代表通过连接/工具能力验收。
 
-不把诊断界面当成任务聊天：工作台发送仍禁用，真实会话聊天属于阶段 4，工具执行循环属于阶段 5。
+诊断与聊天相互独立：工作台已接入阶段 4 普通聊天，见 [聊天生命周期](./chat.md)；工具执行循环属于阶段 5。
 
 ## 已实现的模块与数据流
 
@@ -40,7 +40,7 @@ flowchart TB
     ROUTER --> DATA
   end
   subgraph W[数据库 Worker]
-    DB[(SQLite v3\n元数据 / compatibility / revision / report\n只存 credential_ref)]
+    DB[(SQLite v4\n元数据 / compatibility / revision / report\n只存 credential_ref)]
     CAS[条件更新报告\nWHERE id=? AND revision=?]
     CAS --> DB
   end
@@ -54,7 +54,7 @@ flowchart TB
 
 文件职责：`src/shared/provider-contracts.ts` 定义 ProviderAdapter、消息/图片/工具结果、工具定义、Completion、Usage、流事件及检查 DTO；`src/main/providers` 实现适配、生命周期和安全错误；`src/main/data` 保存配置与凭据引用；`features/provider-settings` 承载界面和轮询清理。
 
-Main 内部的 `ProviderStreamEvent` 包含 text/tool/usage/finish。阶段 3 的 Renderer 使用受归属保护的快照读取累计预览，最大 4096 字符；不向 Renderer 暴露供应商原始响应结构。后续任务消息流另按阶段 4 接入，不修改现有环境事件语义。
+Main 内部的 `ProviderStreamEvent` 包含 text/tool/usage/finish。阶段 3 的 Renderer 使用受归属保护的快照读取累计预览，最大 4096 字符；不向 Renderer 暴露供应商原始响应结构。阶段 4 的任务文本快照与历史读取已另外接入，不修改现有环境事件语义。
 
 ## 请求与响应规则
 
@@ -107,6 +107,8 @@ Main 内部的 `ProviderStreamEvent` 包含 text/tool/usage/finish。阶段 3 �
 | pnpm verify:provider | 真实 Electron + loopback HTTP，UI CRUD、SSE 增量、工具往返、模型 404 兜底、结构化输出、重启报告、错误/超时/取消通过；实际 OS 加密 Key 替换、重启后 Main 解密并认证、UI 清除与临时 profile 明文扫描通过 | 使用 Main 内注入的测试密钥和原生 prompt 替身，不自动填写真实密钥或声称供应商通过 |
 | 真实供应商 | 待用户在应用内保存有效配置 | 尚无真实协议/模型/时间的通过记录 |
 
-真实验收后在工作日志记录日期、协议、模型、文本/流式/工具结果。不要记录 Key、Authorization 或包含凭据的 URL。当前不能勾选真实端点验收，也不能进入阶段 4。
+真实验收后在工作日志记录日期、协议、模型、文本/流式/工具结果。不要记录 Key、Authorization 或包含凭据的 URL。当前不能勾选真实端点验收；阶段 4 按用户后续新指令完成代码和本地验证，不能据此倒推阶段 3 已通过。
 
 协议参照：[Chat API 官方定义](https://developers.openai.com/api/reference/resources/chat)、[Models list 官方定义](https://developers.openai.com/api/reference/resources/models/methods/list)。这些资料只定义协议，本项目对第三方端点的支持仍以实际检查为准。
+
+2026-11-22 真实尝试：DeepSeek / chat-completions / deepseek-v4-1-flash-261017，在隔离资料中复用密文时得到 CREDENTIAL，未达到 HTTP 请求阶段；没有获得真实文本/流式/工具通过记录。此结果不能等同于 API 401，也未改写原用户资料。详见 LOG-039。

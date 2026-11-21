@@ -389,6 +389,49 @@
 
 - 最终交付复核：pnpm check 退出 0（类型/Lint/格式、65 项测试、22 份 Markdown/106 ID/35 连续日志、21 份原组件校验、357 SVG/目录/MIT 校验、生产构建和 Worker 数据检查）。pnpm run pack --config.mac.identity=null 退出 0，新版 release/mac-arm64/Devly.app 的 verify:provider-icons 与 verify:model-picker 均退出 0；包内深浅主题/资源加载、选择持久化和重启回归通过，外部请求为 0，许可证原文与包内文件逐字一致。已实际复核深浅主题截图；没有新增运行时依赖、没有调用真实模型。Windows/远端 CI 与阶段 3 真实端点仍待验证。
 
+## LOG-036｜阶段 4 / 4.1 / P07：独立会话模型绑定与历史授权
+
+- 日期：2026-11-22；用户明确要求完成阶段 4，优先于原顺序，阶段 3 的真实验收缺口仍保留。
+- 实际变更：SQLite v4 给会话保存 Provider UUID/model，新会话从项目设置取初值；已有会话不被默认设置暗中替换。回合记录实际 Provider/model/revision，旧回合不被切换改写；生成中拒绝改绑定。旧版无绑定会话要求明确选模型。
+- 历史处理：原 ModelSelector 组合层提供取消、保留历史并切换、新建会话使用三种结果；Main 再校验 allowHistory。切换本身没有 HTTP；下一次发送才使用明确授权后的成功历史，不自动发项目文件或切换其他端点。
+- 文件：shared/chat-contracts/data-contracts、main/chat/repository、data/{migrations,store,service}、features/chat/ChatWorkspace、App/store 组合及 chat.md。
+- 验证：类型/Lint、pnpm verify:chat 和实际 Electron verify:chat-ui 通过；已有历史切换不授权被拒、旧回合身份保持、弹窗取消/保留/新建和零切换请求、两项目/会话隔离均有实际检查。数据库迁移保留旧数据并先处理旧活动记录再创建唯一索引。
+- 收口保护：会话绑定与项目默认模型在同一事务保存；发送携带 expectedProviderId/expectedModel，旧界面与实际绑定不一致时发 HTTP 前拒绝。切换期间导航不会写入另一项目的设置。
+- 状态：P07 本地实现完成；阶段真实端点仍待正常凭据环境验收。下一步进入本阶段 A01，不展开阶段 5。
+
+## LOG-037｜阶段 4 / 4.2 / A01：独立聊天回合与持久化生命周期
+
+- 日期：2026-11-22。Main ChatRuntime 管理每会话单活动回合、最多四个后台生成；Renderer 只读本地快照，切换页面/重载不会移交归属或重发。共享 phase 定义准备、执行、停止、失败和完成，等待审批/工具状态只预留，不伪造执行。
+- 开始在 Worker 事务中写回合/用户消息/助手占位与 text 分段；累计文本约 80ms 保存，结束保存状态、finish 和供应商实际用量。输出参数用项目 maxTokens，缺少用量保留 null，不计算虚构费用。上下文只取完整成功回合，超过条数/字节上限明确拒绝，不静默截断。
+- 网络/凭据：Abort、120s 上限、配置变化取消、固定 Provider 错误；明文仅 Main 解密使用。SecretRedactor 在发布/入库前处理跨分段的 Key 回显；异常响应体不返回 Renderer。接受后的任务不因 UI 刷新错误重复发送。
+- 恢复与关闭：停止保留部分文本，重发新建回合；正常退出等任务终结后关闭数据库，启动将旧运行记录标 INTERRUPTED，不自动续发。归档/移除项目先停止相应任务，作用域复合检查防止跨项目取消。
+- 文件：src/main/chat/、data/service/store/migrations、main/index、共享契约、electron.vite.config、scripts/{chat.integration,verify-chat}、tests/chat-contracts。
+- 验证：pnpm test 70 项通过；Electron ABI 的 SQLite Worker/ChatRuntime 集成通过，覆盖配对写入、历史绑定/上下文、并发、取消、401/断流/意外工具、凭据回显、分页、重启和 v3 升级恢复；原 verify:data 外键检查适配新增唯一约束后通过。等待审批和工具循环未启用，费用预算/复杂 Agent 恢复仍为后续任务。
+- 状态：A01 本地实现完成；下一步 U01/U02 的界面与验收。
+
+## LOG-038｜阶段 4 / 4.3 / U01：原版 Prompt Input 与发送/停止策略
+
+- 日期：2026-11-22。任务空状态和会话底部接入用户指定的原 PromptInput/Body/Textarea/Footer/Submit；文字可编辑，空白不发送，Enter 提交、Shift+Enter 换行，组合输入遵守上游 composing guard。生成期间当前输入锁定，显示停止；保存/请求准备失败保留受控草稿。
+- 来源：固定 vercel/ai-elements ca8be600bfd01b3131f9bf6134b51602a71f4374 新增 Prompt Input 及 DropdownMenu/HoverCard/InputGroup/Spinner；只替换既有别名/配套格式化，7 AI + 18 UI + LICENSE 共 26 份来源哈希通过。Apache 通知随包分发。
+- 依赖：nanoid 精确 3.3.20，沿用已有传递版本、MIT；离线安装只增加锁文件 importer 引用，没有下载/升级其他依赖或运行生命周期，不声称旧主版本是最新维护线。
+- 附件边界：保留明确禁用的入口，粘贴/拖入文件提示当前纯文本，不把本地附件索引能力说成模型输入已支持；附件发送归阶段 11。
+- 文件：原组件/来源清单、features/chat、WorkspacePage/App/AppShell、styles、package/lock 和 smoke-desktop/model-picker。
+- 验证：类型/Lint/格式与生产构建、26 份原组件校验通过；实际 Electron 检查空输入、键盘发送/换行、锁定/停止、恢复输入和原项目/设置入口。真实系统中文输入法尚无单独人工验收，组合期间的避免提交遵循原组件实现。
+- 状态：U01 本地实现完成；继续 U02 验收和包内复核。
+
+## LOG-039｜阶段 4 / 4.4 / U02：消息历史、局部 ScrollArea 与重启续聊
+
+- 日期：2026-11-22。ChatHistory 复用原 Conversation/Message/MessageResponse，消息区通过同源 Radix ScrollArea + ScrollBar 接入原底部跟随上下文，不修改上游文件；外层 AppShell 保持固定边界。首次读 20 条、按游标加载更早消息，主动上滚不被新分段拉回，回到底部恢复跟随。
+- 生命周期：useChat 按明确项目/会话轮询最新回合，卸载清定时器并拒绝迟到结果；新回合接受后较旧快照不能回退状态。首次发送自动建会话，标题用输入摘要；历史消息、错误/取消状态与实际模型可重启读取并继续，不展示假计划/工具/测试结果。
+- 文件：features/chat/{use-chat,ChatHistory,ChatWorkspace}、纯 WorkspacePage、AppShell/styles、scripts/smoke-chat、CI/check 入口，以及 README、chat/架构/数据/入口/契约/组件/检查/阶段/依赖文档。
+- 验证：开发版 verify:chat-ui 退出 0，21 次 loopback HTTP 请求覆盖连续上下文、两会话/项目、渲染重载不重发、取消/重发、模型历史授权/新建、20 条分页、长分段上滚和回到底部、应用退出重启继续；verify:desktop 通过原导航/IPC/组件/单层页面滚动回归。实际复核聊天页与切换确认截图，修正工具栏项目名被不必要截短；包内最终结果随后记录。
+- 真实尝试：只读检查到已保存 DeepSeek / chat-completions / deepseek-v4-1-flash-261017；隔离验收目录仅复制必要元数据及受保护密文，未输出 Key、未发送项目文件或更改原资料。Provider 文本检查返回 CREDENTIAL，聊天准备未获接受，因此没有真实端点通过记录；此结果不等于 HTTP 401。一次性密文复制检查未加入产品或 CI，不尝试削弱系统保护。
+- 滚动复核：包内首次滚动检查失败；该检查未等待滚轮落地，绝对位移断言也无法区分继续上移与向下回拉。改为先等待真实上移，再验证新分段不向下拉回；Radix 视口同时明确将向上滚轮/翻页键接入原上下文 stopScroll，避免混合 overflow 样式下仅依赖原库查找滚动祖先的差异。不修改原组件。最终包内结果随后记录。
+- 状态：U02 本地实现完成，P07/A01/U01/U02 小项可交付；阶段 4 整体验收为待验证，真实消息与正常凭据环境下的重启续聊不勾选。阶段 3/P05 仍待真实文本/流式/工具验证，阶段 5 未开始。
+- 最终交付复核：最终源码 pnpm check 退出 0（类型/Lint/格式、70 项测试、23 份 Markdown/106 ID/39 连续日志、26 份原组件校验、离线品牌资源、生产构建、SQLite Worker 与 30 次注入协议请求的聊天集成）。最终未签名 macOS 应用目录打包退出 0；包内 verify:chat-ui、verify:model-picker、verify:persistence、verify:provider 均退出 0。聊天 21 次 loopback 请求与两次启动、模型选择零请求、Provider 26 次替身请求/4 次取消、实际 OS 密文替换与重启读取均通过；没有把这些当作真实供应商验收。
+- 包内滚动证据：滚轮前 scrollTop=1700，主动上滚后=500，后续分段后仍=500；960×680 输入与模型入口可达、根窗口无溢出，实际紧凑截图已复核。原 AI 与品牌许可证和包内文件逐字一致。新版应用位于 release/mac-arm64/Devly.app，非签名安装包；Windows/远端 CI 未据本机结果标为通过。
+- 唯一下一步：在正常 Devly 系统授权环境使用可读 Key 完成真实消息与重启续聊验收，记录结果；不能把本地替身、复制密文失败或 .app 构建当成真实供应商通过。
+
 ## 追加记录模板
 
 ```text

@@ -1,6 +1,6 @@
 # 阶段 2：本地数据、项目与设置
 
-实施：2026-11-21；任务 L01–L07。此阶段保存本地元数据、设置、凭据引用与日志索引，不调用模型、不运行工具，不把空会话称作聊天已实现。验收结果以工作日志和工作总表为准。
+实施：2026-11-21；任务 L01–L07。此阶段保存本地元数据、设置、凭据引用与日志索引，此处描述阶段 2 基础；阶段 4 普通聊天扩展见 [聊天说明](./chat.md)，仍不运行工具。验收结果以工作日志和工作总表为准。
 
 ## 存储与进程
 
@@ -28,6 +28,8 @@ Database Worker 的 SQLite 和文件操作在独立线程中运行，线程 API 
 
 - v1：projects、app_state、settings、providers。项目用 canonical realpath 去重，软移除；设置分 global / 项目 UUID 作用域；Provider 只存元数据和 credential_ref。
 - v2：sessions、turns、messages、message_parts、tool_calls、approvals、events、blobs，以及复合归属约束和分页索引。
+- v3：Provider compatibility、revision、report。
+- v4：会话模型绑定、回合身份/状态/时间/用量、消息关联与每会话单活动回合索引；升级恢复旧运行记录，保留旧会话与消息。
 - 每个版本在 SQLite transaction 内更新表与 user_version。已有库升级前使用 SQLite backup 创建独立备份，不把复制仍在写的 WAL 文件当作一致备份。
 - 失败回滚当前版本 DDL 和版本号，保留旧数据与备份；不自动“删库重建”。高于当前代码支持的版本拒绝打开，避免降级写入。
 - 自动启动清理只针对应用自身 UUID 命名的 orphan 临时/密文/blob 文件，保留有索引引用的文件；迁移备份保留最近 3 份。手动恢复须先退出应用，保留故障库和备份，再复制选定备份，不能在应用运行时覆盖数据库。
@@ -40,7 +42,7 @@ Database Worker 的 SQLite 和文件操作在独立线程中运行，线程 API 
 
 会话、消息和日志列表采用 `(time,id)` 降序 keyset 分页，默认 30、最多 100；侧栏按 20 条读取并按需加载。消息分段与日志只读取请求的一页/区间。项目、会话 ID 需要配对校验；SQL 复合外键覆盖回合、消息、工具调用、审批、事件和 blob 的会话归属。
 
-turn/tool/approval/event 表只建立数据结构。没有模型或工具执行、审批弹窗、真实回合恢复；内部文本记录写入仅供后续受信任 Agent 使用，未暴露给 Renderer 任意 SQL 或任意消息插入。
+阶段 4 已使用 turn/message 表保存实际普通聊天回合、消息分段与中断状态；tool/approval/event 的 Agent 执行仍未接入。Renderer 只有受校验的发送/读取/取消接口，没有任意 SQL 或任意消息插入。正常退出先终结后台聊天，再关闭 Worker；异常启动只标记中断，不自动续发。
 
 ## Provider 与凭据
 

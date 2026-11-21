@@ -13,7 +13,7 @@ const messages: Record<ProviderErrorInfo['code'], string> = {
   BAD_REQUEST: '供应商拒绝请求，请检查模型 ID 和兼容参数',
   UNSUPPORTED: '此协议或能力未启用，请检查兼容设置',
   CREDENTIAL: '无法读取受保护密钥，请重新设置密钥或检查系统保护',
-  CONFIG_CHANGED: '配置已改变，本次检查结果已失效',
+  CONFIG_CHANGED: '供应商配置已改变，本次请求已停止，请核对配置后重试',
   LIMIT: '响应或并发检查超过限制',
 }
 export class ProviderError extends Error {

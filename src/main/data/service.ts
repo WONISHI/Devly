@@ -11,6 +11,7 @@ import { ContractError, failure } from '../../shared/contracts'
 import type { DatabaseClient } from './client'
 import type { CredentialVault } from './vault'
 import { ProviderRuntime } from '../providers/runtime'
+import { ChatRuntime } from '../chat/runtime'
 
 type Prompts = {
   credential(): Promise<string | null>
@@ -20,21 +21,25 @@ type Prompts = {
 export class LocalDataService {
   private promptingCredential = false
   private providers: ProviderRuntime
+  private chats: ChatRuntime
   constructor(
     private database: DatabaseClient,
     private vault: CredentialVault,
     private prompts: Prompts,
   ) {
     this.providers = new ProviderRuntime(database, vault)
+    this.chats = new ChatRuntime(database, vault)
   }
   clearOwner(owner: string): void {
     this.providers.clearOwner(owner)
   }
-  close(): void {
+  async close(): Promise<void> {
     this.providers.close()
+    await this.chats.close()
   }
   async initialize(): Promise<void> {
     await this.database.ready
+    await this.chats.initialize()
     await this.vault.initialize()
     await this.vault.reconcile(await this.database.execute<string[]>('internal.credential.refs'))
   }
@@ -48,12 +53,17 @@ export class LocalDataService {
     const args = operationArgs[operation].parse(payload.args) as Record<string, unknown>
     if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
     let data: unknown
-    if (operation.startsWith('providers.probe.')) {
+    if (operation.startsWith('chat.')) {
+      data = await this.chats.execute(operation, args, isActive)
+    } else if (operation.startsWith('providers.probe.')) {
       data = await this.providers.execute(operation, args, owner, isActive)
     } else
       switch (operation) {
         case 'providers.save': {
-          if (args.id) this.providers.clearProvider(String(args.id))
+          if (args.id) {
+            this.providers.clearProvider(String(args.id))
+            this.chats.clearProvider(String(args.id))
+          }
           data = await this.database.execute(operation, args)
           break
         }
@@ -104,6 +114,7 @@ export class LocalDataService {
             }
             try {
               this.providers.clearProvider(providerId)
+              this.chats.clearProvider(providerId)
               const previous = await this.database.execute<string | null>(
                 'internal.credential.ref',
                 {
@@ -127,6 +138,7 @@ export class LocalDataService {
         }
         case 'credentials.clear': {
           this.providers.clearProvider(String(args.providerId))
+          this.chats.clearProvider(String(args.providerId))
           const previous = await this.database.execute<string | null>('internal.credential.ref', {
             providerId: args.providerId,
             ref: null,
@@ -137,6 +149,7 @@ export class LocalDataService {
         }
         case 'providers.remove': {
           this.providers.clearProvider(String(args.providerId))
+          this.chats.clearProvider(String(args.providerId))
           const previous = await this.database.execute<string | null>('internal.credential.ref', {
             providerId: args.providerId,
           })
@@ -159,6 +172,9 @@ export class LocalDataService {
           break
         }
         default:
+          if (operation === 'projects.remove') await this.chats.cancelScope(String(args.projectId))
+          if (operation === 'sessions.archive' && args.archived)
+            await this.chats.cancelScope(String(args.projectId), String(args.sessionId))
           data = await this.database.execute(operation, args)
       }
     if (operation === 'projects.list') data = await this.projects(data as RecentProject[])

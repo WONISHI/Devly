@@ -975,3 +975,122 @@ button:disabled {
     margin-left: 0;
   }
 }
+
+/* The outer page stays bounded; only the local message ScrollArea scrolls. */
+.main-scroll-area.chat-layout [data-slot='scroll-area-viewport'] > div {
+  height: 100%;
+  min-height: 0;
+}
+.chat-layout .main-content {
+  height: 100%;
+  min-height: 0;
+}
+.task-page-chat {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+}
+.task-page-chat > div {
+  max-width: none;
+}
+.task-page-chat .chat-session-title {
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 32px;
+  margin: 0;
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-conversation {
+  min-height: 0;
+  flex: 1;
+  position: relative;
+}
+.chat-scroll-area {
+  height: 100%;
+  width: 100%;
+}
+.chat-viewport {
+  width: 100%;
+  height: 100%;
+}
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: min(100%, 800px);
+  margin: 0 auto;
+  padding: 20px 32px 32px;
+  overflow-wrap: anywhere;
+}
+.chat-user-text {
+  white-space: pre-wrap;
+  margin: 0;
+}
+.chat-message-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.chat-message-meta button {
+  padding: 0;
+  height: 24px;
+  font-size: 11px;
+}
+.chat-composer-dock {
+  flex: 0 0 auto;
+  padding: 16px 32px 10px;
+}
+.chat-composer-dock > form,
+.chat-composer-dock > p,
+.chat-composer-dock > .chat-error {
+  max-width: 736px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.task-composer > [data-slot='input-group'] {
+  height: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+.task-composer .task-input {
+  color: var(--foreground);
+  min-height: 78px;
+  max-height: 200px;
+  box-shadow: none;
+  padding: 0 4px;
+}
+.task-composer [data-slot='input-group-addon'] {
+  padding: 8px 0 0;
+}
+.task-toolbar .task-project-selector {
+  max-width: 200px;
+}
+.chat-error {
+  color: var(--destructive);
+  font-size: 12px;
+  padding-top: 8px;
+  overflow-wrap: anywhere;
+}
+.chat-loading {
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.chat-switch-model {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.chat-switch-actions {
+  flex-wrap: wrap;
+}

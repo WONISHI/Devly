@@ -68,7 +68,7 @@ try {
     0,
   )
   assert.equal(await page.getByRole('button', { name: '查看 AI 组件' }).count(), 0)
-  assert.equal(await page.getByRole('textbox', { name: '任务输入' }).isDisabled(), true)
+  assert.equal(await page.getByRole('textbox', { name: '任务输入' }).isEditable(), true)
   await mkdir('output', { recursive: true })
   await page.screenshot({ path: 'output/workspace-empty.png' })
   await application.evaluate(({ dialog }) => {
@@ -211,7 +211,7 @@ try {
   await page.getByRole('button', { name: '返回工作台', exact: true }).click()
   await page.getByRole('heading', { name: '今天想完成什么？' }).waitFor()
   await page.locator('.project-item').getByText(basename(cwd), { exact: true }).waitFor()
-  assert.equal(await page.getByRole('button', { name: '对话功能待接入' }).isDisabled(), true)
+  assert.equal(await page.getByRole('button', { name: '发送消息' }).isDisabled(), true)
   assert.deepEqual(errors, [])
   console.log(
     JSON.stringify(

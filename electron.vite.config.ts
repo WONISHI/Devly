@@ -14,6 +14,7 @@ export default defineConfig({
           'data-client': resolve('src/main/data/client.ts'),
           vault: resolve('src/main/data/vault.ts'),
           'data-service': resolve('src/main/data/service.ts'),
+          'chat-runtime': resolve('src/main/chat/runtime.ts'),
         },
       },
     },

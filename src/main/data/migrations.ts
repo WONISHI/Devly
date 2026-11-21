@@ -34,6 +34,25 @@ export const migrations = [
     ALTER TABLE providers ADD COLUMN revision INTEGER NOT NULL DEFAULT 1;
     ALTER TABLE providers ADD COLUMN report TEXT;`,
   },
+  {
+    version: 4,
+    sql: `ALTER TABLE sessions ADD COLUMN provider_id TEXT;
+    ALTER TABLE sessions ADD COLUMN model TEXT NOT NULL DEFAULT '';
+    ALTER TABLE turns ADD COLUMN provider_id TEXT;
+    ALTER TABLE turns ADD COLUMN model TEXT NOT NULL DEFAULT '';
+    ALTER TABLE turns ADD COLUMN provider_revision INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE turns ADD COLUMN user_message_id TEXT;
+    ALTER TABLE turns ADD COLUMN assistant_message_id TEXT;
+    ALTER TABLE turns ADD COLUMN started_at INTEGER;
+    ALTER TABLE turns ADD COLUMN ended_at INTEGER;
+    ALTER TABLE turns ADD COLUMN phase TEXT NOT NULL DEFAULT 'pending';
+    ALTER TABLE turns ADD COLUMN error TEXT;
+    ALTER TABLE turns ADD COLUMN usage TEXT;
+    ALTER TABLE turns ADD COLUMN finish TEXT;
+    UPDATE turns SET status='failed',phase='failed',error='{"code":"INTERRUPTED","message":"生成被中断，请手动重新发送","status":null,"retryAfterSeconds":null}' WHERE status IN ('pending','running');
+    CREATE UNIQUE INDEX one_active_turn_per_session ON turns(session_id) WHERE status IN ('pending','running');
+    CREATE INDEX turns_latest ON turns(session_id,started_at DESC,id DESC);`,
+  },
 ] as const
 export async function applyMigrations(db: Database.Database, backups: string): Promise<void> {
   let version = db.pragma('user_version', { simple: true }) as number

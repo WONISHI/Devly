@@ -46,6 +46,13 @@
       "localSha256": "42b19903e6589ca2b8880d1d331fe46d3b3676c08044d050bec971fe4d2feeff"
     },
     {
+      "upstream": "packages/elements/src/prompt-input.tsx",
+      "local": "src/renderer/src/components/ai-elements/prompt-input.tsx",
+      "formatted": false,
+      "upstreamSha256": "cf43baf5baa444b4ae06d250643b3fb2efd329c85f9b31a43e3aaf481dd27305",
+      "localSha256": "6b032a8efeb41e9dcf7383518367da6b21c3c63e906543fc8c90e1a1d59b4f6d"
+    },
+    {
       "upstream": "packages/shadcn-ui/components/ui/avatar.tsx",
       "local": "src/renderer/src/components/ui/avatar.tsx",
       "formatted": true,
@@ -142,6 +149,34 @@
       "formatted": true,
       "upstreamSha256": "53be7fe88f0ddbb2f6d97c64c07c1b4816050494880a582c92c0c3c62117b03c",
       "localSha256": "ec6499a1dc23b595d93649db3fa118eb71d0a9880e77c2942199865d12924a80"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/dropdown-menu.tsx",
+      "local": "src/renderer/src/components/ui/dropdown-menu.tsx",
+      "formatted": true,
+      "upstreamSha256": "9384b044d08c59be883888a3dd66c3816156316f8debbcf107ef90b1e383d022",
+      "localSha256": "a44d905c46d76bab5bbe81b48206ed848f06c33251a05c34b020a2d7e621e543"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/hover-card.tsx",
+      "local": "src/renderer/src/components/ui/hover-card.tsx",
+      "formatted": true,
+      "upstreamSha256": "cf19544ba82d332ce2f882f9ae64d9e848c475f13e79fa0353492f2ce7afe1ef",
+      "localSha256": "113fae2f6d4b0680557306e19856900ffebd11d884f34ff23c107f16717177aa"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/input-group.tsx",
+      "local": "src/renderer/src/components/ui/input-group.tsx",
+      "formatted": true,
+      "upstreamSha256": "d347e89600f0750a438f31559c85bb91833eeef51a56e70c2af5ef5d8d2acdd2",
+      "localSha256": "92ed9fca9a20554f94d5be68f636ac81aae154b50114d80db3fb57c39261f424"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/spinner.tsx",
+      "local": "src/renderer/src/components/ui/spinner.tsx",
+      "formatted": true,
+      "upstreamSha256": "acf4f2aeb7fc29bd8aa22a6501b85dd4462d196e831dc5424be93ffdb49e21b4",
+      "localSha256": "006b673fb9c6922aae885173748176c0daec31d8b396a04335143808a5ec89c4"
     },
     {
       "upstream": "LICENSE",

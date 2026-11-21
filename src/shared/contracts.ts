@@ -61,6 +61,10 @@ export const errorSchema = z
       'CREDENTIAL_UNAVAILABLE',
       'PROJECT_UNAVAILABLE',
       'LIMIT_EXCEEDED',
+      'CHAT_BUSY',
+      'HISTORY_CONFIRMATION_REQUIRED',
+      'BINDING_CHANGED',
+      'CONTEXT_LIMIT',
     ]),
     message: z.string(),
     retryable: z.boolean(),
@@ -130,9 +134,13 @@ export class ContractError extends Error {
 }
 export function failure(code: ErrorInfo['code']): ErrorInfo {
   const messages: Record<ErrorInfo['code'], string> = {
+    CHAT_BUSY: '此会话正在生成，请先停止或等待完成',
+    HISTORY_CONFIRMATION_REQUIRED: '切换前请确认是否允许将此会话历史发送给新供应商',
+    BINDING_CHANGED: '会话模型或供应商配置已改变，请重新选择后发送',
+    CONTEXT_LIMIT: '会话已达到当前上下文限制，请新建会话后继续；历史不会被静默截断',
     NOT_FOUND: '记录不存在或不属于当前项目',
     STORAGE_UNAVAILABLE: '本地存储不可用，请重启应用后重试',
-    CREDENTIAL_UNAVAILABLE: '系统凭据保护不可用，未保存密钥',
+    CREDENTIAL_UNAVAILABLE: '系统凭据保护不可用或无法读取密钥，请在当前应用重新设置',
     PROJECT_UNAVAILABLE: '项目目录不存在或无法访问，请重新选择',
     LIMIT_EXCEEDED: '已达到存储或请求限额',
     INVALID_REQUEST: '请求参数无效',

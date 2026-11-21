@@ -7,12 +7,14 @@ export function AppShell({
   children,
   isMac,
   scrollKey,
+  chatLayout = false,
 }: {
   sidebar: ReactNode
   header: ReactNode
   children: ReactNode
   isMac: boolean
   scrollKey: string
+  chatLayout?: boolean
 }) {
   return (
     <div className="desktop-frame">
@@ -25,7 +27,11 @@ export function AppShell({
         {sidebar}
         <main className="main-area">
           {header}
-          <ScrollArea key={scrollKey} className="main-scroll-area" type="auto">
+          <ScrollArea
+            key={scrollKey}
+            className={`main-scroll-area ${chatLayout ? 'chat-layout' : ''}`}
+            type="auto"
+          >
             <div className="main-content">{children}</div>
           </ScrollArea>
         </main>

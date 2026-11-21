@@ -201,8 +201,15 @@ try {
     () =>
       inspect
         .prepare('INSERT INTO turns(id,session_id,project_id,status) VALUES(?,?,?,?)')
-        .run(randomUUID(), session.id, b.id, 'pending'),
+        .run(randomUUID(), session.id, b.id, 'completed'),
     /FOREIGN KEY/,
+  )
+  assert.throws(
+    () =>
+      inspect
+        .prepare('INSERT INTO turns(id,session_id,project_id,status) VALUES(?,?,?,?)')
+        .run(randomUUID(), session.id, a.id, 'pending'),
+    /UNIQUE/,
   )
   assert.throws(
     () =>
@@ -481,7 +488,7 @@ try {
   assert.equal(migrated.hasCredential, true)
   assert.equal(migrated.report, null)
   assert.equal(migrated.compatibility.vision, 'unknown')
-  assert.equal((await upgraded.execute('internal.status')).schemaVersion, 3)
+  assert.equal((await upgraded.execute('internal.status')).schemaVersion, migrations.length)
   assert.equal(
     await upgraded.execute('internal.credential.ref', { providerId: legacyProvider }),
     legacyRef,

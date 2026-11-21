@@ -14,13 +14,19 @@ import {
 import { ContractError, failure } from '../../shared/contracts'
 import { applyMigrations, migrations } from './migrations'
 import { compatibilitySchema, providerReportSchema } from '../../shared/provider-contracts'
+import { ChatRepository } from '../chat/repository'
 
 type Row = Record<string, unknown>
 export class DataStore {
+  private chat: ChatRepository
   private constructor(
     private db: Database.Database,
     private root: string,
-  ) {}
+  ) {
+    this.chat = new ChatRepository(db, (projectId, sessionId) =>
+      this.requireSession(projectId, sessionId),
+    )
+  }
   static async open(root: string): Promise<DataStore> {
     await mkdir(root, { recursive: true, mode: 0o700 })
     await chmod(root, 0o700)
@@ -92,6 +98,9 @@ export class DataStore {
       title: row.title,
       archived: !!row.archived,
       updatedAt: row.updated_at,
+      providerId: row.provider_id,
+      model: row.model,
+      hasMessages: !!this.one('SELECT id FROM messages WHERE session_id=? LIMIT 1', String(row.id)),
     }
   }
   private blob(row: Row) {
@@ -145,6 +154,7 @@ export class DataStore {
       await unlink(join(this.root, 'backups', entry.file))
   }
   async execute(operation: string, raw: unknown): Promise<unknown> {
+    if (operation.startsWith('internal.chat.')) return this.chat.execute(operation, raw)
     if (operation === 'internal.project.upsert') {
       const { path } = raw as { path: string }
       const canonical = await realpath(path)
@@ -301,12 +311,15 @@ export class DataStore {
       case 'sessions.create': {
         this.requireProject(projectId!)
         const id = randomUUID()
+        const settings = this.settings(projectId!)
         this.run(
-          'INSERT INTO sessions(id,project_id,title,updated_at) VALUES(?,?,?,?)',
+          'INSERT INTO sessions(id,project_id,title,updated_at,provider_id,model) VALUES(?,?,?,?,?,?)',
           id,
           projectId!,
           String(args.title),
           Date.now(),
+          settings.defaultProviderId,
+          settings.defaultModel,
         )
         this.run(
           'INSERT INTO app_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
@@ -344,6 +357,33 @@ export class DataStore {
       }
       case 'sessions.get':
         return this.session(this.requireSession(projectId!, sessionId!))
+      case 'sessions.bind':
+        return this.db.transaction(() => {
+          this.chat.bind(
+            args as {
+              projectId: string
+              sessionId: string
+              providerId: string
+              model: string
+              allowHistory: boolean
+            },
+          )
+          if (args.setDefault) {
+            const settings = {
+              ...this.settings(projectId!),
+              defaultProviderId: String(args.providerId),
+              defaultModel: String(args.model),
+            }
+            this.run(
+              'INSERT INTO settings(scope,value) VALUES(?,?) ON CONFLICT(scope) DO UPDATE SET value=excluded.value',
+              projectId!,
+              JSON.stringify(settings),
+            )
+          }
+          return this.session(this.requireSession(projectId!, sessionId!))
+        })()
+      case 'chat.read':
+        return this.chat.execute(operation, args)
       case 'sessions.rename':
       case 'sessions.archive': {
         this.requireSession(projectId!, sessionId!)
@@ -374,7 +414,7 @@ export class DataStore {
         const cursor = args.cursor as { time: number; id: string } | null
         const limit = Number(args.limit)
         const rows = this.all(
-          `SELECT * FROM messages WHERE session_id=? ${cursor ? 'AND (created_at < ? OR (created_at = ? AND id < ?))' : ''} ORDER BY created_at DESC,id DESC LIMIT ?`,
+          `SELECT m.*,t.status AS turn_state,t.error,t.usage,t.finish,t.provider_id,t.model FROM messages m LEFT JOIN turns t ON t.id=m.turn_id WHERE m.session_id=? ${cursor ? 'AND (m.created_at < ? OR (m.created_at = ? AND m.id < ?))' : ''} ORDER BY m.created_at DESC,m.id DESC LIMIT ?`,
           sessionId!,
           ...(cursor ? [cursor.time, cursor.time, cursor.id] : []),
           limit + 1,
@@ -387,6 +427,13 @@ export class DataStore {
             sessionId: row.session_id,
             role: row.role,
             createdAt: row.created_at,
+            turnId: row.turn_id,
+            state: row.turn_state ?? null,
+            error: row.error ? JSON.parse(String(row.error)) : null,
+            usage: row.usage ? JSON.parse(String(row.usage)) : null,
+            finish: row.finish ?? null,
+            providerId: row.provider_id ?? null,
+            model: row.model ?? '',
             parts: this.all(
               'SELECT id,type,text,blob_id FROM message_parts WHERE message_id=? ORDER BY position',
               String(row.id),

@@ -304,6 +304,40 @@ button:disabled {
   gap: 8px;
   flex-shrink: 0;
 }
+.workspace-model-trigger {
+  max-width: 240px;
+  min-width: 0;
+}
+.workspace-model-picker {
+  max-width: min(440px, calc(100vw - 48px));
+}
+.workspace-model-picker [cmdk-group-heading] {
+  overflow-wrap: anywhere;
+}
+.workspace-model-option {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.workspace-model-option small {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.workspace-model-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.workspace-model-error {
+  margin: 0;
+  padding: 10px 12px;
+}
 .task-toolbar .task-send {
   width: 30px;
   border-radius: 50%;

@@ -36,7 +36,8 @@
     "verify:no-codex": "node scripts/verify-no-codex.mjs",
     "verify:data": "node scripts/verify-data.mjs",
     "verify:persistence": "node scripts/smoke-persistence.mjs",
-    "verify:provider": "node scripts/smoke-provider.mjs"
+    "verify:provider": "node scripts/smoke-provider.mjs",
+    "verify:model-picker": "node scripts/smoke-model-picker.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -54,6 +55,7 @@
     "better-sqlite3": "^12.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "1.1.1",
     "electron-log": "^5.4.0",
     "lucide-react": "^0.468.0",
     "monaco-editor": "^0.52.2",

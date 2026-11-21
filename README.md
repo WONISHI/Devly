@@ -33,6 +33,7 @@ pnpm dev
 | `pnpm verify:data`               | Worker/SQLite 数据、迁移与存储集成检查                      |
 | `pnpm verify:persistence`        | 真实桌面双项目重启、设置与系统凭据检查                      |
 | `pnpm verify:provider`           | Electron 供应商界面与本地 HTTP 协议替身验证（非供应商实测） |
+| `pnpm verify:model-picker`       | 首页原版模型选择、搜索、重启与项目隔离，确认不发送 API 请求 |
 | `pnpm verify:native`             | 在 Electron Node 中验证 SQLite 和 PTY                       |
 | `node scripts/smoke-desktop.mjs` | 启动桌面应用，检查 IPC、目录选择和 AI 组件，生成截图        |
 | `pnpm run pack`                  | 构建当前平台应用目录                                        |
@@ -55,7 +56,7 @@ tests/                          基础测试
 docs/                           架构、技术选型、实施计划和搭建记录
 ```
 
-首页为任务空状态，模型选择与侧栏设置进入供应商管理；环境检查和原 AI 组件预览收进开发者选项。供应商连接诊断已接入，任务聊天/Agent 仍待后续阶段。正常启动不探测 Codex，不要求安装 Codex 或登录 ChatGPT；独立的初始化握手脚本保留为可选技术储备。入口与无 Codex 验证见 [B03 记录](./docs/provider-entry.md)。
+首页使用原版 AI Elements ModelSelector 选择已保存模型，支持按模型/供应商搜索；无项目时保存应用默认值，有项目时保存该项目默认值，重启保留。选择器提供供应商管理入口，侧栏设置仍可管理配置；环境检查和原 AI 组件预览收进开发者选项。供应商连接诊断已接入，任务聊天/Agent 仍待后续阶段。正常启动不探测 Codex，不要求安装 Codex 或登录 ChatGPT；独立握手脚本保留为可选技术储备。见 [产品入口](./docs/provider-entry.md)。
 
 后续按 [工作总表](./docs/work-plan.md) 推进，每项完成后在 [工作日志](./docs/work-log.md) 记录实现与验证；仓库执行约定见 [AGENTS.md](./AGENTS.md)。
 

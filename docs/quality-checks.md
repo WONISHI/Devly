@@ -13,7 +13,7 @@
 | 格式 | `pnpm format:check` | 仓库格式；沿用现有 docs/上游 AI 组件排除规则 |
 | 关键测试 | `pnpm test` | 路径契约、IPC 参数/归属、错误和订阅清理 |
 | 文档结构 | `pnpm check:docs` | 本地链接、代码围栏、106 个唯一任务 ID、连续日志号 |
-| 原组件完整性 | `pnpm verify:vendor` | 固定提交的 18 份 AI/UI/许可证文件本地 SHA-256，完全离线（含 ScrollArea） |
+| 原组件完整性 | `pnpm verify:vendor` | 固定提交的 21 份 AI/UI/许可证文件本地 SHA-256，完全离线（含 ModelSelector/ScrollArea） |
 | 生产产物 | `pnpm build:bundle` | 构建 main、沙箱 preload 和 renderer；不重复运行类型检查 |
 | 本地数据集成 | `pnpm verify:data` | 构建后以 Electron Node 运行真实 SQLite Worker、迁移、分页、日志、凭据引用检查 |
 
@@ -55,3 +55,5 @@ V02/V03 仍需在已安装应用中验证业务能力、原生模块、中文/�
 阶段 2 增加 `pnpm verify:persistence`，在隔离的临时 userData 检查真实窗口的多项目重启、会话、设置/主题、系统 safeStorage 与原生导出；可以用 DEVLY_EXECUTABLE 指向打包应用。系统安全后端不可用时明确失败，不回退明文。CI 与平台结果仍需实际执行，见 [本地数据说明](./local-data.md)。
 
 阶段 3 新增 `pnpm verify:provider` 与 CI 步骤：真实 Electron、临时 userData、loopback HTTP 协议替身，覆盖供应商 CRUD、模型列表 404/手工兜底、SSE 增量、工具往返、独立能力、401/403/429/500、超时/断流/取消及报告重启/失效。这里的“CI 不请求模型”指不请求外部模型；替身不构成真实供应商接通证据。支持 DEVLY_EXECUTABLE 指向包内程序。`pnpm test` 当前为 56 项，新增适配器与生命周期测试见 tests/providers.test.ts。真实端点验收单独记录，见 [Provider API](./provider-api.md)。
+
+首页选择修正新增 `pnpm verify:model-picker` 与 CI 步骤：原版选择器、搜索/键盘、应用/双项目默认选择和重启、编辑/删除后的选择处理，验证端点收到请求数为 0。支持包内 DEVLY_EXECUTABLE。新增 4 项模型选项边界测试后 pnpm test 共 60 项。

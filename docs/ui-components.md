@@ -8,12 +8,12 @@
 | --- | --- | --- |
 | 基础控件 | shadcn/ui + Radix：Button、Input、Textarea、Label、Select、Collapsible、ScrollArea | components/ui/ |
 | 通用表单组合 | SelectField 组合现有 Select/Trigger/Content/Item，不重新实现下拉行为 | components/forms/SelectField.tsx |
-| AI 交互 | 用户指定的原版 AI Elements：Conversation、Message、Tool、Commit、Code Block | components/ai-elements/ |
+| AI 交互 | 原版 AI Elements：ModelSelector、Conversation、Message、Tool、Commit、Code Block | components/ai-elements/ |
 | 布局 | 正常 React/HTML/CSS 的侧栏、页面框架、可拖动标题栏 | app/、features/、styles.css |
 
 shadcn/ui 采用源码放进项目的方式，所以 components/ui 中可以看到底层 HTML 或 Radix primitive；判断是否复用要看业务页的组件导入和调用，不能以最终 DOM 是否出现 button/input 判断。当前业务交互控件已经统一，正常 form/div/section 等结构元素继续用于布局和原生表单语义。
 
-AI Elements 目前主要在开发者预览中；真实模型消息、Prompt Input、工具执行等 UI 随对应业务阶段引入，不把只替换基础控件称为已经接通 AI。没有迁移到新版 Base UI 或其他 AI patterns。
+原版 AI Elements ModelSelector 已用于首页：搜索/按供应商分组/键盘选择、应用或项目默认值持久化。其余 AI 组件主要在开发者预览中；真实模型消息、Prompt Input、工具执行等 UI 随对应业务阶段引入，不把选择模型称为已经接通聊天。没有迁移到新版 Base UI 或其他 AI patterns。
 
 ## 当前映射
 
@@ -29,7 +29,7 @@ AI Elements 目前主要在开发者预览中；真实模型消息、Prompt Inpu
 
 新增 Input、Textarea、Label 来自与现有组件相同的 vercel/ai-elements 固定提交 ca8be600bfd01b3131f9bf6134b51602a71f4374 中 packages/shadcn-ui/components/ui，沿用 Apache-2.0 原通知，只改本地路径别名并使用既有 Prettier 格式。原有五个 AI 组件没有修改。
 
-当前 vendor 清单为 18 份：5 个 AI、12 个配套 UI、1 个 LICENSE；上游/本地 SHA-256 见 resources/vendor/ai-elements.json。ScrollArea 与其他 UI 来自同一固定提交，只改路径别名和既有格式化；使用已安装的 radix-ui，不增加 npm 依赖。pnpm verify:vendor 离线验证。SelectField 是本项目组合组件，不冒称原仓文件。
+当前 vendor 清单为 21 份：6 个 AI、14 个配套 UI、1 个 LICENSE；上游/本地 SHA-256 见 resources/vendor/ai-elements.json。ModelSelector 与配套 Dialog/Command、ScrollArea 均来自同一固定提交，只改路径别名和既有格式化。Command 新增 cmdk 1.1.1（MIT，支持 React 18/19）；其余沿用现有 radix-ui。pnpm verify:vendor 离线验证。SelectField/WorkspaceModelPicker 是本项目组合组件，不冒称原仓文件。
 
 AGENTS.md 和 ESLint 已约束 App/features 不直接书写 button/input/textarea/select/option/label/details/summary；组件实现层和源自上游的组件不受此业务层限制。新增控件先检查 components/ui，补组件时同步来源。
 

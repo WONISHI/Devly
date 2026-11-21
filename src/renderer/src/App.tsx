@@ -6,7 +6,12 @@ import { AppShell } from '@/app/AppShell'
 import { ComponentPreviewPage } from '@/features/component-preview'
 import { ProviderSettingsPage } from '@/features/provider-settings'
 import { useEnvironment } from '@/features/environment'
-import { WorkspacePage, WorkspaceSidebar, useOpenProject } from '@/features/workspace'
+import {
+  WorkspacePage,
+  WorkspaceSidebar,
+  WorkspaceModelPicker,
+  useOpenProject,
+} from '@/features/workspace'
 import { useWorkspace } from '@/store'
 
 export function App() {
@@ -58,7 +63,16 @@ export function App() {
           sessionTitle={state.activeSession?.title}
           project={project}
           openProject={openProject}
-          openProviders={() => setTab('providers')}
+          modelPicker={
+            <WorkspaceModelPicker
+              providers={state.providers}
+              settings={project ? state.projectSettings : state.settings}
+              scopeLabel={project ? '当前项目' : '应用默认'}
+              disabled={state.loading || !!state.loadError}
+              onSelect={state.selectModel}
+              onManage={() => setTab('providers')}
+            />
+          }
         />
       ) : tab === 'providers' ? (
         <ProviderSettingsPage

@@ -365,6 +365,18 @@
 - 最终交付复核：开发版 verify:provider 退出 0，密钥/测试/流式与取消等既有 26 次替身请求保持通过；pnpm run pack --config.mac.identity=null 退出 0，更新本机 Devly.app；该包内 verify:desktop 退出 0，单层 ScrollArea/固定标题与侧栏/底部可达、项目与 AI 组件预览均通过。格式、类型/Lint、18 份组件来源校验和 21 份 Markdown/106 ID/33 连续日志检查通过；按此前要求提交同步，具体 hash/回执由 Git 和最终回复报告。
 - Git 交付：修复本地提交为 7585304。三次普通快进推送（含 HTTP/1.1 重试）均因 GitHub 网络低速超时失败，错误为 Operation too slow，未获得远端成功回执；没有改写历史或回滚修复。本机新版应用与验证结果不受影响，网络恢复后执行 git push origin main 即可同步剩余提交。
 
+## LOG-034｜L04/P02 首页修正：已保存模型可选与默认选择持久化
+
+- 日期：2026-11-21。用户指出添加供应商后首页仍无法选择模型；这是原按钮仅打开设置、没有实现真实选项和保存动作导致的缺口。
+- 实现：使用用户指定的原版 AI Elements ModelSelector，支持模型/供应商搜索、键盘选择、Escape 取消、当前选择标识与管理供应商入口；新保存的 Provider/模型立即可选，首页按钮显示选中模型。按 Provider UUID 与模型 ID 组合区分不同端点的同名模型；无模型 ID 或未实现协议禁用，未设 Key 的无认证端点仍允许明确选择。
+- 持久化：无项目时保存应用默认 Provider/模型，有项目时保存当前项目默认值，并保留该作用域其他设置。保存完成后刷新真实状态，不用乐观显示冒充落库；编辑供应商默认模型不会暗中替换用户已选 ID，删除供应商后清空失效选择，不自动换到其他端点。没有新增 API 请求或转发代码上下文。
+- 来源/依赖：ModelSelector 及配套 Dialog/Command 来自既有固定提交 ca8be600bfd01b3131f9bf6134b51602a71f4374，仅别名替换/配套格式化；6 AI + 14 UI + LICENSE 共 21 份哈希核对通过。新增 cmdk 精确版本 1.1.1（MIT，React 18/19 peer），锁文件只新增该包及对既有 Radix/React 的引用，未升级其他依赖。来源/许可证与兼容性记录已同步，不据此宣称正式可发行。
+- 文件：WorkspaceModelPicker.tsx、model-options.ts、WorkspacePage/App/store/index、styles.css、原组件与来源清单、package/lock、tests/model-options.test.ts、smoke-model-picker、desktop smoke/CI，以及 README、入口、UI、Provider/依赖/检查文档。
+- 已验证：类型/Lint/生产构建通过；pnpm test 60/60（新增 4 项同名模型、去重/未知协议、保留旧选择与删除不自动替换）；verify:model-picker 退出 0，实际界面新建配置后立即可选、搜索/键盘/Escape、两次重启、应用/双项目隔离、配置编辑与删除检查通过，端点收到请求数为 0。verify:desktop 退出 0，空选择器管理入口、单层 ScrollArea、既有 IPC/项目/AI 组件预览回归通过。output/workspace-model-picker.png 实际截图已复核。
+- 边界：本轮修复默认选择入口，未实现 P07 的会话绑定、模型消息生成或工具运行，不把选择成功当成 API 文本/工具验收通过；阶段 3/P05 仍待有效端点实测。Windows/远端 CI 未获通过结论。
+- 下一步：更新本机应用并做包内选择恢复复核，然后按此前要求提交同步。真实端点验收与阶段 4 仍按工作表执行。
+- 最终交付复核：pnpm check 退出 0（类型/Lint/格式、60 项测试、21 原组件/许可证校验、21 份 Markdown/106 ID/34 连续日志、生产构建及 Worker 数据检查）。pnpm run pack --config.mac.identity=null 退出 0，更新本机 Devly.app；包内 verify:model-picker 退出 0，应用/项目选择与两次重启均通过，端点请求仍为 0。截图已复核，不把测试模型名称当成真实服务可用证明。
+
 ## 追加记录模板
 
 ```text

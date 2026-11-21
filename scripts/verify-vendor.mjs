@@ -8,11 +8,13 @@ const commit = 'ca8be600bfd01b3131f9bf6134b51602a71f4374'
 const sha256 = (text) => createHash('sha256').update(text).digest('hex')
 if (process.argv.includes('--refresh')) {
   const entries = [
-    ...['commit', 'conversation', 'message', 'tool', 'code-block'].map((name) => ({
-      upstream: `packages/elements/src/${name}.tsx`,
-      local: `src/renderer/src/components/ai-elements/${name}.tsx`,
-      formatted: false,
-    })),
+    ...['commit', 'conversation', 'message', 'tool', 'code-block', 'model-selector'].map(
+      (name) => ({
+        upstream: `packages/elements/src/${name}.tsx`,
+        local: `src/renderer/src/components/ai-elements/${name}.tsx`,
+        formatted: false,
+      }),
+    ),
     ...[
       'avatar',
       'badge',
@@ -26,6 +28,8 @@ if (process.argv.includes('--refresh')) {
       'textarea',
       'label',
       'scroll-area',
+      'dialog',
+      'command',
     ].map((name) => ({
       upstream: `packages/shadcn-ui/components/ui/${name}.tsx`,
       local: `src/renderer/src/components/ui/${name}.tsx`,

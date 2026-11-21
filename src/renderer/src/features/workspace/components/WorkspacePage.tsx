@@ -2,18 +2,19 @@ import { ArrowUp, ChevronDown, FolderOpen } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import type { Project } from '@shared/contracts'
+import type { ReactNode } from 'react'
 
 type WorkspacePageProps = {
   sessionTitle?: string
   project: Project | null
   openProject: () => Promise<void>
-  openProviders: () => void
+  modelPicker: ReactNode
 }
 
 export function WorkspacePage({
   project,
   openProject,
-  openProviders,
+  modelPicker,
   sessionTitle,
 }: WorkspacePageProps) {
   return (
@@ -41,10 +42,7 @@ export function WorkspacePage({
               <ChevronDown size={12} />
             </Button>
             <div className="task-model-controls">
-              <Button variant="ghost" size="sm" onClick={openProviders} aria-label="选择模型">
-                选择模型
-                <ChevronDown size={12} />
-              </Button>
+              {modelPicker}
               <Button size="icon" disabled aria-label="对话功能待接入" className="task-send">
                 <ArrowUp size={17} />
               </Button>

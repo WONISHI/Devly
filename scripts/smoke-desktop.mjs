@@ -97,6 +97,7 @@ try {
   await mkdir('output', { recursive: true })
   await page.screenshot({ path: 'output/workspace.png' })
   await page.getByRole('button', { name: '选择模型', exact: true }).click()
+  await page.getByRole('button', { name: '添加供应商', exact: true }).click()
   await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
   await page.getByRole('button', { name: '添加供应商', exact: true }).waitFor()
   assert.equal(await page.locator('input[type=password]').count(), 0)

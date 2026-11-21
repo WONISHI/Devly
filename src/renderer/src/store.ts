@@ -7,6 +7,7 @@ import {
   type Settings,
   type Provider,
 } from '@shared/data-contracts'
+import { modelOptions } from '@/features/workspace/model-options'
 export type WorkspaceTab = 'workspace' | 'components' | 'providers'
 type Cursor = { time: number; id: string } | null
 type WorkspaceState = {
@@ -26,6 +27,7 @@ type WorkspaceState = {
   setTab: (tab: WorkspaceTab) => void
   refresh: () => Promise<void>
   selectProject: (id: string) => Promise<void>
+  selectModel: (providerId: string, model: string) => Promise<void>
   removeProject: (id: string) => Promise<void>
   newSession: () => Promise<void>
   selectSession: (id: string) => Promise<void>
@@ -96,6 +98,20 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   selectProject: async (id) => {
     await desktop.data('projects.switch', { projectId: id })
     set({ tab: 'workspace', archived: false })
+    await get().refresh()
+  },
+  selectModel: async (providerId, model) => {
+    const state = get()
+    const projectId = state.project?.id ?? null
+    const settings = projectId ? state.projectSettings : state.settings
+    const option = modelOptions(state.providers, settings).find(
+      (option) => option.providerId === providerId && option.model === model,
+    )
+    if (!option || option.disabled) throw new Error('模型配置已改变或协议暂未接入，请重新选择')
+    await desktop.data('settings.save', {
+      projectId,
+      settings: { ...settings, defaultProviderId: providerId, defaultModel: model },
+    })
     await get().refresh()
   },
   removeProject: async (id) => {

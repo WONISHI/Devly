@@ -353,6 +353,17 @@
 - 下一步：更新本机应用并复核包内流程；用户配置有效端点与受保护密钥后继续 P05 的真实文本/SSE/工具往返验收，阶段位置保持阶段 3。
 - 最终包内验证：pnpm run pack --config.mac.identity=null 退出 0；DEVLY_EXECUTABLE 指向新版 Devly.app 的 verify:provider 退出 0，覆盖 26 次本地请求、4 次关闭/取消路径，含表单“取消测试”、首次设置 Key 的取消/替换/清除及 OS 密文/认证/明文扫描；格式/类型/Lint、17 份原组件校验与文档结构检查通过。应用已更新，尚无真实供应商验收结论。
 
+## LOG-033｜B01/B03/P02 界面修正：单层 ScrollArea 与窗口滚动边界
+
+- 日期：2026-11-21。用户要求修复设置页双滚动条并使用 ScrollArea；本轮仅修正滚动和布局，阶段 3/P05 真实端点验收状态保持待验证。
+- 根因证据：实际 Electron 中 innerHeight=859，设置页自身 scrollHeight=1297，同时根文档 scrollHeight=1086；Radix Select 的隐藏原生 select 使用 absolute 定位，静态坐标超出视窗（底部约 1086），缺少定位/根滚动边界使它额外撑高文档。不是两条相同滚动条简单重复绘制。
+- 修正：html/body/root 限制为窗口尺寸，desktop-frame 建立定位边界；AppShell 在标题下统一使用 ScrollArea，设置/工作台/组件预览移除页面级 overflow:auto。测量层使用限定宽度、可随内容增高的弹性布局，保留 Radix 对长表单变化的测量；按 tab 重建滚动视图，页面切换回到顶部。标题栏/侧栏仍固定，局部消息/日志/侧栏滚动不混入主窗口。
+- 组件来源：新增 scroll-area.tsx 来自现有 vercel/ai-elements 固定提交 ca8be600bfd01b3131f9bf6134b51602a71f4374 的配套 shadcn-ui；只替换别名并格式化，Apache-2.0 原通知保留。使用现有 radix-ui，没有增加 npm 依赖。校验清单从 17 更新到 18，原有组件哈希校验仍通过。
+- 文件：App.tsx、app/AppShell.tsx、styles.css、components/ui/{scroll-area.tsx,SOURCE.md}、vendor 清单与 verify-vendor、smoke-desktop、ui-components/quality-checks、工作计划及 AGENTS。
+- 已验证：类型/Lint/生产构建通过；verify:desktop 退出 0，960×680 长表单实际滚轮只移动 ScrollArea、标题/侧栏坐标固定、打开/关闭主题下拉后根文档无纵横溢出、唯一主滚动条和底部开发者入口可达，原 IPC/项目/组件预览回归通过。已检查 output/settings-scrollarea-compact.png 与 workspace-compact.png 的真实渲染，无第二根窗口滚动条，工作台布局可用。
+- 边界/下一步：继续供应商表单回归与包内复核、更新本机应用；Windows/远端 CI 尚未实测，不改变真实模型或正式发行验收结论。
+- 最终交付复核：开发版 verify:provider 退出 0，密钥/测试/流式与取消等既有 26 次替身请求保持通过；pnpm run pack --config.mac.identity=null 退出 0，更新本机 Devly.app；该包内 verify:desktop 退出 0，单层 ScrollArea/固定标题与侧栏/底部可达、项目与 AI 组件预览均通过。格式、类型/Lint、18 份组件来源校验和 21 份 Markdown/106 ID/33 连续日志检查通过；按此前要求提交同步，具体 hash/回执由 Git 和最终回复报告。
+
 ## 追加记录模板
 
 ```text

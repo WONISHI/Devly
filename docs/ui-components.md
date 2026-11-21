@@ -6,7 +6,7 @@
 
 | 范围 | 当前使用 | 位置 |
 | --- | --- | --- |
-| 基础控件 | shadcn/ui + Radix：Button、Input、Textarea、Label、Select、Collapsible | components/ui/ |
+| 基础控件 | shadcn/ui + Radix：Button、Input、Textarea、Label、Select、Collapsible、ScrollArea | components/ui/ |
 | 通用表单组合 | SelectField 组合现有 Select/Trigger/Content/Item，不重新实现下拉行为 | components/forms/SelectField.tsx |
 | AI 交互 | 用户指定的原版 AI Elements：Conversation、Message、Tool、Commit、Code Block | components/ai-elements/ |
 | 布局 | 正常 React/HTML/CSS 的侧栏、页面框架、可拖动标题栏 | app/、features/、styles.css |
@@ -29,9 +29,15 @@ AI Elements 目前主要在开发者预览中；真实模型消息、Prompt Inpu
 
 新增 Input、Textarea、Label 来自与现有组件相同的 vercel/ai-elements 固定提交 ca8be600bfd01b3131f9bf6134b51602a71f4374 中 packages/shadcn-ui/components/ui，沿用 Apache-2.0 原通知，只改本地路径别名并使用既有 Prettier 格式。原有五个 AI 组件没有修改。
 
-当前 vendor 清单为 17 份：5 个 AI、11 个配套 UI、1 个 LICENSE；上游/本地 SHA-256 见 resources/vendor/ai-elements.json。pnpm verify:vendor 离线验证；新增组件没有新增 npm 依赖。SelectField 是本项目组合组件，不冒称原仓文件。
+当前 vendor 清单为 18 份：5 个 AI、12 个配套 UI、1 个 LICENSE；上游/本地 SHA-256 见 resources/vendor/ai-elements.json。ScrollArea 与其他 UI 来自同一固定提交，只改路径别名和既有格式化；使用已安装的 radix-ui，不增加 npm 依赖。pnpm verify:vendor 离线验证。SelectField 是本项目组合组件，不冒称原仓文件。
 
 AGENTS.md 和 ESLint 已约束 App/features 不直接书写 button/input/textarea/select/option/label/details/summary；组件实现层和源自上游的组件不受此业务层限制。新增控件先检查 components/ui，补组件时同步来源。
+
+## 页面滚动（LOG-033）
+
+AppShell 的标题栏和侧栏固定，主内容区统一由原版 ScrollArea 管理；设置、工作台、组件预览不再各自创建页面级原生滚动。html/body/root 限制为窗口尺寸，桌面框架建立定位边界，防止 Radix 隐藏的表单 Select 绝对定位到根页面后撑开外层滚动范围。ScrollArea 内容测量层采用限定宽度的弹性布局，随长表单展开自然增高，保留滚动条尺寸更新；页面切换与现有内容生命周期保持一致。
+
+桌面检查包含紧凑窗口长表单、实际滚轮、根文档尺寸、唯一主滚动条、标题/侧栏固定、下拉开关后无外层溢出、底部内容可达及截图。消息预览、代码块和侧栏各自的局部滚动不与主窗口滚动混为一项。
 
 ## 验证边界
 

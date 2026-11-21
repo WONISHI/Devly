@@ -40,6 +40,7 @@ export function App() {
   }
   return (
     <AppShell
+      scrollKey={tab}
       isMac={environmentState.isMac}
       sidebar={<WorkspaceSidebar state={state} openProject={openProject} run={run} />}
       header={<AppHeader project={project} tab={tab} />}

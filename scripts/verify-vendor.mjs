@@ -25,6 +25,7 @@ if (process.argv.includes('--refresh')) {
       'input',
       'textarea',
       'label',
+      'scroll-area',
     ].map((name) => ({
       upstream: `packages/shadcn-ui/components/ui/${name}.tsx`,
       local: `src/renderer/src/components/ui/${name}.tsx`,

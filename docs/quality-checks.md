@@ -13,7 +13,7 @@
 | 格式 | `pnpm format:check` | 仓库格式；沿用现有 docs/上游 AI 组件排除规则 |
 | 关键测试 | `pnpm test` | 路径契约、IPC 参数/归属、错误和订阅清理 |
 | 文档结构 | `pnpm check:docs` | 本地链接、代码围栏、106 个唯一任务 ID、连续日志号 |
-| 原组件完整性 | `pnpm verify:vendor` | 固定提交的 17 份 AI/UI/许可证文件本地 SHA-256，完全离线 |
+| 原组件完整性 | `pnpm verify:vendor` | 固定提交的 18 份 AI/UI/许可证文件本地 SHA-256，完全离线（含 ScrollArea） |
 | 生产产物 | `pnpm build:bundle` | 构建 main、沙箱 preload 和 renderer；不重复运行类型检查 |
 | 本地数据集成 | `pnpm verify:data` | 构建后以 Electron Node 运行真实 SQLite Worker、迁移、分页、日志、凭据引用检查 |
 

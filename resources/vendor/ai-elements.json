@@ -116,6 +116,13 @@
       "localSha256": "49aedc524d15feaf0aebff951f63de6087fc31d1d2b78eae4e756db43ae1bc81"
     },
     {
+      "upstream": "packages/shadcn-ui/components/ui/scroll-area.tsx",
+      "local": "src/renderer/src/components/ui/scroll-area.tsx",
+      "formatted": true,
+      "upstreamSha256": "e7d38bb90960e5cd95069bb0ced0177d4284a7d029a65171ac5772b6ab42ff46",
+      "localSha256": "29fc959397cdfe78cdaea29529b3bda04bc0f001a888562882cc64e044b3279c"
+    },
+    {
       "upstream": "LICENSE",
       "local": "src/renderer/src/components/ai-elements/LICENSE",
       "formatted": false,

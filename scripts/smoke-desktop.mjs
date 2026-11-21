@@ -122,6 +122,61 @@ try {
     false,
   )
   await page.screenshot({ path: 'output/providers-compact.png' })
+  await page.getByRole('button', { name: '添加供应商', exact: true }).click()
+  const viewport = page.locator('.main-scroll-area > [data-slot="scroll-area-viewport"]')
+  await viewport.evaluate((element) => {
+    element.scrollTop = 0
+  })
+  const fixedPosition = await page.evaluate(() => ({
+    header: document.querySelector('.topbar').getBoundingClientRect().top,
+    sidebar: document.querySelector('.sidebar').getBoundingClientRect().top,
+  }))
+  const region = await viewport.boundingBox()
+  await page.mouse.move(region.x + region.width - 30, region.y + region.height / 2)
+  await page.mouse.wheel(0, 500)
+  await page.waitForFunction(
+    () =>
+      document.querySelector('.main-scroll-area [data-slot="scroll-area-viewport"]').scrollTop >
+      100,
+  )
+  assert.deepEqual(
+    await page.evaluate(() => ({
+      header: document.querySelector('.topbar').getBoundingClientRect().top,
+      sidebar: document.querySelector('.sidebar').getBoundingClientRect().top,
+    })),
+    fixedPosition,
+    'header and sidebar stay fixed while content scrolls',
+  )
+  await page.getByRole('combobox', { name: '主题', exact: true }).click()
+  await page.keyboard.press('Escape')
+  const scrollBounds = await page.evaluate(() => ({
+    rootHeight: document.scrollingElement.scrollHeight,
+    rootClient: document.scrollingElement.clientHeight,
+    rootWidth: document.scrollingElement.scrollWidth,
+    width: innerWidth,
+    top: document.scrollingElement.scrollTop,
+    scrollbars: document.querySelectorAll('.main-scroll-area [data-slot="scroll-area-scrollbar"]')
+      .length,
+  }))
+  assert.ok(scrollBounds.rootHeight <= scrollBounds.rootClient + 1, JSON.stringify(scrollBounds))
+  assert.equal(scrollBounds.rootWidth, scrollBounds.width)
+  assert.equal(scrollBounds.top, 0)
+  assert.equal(scrollBounds.scrollbars, 1)
+  await viewport.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+  })
+  await page.getByRole('button', { name: '开发者选项', exact: true }).waitFor({ state: 'visible' })
+  assert.ok(await page.getByRole('button', { name: '开发者选项', exact: true }).isVisible())
+  const footer = await page.getByRole('button', { name: '开发者选项', exact: true }).boundingBox()
+  assert.ok(
+    footer.y + footer.height <= region.y + region.height + 1,
+    'the final settings control must be reachable',
+  )
+  await viewport.evaluate((element) => {
+    element.scrollTop = 0
+  })
+  await page.screenshot({ path: 'output/settings-scrollarea-compact.png' })
+  await page.getByRole('button', { name: '关闭', exact: true }).click()
   await page.getByRole('button', { name: '返回工作台', exact: true }).click()
   assert.equal(
     await page
@@ -164,6 +219,7 @@ try {
           'Electron window',
           'minimal task workspace without engineering panels',
           'workspace and settings fit compact viewport',
+          'single ScrollArea viewport, fixed chrome and reachable settings footer',
           'Model selector and sidebar settings navigation',
           'concise unconfigured model state',
           'developer diagnostics folded away from the task workspace',

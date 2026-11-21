@@ -9,7 +9,8 @@
 
 ## UI 组件使用
 
-- 业务交互控件统一复用 `components/ui` 的 Button、Input、Textarea、Label、Select、Collapsible 等 shadcn/ui + Radix 组件；组合控件可以封装在 `components/forms`，不在业务页直接重写原生交互标签。
+- 业务交互控件统一复用 `components/ui` 的 Button、Input、Textarea、Label、Select、Collapsible、ScrollArea 等 shadcn/ui + Radix 组件；组合控件可以封装在 `components/forms`，不在业务页直接重写原生交互标签。
+- 主内容区由 AppShell 的 ScrollArea 管理滚动，页面不再叠加页面级 `overflow: auto`；保持根窗口、标题栏和侧栏边界固定。日志、消息、编辑器等局部滚动按自身功能管理。
 - 布局使用正常 React/HTML/CSS；AI 交互仍用用户指定的原版 AI Elements。新增原组件须记录固定来源/许可证和校验清单，不擅自迁移为其他 AI patterns 或另一套基础 UI。
 
 ## 开工与执行

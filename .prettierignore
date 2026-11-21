@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+node_modules
+out
+release
+output
+docs
+src/renderer/src/components/ai-elements

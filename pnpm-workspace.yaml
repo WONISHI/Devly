@@ -1,0 +1,10 @@
+packages:
+  - .
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+  - better-sqlite3
+  - node-pty
+  - '@tailwindcss/oxide'
+  - cpu-features
+  - ssh2

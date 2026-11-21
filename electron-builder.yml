@@ -1,0 +1,23 @@
+appId: com.devly.desktop
+productName: Devly
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+extraResources:
+  - from: build/icon.png
+    to: icon.png
+asarUnpack:
+  - '**/*.node'
+  - node_modules/node-pty/**
+mac:
+  icon: build/icon.icns
+  target: dmg
+  category: public.app-category.developer-tools
+win:
+  icon: build/icon.png
+  target: nsis
+linux:
+  icon: build/icon.png
+  target: AppImage

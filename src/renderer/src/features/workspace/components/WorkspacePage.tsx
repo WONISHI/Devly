@@ -1,4 +1,5 @@
 import { ArrowUp, ChevronDown, FolderOpen } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import type { Project } from '@shared/contracts'
 
@@ -20,7 +21,7 @@ export function WorkspacePage({
       <div className="task-start">
         <h1 id="task-title">{sessionTitle ?? '今天想完成什么？'}</h1>
         <div className="task-composer">
-          <textarea
+          <Textarea
             className="task-input"
             aria-label="任务输入"
             placeholder="描述你想完成的任务…"

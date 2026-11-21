@@ -38,6 +38,10 @@ async function data(operation, args = {}) {
   if (!result.ok) throw Error(`${operation}: ${result.error.code}`)
   return result.data
 }
+async function selectOption(label, text) {
+  await page.getByRole('combobox', { name: label, exact: true }).click()
+  await page.getByRole('option', { name: text, exact: true }).click()
+}
 async function choose(path) {
   await application.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
@@ -91,7 +95,7 @@ try {
     await data('sessions.create', { projectId: aId, title: `分页验证 ${index}` })
   await data('sessions.select', { projectId: aId, sessionId: aSession })
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
-  await page.getByLabel('设置范围').selectOption('project')
+  await selectOption('设置范围', '当前项目')
   await page.getByLabel('默认模型', { exact: true }).fill('A-model')
   await page.getByLabel('Token 上限', { exact: true }).fill('4096')
   await page.getByRole('button', { name: '保存设置', exact: true }).click()
@@ -109,10 +113,10 @@ try {
   await page.locator('.session-title').getByText('B 的独立会话', { exact: true }).waitFor()
   const bSession = (await data('bootstrap')).activeSessionId
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
-  await page.getByLabel('设置范围').selectOption('project')
+  await selectOption('设置范围', '当前项目')
   assert.equal(await page.getByLabel('默认模型', { exact: true }).inputValue(), '')
   await page.getByLabel('默认模型', { exact: true }).fill('B-model')
-  await page.getByLabel('主题', { exact: true }).selectOption('light')
+  await selectOption('主题', '浅色')
   await page.getByRole('button', { name: '保存设置', exact: true }).click()
   await page.getByRole('button', { name: '已保存', exact: true }).waitFor()
   await page.waitForFunction(() => document.documentElement.dataset.theme === 'light')
@@ -183,7 +187,7 @@ try {
   assert.equal(bad.ok, false)
   assert.equal(bad.error.code, 'NOT_FOUND')
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
-  await page.getByLabel('设置范围').selectOption('project')
+  await selectOption('设置范围', '当前项目')
   assert.equal(await page.getByLabel('默认模型', { exact: true }).inputValue(), 'A-model')
   const exportPath = join(root, 'export.json')
   await application.evaluate(({ dialog }, path) => {
@@ -197,6 +201,18 @@ try {
   assert.ok(!('credentialRef' in exported))
   await mkdir('output', { recursive: true })
   await page.screenshot({ path: 'output/settings-persisted.png' })
+  const themeSelect = page.getByRole('combobox', { name: '主题', exact: true })
+  await themeSelect.click()
+  await page.getByRole('option', { name: '跟随系统', exact: true }).waitFor()
+  await page.screenshot({ path: 'output/ui-select-options.png' })
+  await page.keyboard.press('Escape')
+  await expect(themeSelect).toBeFocused()
+  assert.equal(
+    await page
+      .locator('.project-list')
+      .evaluate((element) => element.scrollWidth > element.clientWidth),
+    false,
+  )
   await page.getByRole('button', { name: '返回工作台', exact: true }).click()
   await page.screenshot({ path: 'output/sessions-persisted.png' })
   assert.deepEqual(pageErrors, [])

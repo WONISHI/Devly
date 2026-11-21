@@ -262,6 +262,22 @@
 - 边界：本条随交付提交保存，具体提交 ID 和远端推送回执由 Git 记录及最终回复报告；Windows 与 GitHub Actions 未获得新通过状态，不改变已有发行风险记录。
 - 下一步：阶段 3 / 3.1 / P01。
 
+## LOG-024｜B01/L04 修正：统一使用 shadcn/ui + Radix 基础控件
+
+- 日期：2026-11-21；用户指出项目大量使用原生控件，与已确认 UI 选型不一致。本次为既有界面修正，阶段 3/P01 保持待开始。
+- 核查：此前确有 Button 和原 AI Elements 接入，但设置的 input/select/label/details，以及侧栏原生按钮没有统一；没有把“安装了组件”当成“业务使用一致”。
+- 完成：业务按钮统一 Button；设置与会话重命名使用 Input/Label；输入占位使用 Textarea；设置的主题/供应商/权限/作用域使用现有 Radix Select，SelectField 只组合原有组件；开发者折叠区改为 Collapsible。保留精简布局与真实功能边界，没有引入另一套 UI 或迁移 AI patterns。
+- 来源：Input/Textarea/Label 来自 vercel/ai-elements 固定提交 ca8be600bfd01b3131f9bf6134b51602a71f4374 同仓配套 UI，只做别名替换/既有格式化；17 份来源/本地哈希核对通过（5 AI + 11 UI + LICENSE）。原有 14 份未改，不增加 npm 依赖。
+- 约束：AGENTS.md 明确基础控件/AI 组件分工，ESLint 禁止 App/features 直接书写原生 button/input/textarea/select/option/label/details/summary。组件实现层和正常 HTML 布局不受此业务层限制。
+- 文件：components/forms/SelectField.tsx、components/ui/{input,textarea,label,SOURCE}、SettingsEditor.tsx、ProviderSettingsPage.tsx、WorkspaceSidebar.tsx、WorkspacePage.tsx、App.tsx、styles.css、eslint.config.js、scripts/verify-vendor.mjs 与 vendor 清单、两个桌面脚本及 docs/ui-components.md。
+- 验证：类型/Lint/生产构建/格式检查通过，30 项契约测试通过，17 份来源校验通过；verify:desktop 和 verify:persistence 退出 0，覆盖真实 combobox/option 选择、Collapsible 默认关闭、保存/导出、主题、项目/会话操作、重启持久化和原 AI 组件预览。Escape 关闭并恢复触发器焦点、侧栏无横向溢出通过。
+- 视觉复核：检查 output/settings-persisted.png、ui-select-options.png 的实际渲染。首次替换为 Button 后发现其 shrink-0 默认值引起项目行横向溢出，调整项目按钮 flex/宽度并复跑通过，未删改基础 Button 上游源码。
+- 边界：任务输入/发送仍按未接模型状态禁用；AI Elements 仍在开发预览，真实 Prompt Input/消息/Agent 按后续任务接入。Windows/远端 CI 未实测，V01 的维护/发行风险不变。
+- 状态：现有基础控件统一完成；按用户此前的提交要求交付本次修正，具体 hash/推送回执由 Git 和最终回复报告；下一项仍为 3.1/P01。
+- 打包：pnpm run pack --config.mac.identity=null 退出 0，更新本机 Devly.app；包内 verify:persistence 退出 0，确认组件选择、键盘焦点、设置/会话与系统凭据回归通过。
+- 未覆盖：Windows/远端 CI 未运行；没有推进 API/Agent 或 Prompt Input 业务，没有改动品牌/标题栏配色或解除已有发行风险。
+- 状态：本次 UI 统一修正完成；按用户此前要求提交本次修正，具体哈希与推送回执见 Git 和最终回复。唯一下一项仍为阶段 3/P01。
+
 ## 追加记录模板
 
 ```text

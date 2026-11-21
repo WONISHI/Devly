@@ -4,6 +4,8 @@ import { savePreferences, changeCredential, exportPreferences } from './hooks'
 import { useWorkspace } from '@/store'
 import { toast } from 'sonner'
 import { ArrowLeft, Blocks, ChevronRight, PlugZap } from 'lucide-react'
+import { SelectField } from '@/components/forms/SelectField'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { EnvironmentPanel, type useEnvironment } from '@/features/environment'
 
@@ -75,16 +77,15 @@ export function ProviderSettingsPage({
       ))}
       <div className="settings-scope">
         <h2>偏好设置</h2>
-        <select
-          aria-label="设置范围"
+        <SelectField
+          label="设置范围"
           value={scope}
-          onChange={(event) => setScope(event.target.value as typeof scope)}
-        >
-          <option value="global">应用默认值</option>
-          <option value="project" disabled={!state.project}>
-            当前项目
-          </option>
-        </select>
+          onValueChange={(value) => setScope(value as typeof scope)}
+          options={[
+            { value: 'global', label: '应用默认值' },
+            { value: 'project', label: '当前项目', disabled: !state.project },
+          ]}
+        />
       </div>
       <SettingsEditor
         onExport={() => exportPreferences(scope === 'project' ? state.project!.id : null)}
@@ -93,19 +94,21 @@ export function ProviderSettingsPage({
         providers={state.providers}
         onSave={(value) => savePreferences(scope === 'project' ? state.project!.id : null, value)}
       />
-      <details className="developer-options">
-        <summary>
-          开发者选项
-          <ChevronRight size={14} />
-        </summary>
-        <div className="developer-content">
+      <Collapsible className="developer-options">
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" type="button" className="developer-trigger">
+            开发者选项
+            <ChevronRight size={14} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="developer-content">
           <EnvironmentPanel {...environmentState} />
           <Button variant="outline" size="sm" onClick={onShowComponents}>
             <Blocks size={14} />
             查看 AI 组件
           </Button>
-        </div>
-      </details>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   )
 }

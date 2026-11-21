@@ -101,8 +101,13 @@ try {
   await page.getByText('供应商配置待接入', { exact: true }).waitFor()
   assert.equal(await page.locator('input[type=password]').count(), 0)
   assert.equal(await page.getByRole('button', { name: /登录|安装 Codex|连接测试/ }).count(), 0)
-  assert.equal(await page.locator('details').getAttribute('open'), null)
-  assert.equal(await page.getByRole('button', { name: '重新检查' }).isVisible(), false)
+  assert.equal(
+    await page
+      .getByRole('button', { name: '开发者选项', exact: true })
+      .getAttribute('aria-expanded'),
+    'false',
+  )
+  assert.equal(await page.getByRole('button', { name: '重新检查' }).count(), 0)
   await page.screenshot({
     path: noCodex ? 'output/providers-no-codex.png' : 'output/providers.png',
   })

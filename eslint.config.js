@@ -70,4 +70,22 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ['src/renderer/src/App.tsx', 'src/renderer/src/features/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "JSXOpeningElement[name.type='JSXIdentifier'][name.name=/^(button|input|textarea|select|option|label|details|summary)$/]",
+          message:
+            '业务控件请复用 components/ui 的 Button、Input、Textarea、Select、Label、Collapsible。',
+        },
+        {
+          selector: "MemberExpression[object.name='window'][property.name='devly']",
+          message: '展示层通过 feature hook 和 platform 网关访问桌面能力。',
+        },
+      ],
+    },
+  },
 )

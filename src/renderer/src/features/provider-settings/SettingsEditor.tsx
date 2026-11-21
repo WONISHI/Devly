@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { SelectField } from '@/components/forms/SelectField'
 import type { Settings, Provider } from '@shared/data-contracts'
 
 type Props = {
@@ -9,6 +12,7 @@ type Props = {
   onExport: () => Promise<void>
 }
 export function SettingsEditor({ value, providers, onSave, onExport }: Props) {
+  const id = useId()
   const [draft, setDraft] = useState(value),
     [saving, setSaving] = useState(false),
     [error, setError] = useState<string | null>(null),
@@ -34,58 +38,62 @@ export function SettingsEditor({ value, providers, onSave, onExport }: Props) {
         }
       }}
     >
-      <label>
-        主题
-        <select
-          aria-label="主题"
+      <div className="settings-field">
+        <Label htmlFor={`${id}-theme`}>主题</Label>
+        <SelectField
+          id={`${id}-theme`}
+          label="主题"
           value={draft.theme}
-          onChange={(event) => update('theme', event.target.value as Settings['theme'])}
-        >
-          <option value="dark">深色</option>
-          <option value="light">浅色</option>
-          <option value="system">跟随系统</option>
-        </select>
-      </label>
-      <label>
-        默认供应商
-        <select
-          aria-label="默认供应商"
-          value={draft.defaultProviderId ?? ''}
-          onChange={(event) => update('defaultProviderId', event.target.value || null)}
-        >
-          <option value="">未选择</option>
-          {providers.map((provider) => (
-            <option key={provider.id} value={provider.id}>
-              {provider.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        默认模型
-        <input
+          onValueChange={(value) => update('theme', value as Settings['theme'])}
+          options={[
+            { value: 'dark', label: '深色' },
+            { value: 'light', label: '浅色' },
+            { value: 'system', label: '跟随系统' },
+          ]}
+        />
+      </div>
+      <div className="settings-field">
+        <Label htmlFor={`${id}-provider`}>默认供应商</Label>
+        <SelectField
+          id={`${id}-provider`}
+          label="默认供应商"
+          value={draft.defaultProviderId ?? 'none'}
+          onValueChange={(value) => update('defaultProviderId', value === 'none' ? null : value)}
+          options={[
+            { value: 'none', label: '未选择' },
+            ...providers.map((provider) => ({ value: provider.id, label: provider.name })),
+          ]}
+        />
+      </div>
+      <div className="settings-field">
+        <Label htmlFor={`${id}-model`}>默认模型</Label>
+        <Input
+          id={`${id}-model`}
           aria-label="默认模型"
           maxLength={200}
           value={draft.defaultModel}
           onChange={(event) => update('defaultModel', event.target.value)}
         />
-      </label>
-      <label>
-        项目权限
-        <select
-          aria-label="项目权限"
+      </div>
+      <div className="settings-field">
+        <Label htmlFor={`${id}-permission`}>项目权限</Label>
+        <SelectField
+          id={`${id}-permission`}
+          label="项目权限"
           value={draft.projectPermission}
-          onChange={(event) =>
-            update('projectPermission', event.target.value as Settings['projectPermission'])
+          onValueChange={(value) =>
+            update('projectPermission', value as Settings['projectPermission'])
           }
-        >
-          <option value="read-only">只读</option>
-          <option value="ask">每次询问</option>
-        </select>
-      </label>
-      <label>
-        Token 上限
-        <input
+          options={[
+            { value: 'read-only', label: '只读' },
+            { value: 'ask', label: '每次询问' },
+          ]}
+        />
+      </div>
+      <div className="settings-field">
+        <Label htmlFor={`${id}-tokens`}>Token 上限</Label>
+        <Input
+          id={`${id}-tokens`}
           aria-label="Token 上限"
           type="number"
           min={256}
@@ -94,10 +102,11 @@ export function SettingsEditor({ value, providers, onSave, onExport }: Props) {
           value={draft.maxTokens}
           onChange={(event) => update('maxTokens', event.target.valueAsNumber)}
         />
-      </label>
-      <label>
-        费用上限（USD）
-        <input
+      </div>
+      <div className="settings-field">
+        <Label htmlFor={`${id}-cost`}>费用上限（USD）</Label>
+        <Input
+          id={`${id}-cost`}
           aria-label="费用上限"
           type="number"
           min={0}
@@ -107,7 +116,7 @@ export function SettingsEditor({ value, providers, onSave, onExport }: Props) {
           value={draft.maxCost}
           onChange={(event) => update('maxCost', event.target.valueAsNumber)}
         />
-      </label>
+      </div>
       <p className="settings-footnote">权限和限额已保存；工具执行与费用统计尚未接入。</p>
       {error && (
         <p role="alert" className="error-text">

@@ -11,6 +11,8 @@
 
 ## 设计与搭建资料
 
+- [UI 与 AI 组件使用](./ui-components.md)：基础控件统一、原 AI Elements 的分工与来源约束。
+
 - [本地数据、项目与设置](./local-data.md)：阶段 2 的 Worker、迁移、凭据引用、分页、日志与验收边界。
 
 - [Provider / Agent 产品入口](./provider-entry.md)：B03 的模型/设置入口、精简任务首页、开发者折叠项与无 Codex 验证。

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
 import { AppHeader } from '@/app/AppHeader'
 import { AppShell } from '@/app/AppShell'
 import { ComponentPreviewPage } from '@/features/component-preview'
@@ -46,7 +47,9 @@ export function App() {
       {state.loadError && (
         <div className="storage-error" role="alert">
           {state.loadError}
-          <button onClick={() => run(state.refresh)}>重试</button>
+          <Button variant="link" size="sm" onClick={() => run(state.refresh)}>
+            重试
+          </Button>
         </div>
       )}
       {tab === 'workspace' ? (

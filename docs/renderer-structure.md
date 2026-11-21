@@ -46,3 +46,5 @@ ESLint 禁止 Renderer 导入 Node 或 Electron。App、shell 和展示组件进
 阶段 2：store.ts 负责 bootstrap 与项目/会话分页状态及过期响应保护；侧栏通过回调进行持久化操作。SettingsEditor 展示应用/项目范围设置，feature hooks 调 desktop.data 网关。主题监听有清理。原始 Key 不经过 Renderer，凭据入口仅发送 providerId 到 Main 原生输入。数据与失败边界见 [本地数据说明](./local-data.md)。
 
 标题栏修正（LOG-022）：macOS 使用 Electron hidden 原生标题栏，保留红黄绿按钮；AppShell 的 32px 可拖动行分别使用侧栏和主区的现有主题变量，随侧栏响应宽度与深浅主题同步。平台标识由 preload 只读暴露，经 platform 网关/环境 hook 传入展示层，不依赖异步环境检查后才决定布局。其他系统保留原生标题栏。实现依据 [Electron 自定义标题栏文档](https://www.electronjs.org/docs/latest/tutorial/custom-title-bar)。
+
+交互控件统一（LOG-024）：业务页复用 Button/Input/Textarea/Label/Radix Select/Collapsible，SelectField 仅组合已有基础组件；ESLint 禁止业务层直接重写原生交互控件。具体映射和校验见 [UI 组件说明](./ui-components.md)。

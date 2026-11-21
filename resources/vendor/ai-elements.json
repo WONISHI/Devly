@@ -95,6 +95,27 @@
       "localSha256": "466c2286e157cf7c1c692e8d67a9d9ab7debf880096930858ea8f173e3e5aec9"
     },
     {
+      "upstream": "packages/shadcn-ui/components/ui/input.tsx",
+      "local": "src/renderer/src/components/ui/input.tsx",
+      "formatted": true,
+      "upstreamSha256": "96207e020d2624fba7241b91a1f2e5a971510003b9c0becc9d0c02a535b15067",
+      "localSha256": "b67dea8a8d35c004c6d94c22aacbbf2340b0e536c614e4c87a69d8814a7b4502"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/textarea.tsx",
+      "local": "src/renderer/src/components/ui/textarea.tsx",
+      "formatted": true,
+      "upstreamSha256": "0b7fc00f5a0fa6ace377c5f61ef14a30b3d190bc2761c2728ec6886809a1a0c8",
+      "localSha256": "cf31ce99f03ac69f9821b4463a366c66698ae8e7eba5c06d2ede63d5cf7309bd"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/label.tsx",
+      "local": "src/renderer/src/components/ui/label.tsx",
+      "formatted": true,
+      "upstreamSha256": "84b0ed95e279045b1743b5c7df6506206d18fdafb4c342416ff3bac27c855571",
+      "localSha256": "49aedc524d15feaf0aebff951f63de6087fc31d1d2b78eae4e756db43ae1bc81"
+    },
+    {
       "upstream": "LICENSE",
       "local": "src/renderer/src/components/ai-elements/LICENSE",
       "formatted": false,

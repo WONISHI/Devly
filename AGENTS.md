@@ -7,6 +7,11 @@
 - 保持已确认的 Electron、React、TypeScript、原版 AI Elements（elements.ai-sdk.dev）、配套 shadcn/ui、Tailwind CSS 和 Lucide 选型。
 - 当前 Dock 图标使用 v5 黑底圆角与内部留白版本，除用户要求外不要继续调整已确认的品牌样式。
 
+## UI 组件使用
+
+- 业务交互控件统一复用 `components/ui` 的 Button、Input、Textarea、Label、Select、Collapsible 等 shadcn/ui + Radix 组件；组合控件可以封装在 `components/forms`，不在业务页直接重写原生交互标签。
+- 布局使用正常 React/HTML/CSS；AI 交互仍用用户指定的原版 AI Elements。新增原组件须记录固定来源/许可证和校验清单，不擅自迁移为其他 AI patterns 或另一套基础 UI。
+
 ## 开工与执行
 
 - 开始工作先阅读 `docs/work-plan.md`、`docs/work-log.md` 的最新记录，再检查实际代码。

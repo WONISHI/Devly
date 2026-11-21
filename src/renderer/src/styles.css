@@ -338,23 +338,19 @@ button:disabled {
 .developer-options {
   margin-top: 30px;
 }
-.developer-options > summary {
+.developer-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 0;
-  list-style: none;
   cursor: pointer;
   font-size: 12px;
   color: #7e848e;
 }
-.developer-options > summary::-webkit-details-marker {
-  display: none;
-}
-.developer-options[open] > summary svg {
+.developer-trigger[data-state='open'] svg {
   transform: rotate(90deg);
 }
-.developer-options > summary:focus-visible,
+.developer-trigger:focus-visible,
 .nav-item:focus-visible,
 .project-item:focus-visible {
   outline: 2px solid var(--muted-foreground);
@@ -542,7 +538,7 @@ button:disabled {
   gap: 15px;
   margin-top: 18px;
 }
-.preferences-form label {
+.settings-field {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -551,8 +547,8 @@ button:disabled {
   color: var(--foreground);
 }
 .preferences-form input,
-.preferences-form select,
-.settings-scope select {
+.preferences-form [data-slot='select-trigger'],
+.settings-scope [data-slot='select-trigger'] {
   width: 190px;
   min-width: 0;
   padding: 7px 10px;
@@ -640,4 +636,56 @@ button:disabled {
 }
 .environment-item {
   background: var(--card);
+}
+
+.nav-item,
+.project-item {
+  justify-content: flex-start;
+  height: auto;
+}
+.row-action {
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+}
+.session-title {
+  justify-content: flex-start;
+  height: auto;
+  font-size: inherit;
+  font-weight: 400;
+}
+.session-row input {
+  height: 28px;
+}
+.developer-trigger {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+.settings-field [data-slot='label'] {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.preferences-form [data-slot='select-trigger'],
+.settings-scope [data-slot='select-trigger'] {
+  height: 34px;
+}
+.task-input {
+  box-shadow: none;
+  border: 0;
+  border-radius: 0;
+}
+.project-row > .project-item {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+}
+.project-list {
+  overflow-x: hidden;
+}
+.rename-cancel {
+  width: 24px;
+  height: 28px;
+  padding: 4px;
 }

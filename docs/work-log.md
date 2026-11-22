@@ -433,6 +433,16 @@
 - Git 交付：功能提交 a56cfd0 已生成；首轮 GitHub HTTPS 推送返回 Operation too slow，正在重试，未将本地提交误标为远端成功。能力矩阵同时校正为同协议切换/聊天历史/中断核对已实现，多协议与 Agent 恢复未实现；最终远端回执由 Git 和回复报告。
 - 唯一下一步：在正常 Devly 系统授权环境使用可读 Key 完成真实消息与重启续聊验收，记录结果；不能把本地替身、复制密文失败或 .app 构建当成真实供应商通过。
 
+## LOG-040｜L04/B01 设置界面修正：功能分组与快速导航
+
+- 日期：2026-11-22。用户要求“设置进行分组”；本次调整设置布局与分类，不推进新的业务阶段。
+- 实际变更：设置分为模型供应商、外观、默认模型、权限与限额、开发者五组，增加带图标和选中状态的固定分类导航。点击后只滚动原 AppShell ScrollArea 到相应组，不新增整页滚动；删除重复的供应商概览装饰，组内保留完整编辑与诊断入口。
+- 状态与保存：SettingsGroup 为纯布局，ProviderManager 和偏好表单保持挂载，分组定位不丢未保存草稿。应用/当前项目范围、原保存/导出、原生 Key 与连接操作继续使用现有实现。工具权限/费用限额的提示明确为后续生效，不将未保存草稿说成已保存。
+- 文件：features/provider-settings/{ProviderSettingsPage,SettingsEditor,SettingsGroup}.tsx、styles.css、scripts/smoke-desktop/smoke-persistence，以及 README、work-plan、provider-entry、ui-components。
+- 验证：类型/Lint/生产构建通过；开发版 verify:desktop 和 verify:persistence 均退出 0，五个分类定位、未保存默认模型往返保留、原项目/设置/组件入口、960×680 无根溢出/单层滚动、设置保存/主题/导出/重启和真实 OS 加密往返通过。分组标题与输入同名后，将测试定位明确为 textbox，避免把 region 误当输入；没有为布局添加实现镜像单元测试。实际复核 output/settings-groups.png。
+- 最终复核：pnpm check 退出 0（70 项测试、23 份 Markdown/106 ID/40 连续日志、26 份原组件、品牌资源、生产构建及数据/聊天集成）。未签名 macOS 应用目录更新成功；包内 verify:desktop、verify:persistence、verify:provider 全部退出 0，分组/草稿/单层滚动/960×680、真实 OS 密文往返和原供应商 26 次替身请求/4 次取消保持通过。设置界面实际截图已复核；应用目录为 release/mac-arm64/Devly.app。
+- 边界：无新增依赖、无主进程/数据库变更；阶段 4 的真实 API 验收仍待正常凭据环境完成，Windows/远端 CI 不据本机检查自动判通过。后续进行包内复核并按既有要求提交同步。
+
 ## 追加记录模板
 
 ```text

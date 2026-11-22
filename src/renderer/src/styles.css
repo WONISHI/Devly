@@ -354,7 +354,7 @@ button:disabled {
 .settings-page {
   flex: 1;
   min-height: 0;
-  padding: 42px max(36px, calc((100% - 720px) / 2));
+  padding: 32px max(24px, calc((100% - 1040px) / 2));
 }
 .settings-heading {
   display: flex;
@@ -367,37 +367,6 @@ button:disabled {
   font-weight: 500;
   letter-spacing: -0.6px;
   margin: 0;
-}
-.model-setting {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 22px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-.setting-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  color: #b1b5bc;
-}
-.model-setting h2 {
-  font-size: 13px;
-  font-weight: 500;
-  margin: 0 0 5px;
-}
-.model-setting p {
-  font-size: 12px;
-  color: var(--muted-foreground);
-}
-.setting-state {
-  margin-left: auto;
-  font-size: 11px;
-  color: #8c929b;
 }
 .developer-options {
   margin-top: 30px;
@@ -1093,4 +1062,92 @@ button:disabled {
 }
 .chat-switch-actions {
   flex-wrap: wrap;
+}
+
+/* Settings retain a single form and the shell's existing ScrollArea. */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.settings-group-nav {
+  display: grid;
+  gap: 5px;
+  position: sticky;
+  top: 24px;
+}
+.settings-group-link {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.settings-group-link[aria-pressed='true'] {
+  color: var(--foreground);
+  background: var(--accent);
+}
+.settings-group-content {
+  min-width: 0;
+}
+.settings-group {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.settings-group-heading {
+  margin-bottom: 20px;
+}
+.settings-group-heading h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.settings-group-heading p {
+  margin: 7px 0 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+.settings-group-fields {
+  display: grid;
+  gap: 18px;
+}
+.settings-group .provider-list-heading {
+  margin-top: 0;
+}
+.settings-group .developer-options {
+  margin-top: 0;
+}
+.settings-group .settings-footnote {
+  margin: 16px 0 0;
+  line-height: 1.6;
+}
+.settings-group-content > .settings-group:last-child {
+  margin-top: 24px;
+}
+.settings-group-content .settings-scope {
+  margin: 24px 0 16px;
+}
+.settings-scope h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+@media (max-width: 1100px) {
+  .settings-layout {
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .settings-group {
+    padding: 18px;
+  }
+  .settings-group-link {
+    padding: 9px 10px;
+    gap: 8px;
+  }
 }

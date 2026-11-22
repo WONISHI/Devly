@@ -1,4 +1,4 @@
-import { _electron as electron } from '@playwright/test'
+import { _electron as electron, expect } from '@playwright/test'
 import assert from 'node:assert/strict'
 import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -100,6 +100,23 @@ try {
   await page.getByRole('button', { name: '添加供应商', exact: true }).click()
   await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
   await page.getByRole('button', { name: '添加供应商', exact: true }).waitFor()
+  const settingsGroups = page.getByRole('navigation', { name: '设置分组', exact: true })
+  await expect(settingsGroups.getByRole('button')).toHaveCount(5)
+  await settingsGroups.getByRole('button', { name: '默认模型', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '默认模型', exact: true })).toBeInViewport()
+  await page.getByRole('textbox', { name: '默认模型', exact: true }).fill('unsaved-group-draft')
+  await settingsGroups.getByRole('button', { name: '外观', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '外观', exact: true })).toBeInViewport()
+  await settingsGroups.getByRole('button', { name: '默认模型', exact: true }).click()
+  await expect(page.getByRole('textbox', { name: '默认模型', exact: true })).toHaveValue(
+    'unsaved-group-draft',
+  )
+  await settingsGroups.getByRole('button', { name: '模型供应商', exact: true }).click()
+  await expect(
+    settingsGroups.getByRole('button', { name: '模型供应商', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('heading', { name: '模型供应商', exact: true })).toBeInViewport()
+  await page.screenshot({ path: 'output/settings-groups.png' })
   assert.equal(await page.locator('input[type=password]').count(), 0)
   assert.equal(await page.getByRole('button', { name: /登录|安装 Codex|连接测试/ }).count(), 0)
   assert.equal(
@@ -219,6 +236,7 @@ try {
         passed: [
           'Electron window',
           'minimal task workspace without engineering panels',
+          'five settings groups, navigation and unsaved preference draft retained',
           'workspace and settings fit compact viewport',
           'single ScrollArea viewport, fixed chrome and reachable settings footer',
           'Model selector and sidebar settings navigation',

@@ -96,7 +96,7 @@ try {
   await data('sessions.select', { projectId: aId, sessionId: aSession })
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
   await selectOption('设置范围', '当前项目')
-  await page.getByLabel('默认模型', { exact: true }).fill('A-model')
+  await page.getByRole('textbox', { name: '默认模型', exact: true }).fill('A-model')
   await page.getByLabel('Token 上限', { exact: true }).fill('4096')
   await page.getByRole('button', { name: '保存设置', exact: true }).click()
   await page.getByRole('button', { name: '已保存', exact: true }).waitFor()
@@ -114,8 +114,8 @@ try {
   const bSession = (await data('bootstrap')).activeSessionId
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
   await selectOption('设置范围', '当前项目')
-  assert.equal(await page.getByLabel('默认模型', { exact: true }).inputValue(), '')
-  await page.getByLabel('默认模型', { exact: true }).fill('B-model')
+  assert.equal(await page.getByRole('textbox', { name: '默认模型', exact: true }).inputValue(), '')
+  await page.getByRole('textbox', { name: '默认模型', exact: true }).fill('B-model')
   await selectOption('主题', '浅色')
   await page.getByRole('button', { name: '保存设置', exact: true }).click()
   await page.getByRole('button', { name: '已保存', exact: true }).waitFor()
@@ -188,7 +188,10 @@ try {
   assert.equal(bad.error.code, 'NOT_FOUND')
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
   await selectOption('设置范围', '当前项目')
-  assert.equal(await page.getByLabel('默认模型', { exact: true }).inputValue(), 'A-model')
+  assert.equal(
+    await page.getByRole('textbox', { name: '默认模型', exact: true }).inputValue(),
+    'A-model',
+  )
   const exportPath = join(root, 'export.json')
   await application.evaluate(({ dialog }, path) => {
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: path })

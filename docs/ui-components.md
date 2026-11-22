@@ -47,3 +47,7 @@ AppShell 的标题栏和侧栏固定，主内容区统一由原版 ScrollArea �
 实际命令/结果见 LOG-024；Windows 和远端 CI 不因本机通过自动获得通过状态。阶段 4 普通聊天另见 LOG-036–LOG-039；Agent 工具循环没有因组件引入自动实现。
 
 阶段 4 原 Prompt Input 及 DropdownMenu/HoverCard/InputGroup/Spinner 来自同一固定提交，只改既定别名与 UI 格式；新增 nanoid 直接依赖锁定既有 3.3.20（MIT），未升级依赖树。ChatHistory 使用 Conversation 的底部跟随上下文配合 Radix ScrollArea/同源 ScrollBar，未改原 Conversation/Message。Apache-2.0 通知随应用打包。
+
+## 设置分组（LOG-040）
+
+ProviderSettingsPage 使用现有 Button 组成五项快速导航；SettingsGroup 是本项目的纯 section/header 布局组件，分别承载模型供应商、外观、默认模型、权限与限额、开发者。点击分类只在 AppShell 已有 ScrollArea 的 viewport 内定位，不增加页面级滚动，也不卸载编辑器；偏好设置仍为同一表单，切换分组保留草稿，应用/项目范围切换沿用原行为。开发者诊断继续使用原 Collapsible，所有输入/选择/保存仍复用现有 shadcn/ui。没有新增依赖或修改上游 AI Elements。实际 Electron 检查包含五组导航、草稿保留、960×680 布局、单层滚动，以及原设置持久化/重启回归。

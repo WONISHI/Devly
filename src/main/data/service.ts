@@ -1,4 +1,4 @@
-import { stat, writeFile, rename, unlink } from 'node:fs/promises'
+import { stat, writeFile, rename, unlink, mkdir, realpath } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import {
@@ -14,6 +14,7 @@ import { ProviderRuntime } from '../providers/runtime'
 import { ChatRuntime } from '../chat/runtime'
 
 type Prompts = {
+  project?(): Promise<string | null>
   credential(): Promise<string | null>
   file(): Promise<string | null>
   export?(): Promise<string | null>
@@ -59,6 +60,23 @@ export class LocalDataService {
       data = await this.providers.execute(operation, args, owner, isActive)
     } else
       switch (operation) {
+        case 'projects.create': {
+          const path = await this.prompts.project?.()
+          if (!path) {
+            data = null
+            break
+          }
+          if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
+          try {
+            await mkdir(path, { recursive: false })
+          } catch {
+            throw new ContractError(failure('PROJECT_UNAVAILABLE'))
+          }
+          data = await this.database.execute('internal.project.upsert', {
+            path: await realpath(path),
+          })
+          break
+        }
         case 'providers.save': {
           if (args.id) {
             this.providers.clearProvider(String(args.id))

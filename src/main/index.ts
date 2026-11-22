@@ -157,6 +157,15 @@ app
         decrypt: (value) => safeStorage.decryptString(value),
       })
       localData = new LocalDataService(database, vault, {
+        project: async () => {
+          const selected = await dialog.showSaveDialog(mainWindow!, {
+            title: '新建项目',
+            buttonLabel: '创建项目',
+            defaultPath: join(app.getPath('documents'), '未命名项目'),
+            properties: ['createDirectory'],
+          })
+          return selected.canceled || !selected.filePath ? null : selected.filePath
+        },
         credential: promptCredential,
         export: async () => {
           const selected = await dialog.showSaveDialog(mainWindow!, {

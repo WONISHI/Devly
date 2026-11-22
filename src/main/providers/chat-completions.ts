@@ -32,6 +32,7 @@ const resultWire = z.object({
         finish_reason: finishWire,
         message: z.object({
           content: z.string().nullable().optional(),
+          reasoning_content: z.string().nullable().optional(),
           tool_calls: z.array(toolWire).max(64).optional(),
           refusal: z.string().nullable().optional(),
         }),
@@ -49,6 +50,7 @@ const chunkWire = z.object({
         finish_reason: finishWire.optional(),
         delta: z.object({
           content: z.string().nullable().optional(),
+          reasoning_content: z.string().nullable().optional(),
           tool_calls: z
             .array(
               z.object({
@@ -230,6 +232,7 @@ export class ChatCompletionsAdapter implements ProviderAdapter {
         return {
           role: message.role,
           content: message.content || null,
+          ...(message.reasoning ? { reasoning_content: message.reasoning } : {}),
           ...(message.toolCalls?.length
             ? {
                 tool_calls: message.toolCalls.map((call) => ({
@@ -288,6 +291,7 @@ export class ChatCompletionsAdapter implements ProviderAdapter {
     if (choice.message.refusal) throw new ProviderError('INVALID_RESPONSE')
     return {
       text: choice.message.content ?? '',
+      ...(choice.message.reasoning_content ? { reasoning: choice.message.reasoning_content } : {}),
       toolCalls: validateCalls(
         (choice.message.tool_calls ?? []).map((call) => ({
           id: call.id,
@@ -317,6 +321,7 @@ export class ChatCompletionsAdapter implements ProviderAdapter {
       throw new ProviderError('INVALID_RESPONSE')
     }
     let text = '',
+      reasoning = '',
       reason: Completion['finish'] = 'unknown',
       seenFinish = false,
       currentUsage = unknownUsage()
@@ -331,6 +336,7 @@ export class ChatCompletionsAdapter implements ProviderAdapter {
           type: 'finish',
           result: {
             text,
+            ...(reasoning ? { reasoning } : {}),
             toolCalls: validateCalls(
               ordered.map(([, call]) => call),
               reason,
@@ -349,6 +355,10 @@ export class ChatCompletionsAdapter implements ProviderAdapter {
       }
       if (!choice) continue
       if (seenFinish) throw new ProviderError('INVALID_RESPONSE')
+      if (choice.delta.reasoning_content) {
+        reasoning += choice.delta.reasoning_content
+        if (reasoning.length > 262144) throw new ProviderError('LIMIT')
+      }
       if (choice.delta.content) {
         text += choice.delta.content
         yield { type: 'text', delta: choice.delta.content }

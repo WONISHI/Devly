@@ -1,6 +1,16 @@
 import Database from 'better-sqlite3'
 import { randomUUID } from 'node:crypto'
-import { mkdir, stat, readdir, unlink, open, rename, realpath, chmod } from 'node:fs/promises'
+import {
+  mkdir,
+  stat,
+  readdir,
+  unlink,
+  open,
+  rename,
+  realpath,
+  chmod,
+  writeFile,
+} from 'node:fs/promises'
 import { join, basename } from 'node:path'
 import { createReadStream, createWriteStream, constants } from 'node:fs'
 import { pipeline } from 'node:stream/promises'
@@ -76,6 +86,7 @@ export class DataStore {
       name: row.name,
       lastOpenedAt: row.last_opened_at,
       available: true,
+      managed: !!row.managed,
     }
   }
   private provider(row: Row) {
@@ -154,6 +165,50 @@ export class DataStore {
       await unlink(join(this.root, 'backups', entry.file))
   }
   async execute(operation: string, raw: unknown): Promise<unknown> {
+    if (operation === 'internal.agent.log') {
+      const args = raw as {
+        projectId: string
+        sessionId: string
+        turnId: string
+        name: string
+        output: string
+      }
+      this.requireSession(args.projectId, args.sessionId)
+      if (
+        !this.one(
+          'SELECT id FROM turns WHERE id=? AND session_id=?',
+          args.turnId,
+          args.sessionId,
+        ) ||
+        typeof args.output !== 'string' ||
+        Buffer.byteLength(args.output) > 1048576
+      )
+        throw new ContractError(failure('INVALID_REQUEST'))
+      const total = Number(this.one('SELECT coalesce(sum(bytes),0) AS bytes FROM blobs')!.bytes)
+      if (total + Buffer.byteLength(args.output) > 256 * 1024 * 1024)
+        throw new ContractError(failure('LIMIT_EXCEEDED'))
+      const id = randomUUID(),
+        path = join(this.root, 'blobs', `${id}.bin`),
+        now = Date.now()
+      await writeFile(path, args.output, { flag: 'wx', mode: 0o600 })
+      try {
+        this.run(
+          'INSERT INTO blobs(id,project_id,session_id,kind,name,mime,bytes,created_at) VALUES(?,?,?,?,?,?,?,?)',
+          id,
+          args.projectId,
+          args.sessionId,
+          'log',
+          `agent-${args.name.slice(0, 100)}.json`,
+          'application/json',
+          Buffer.byteLength(args.output),
+          now,
+        )
+      } catch (error) {
+        await unlink(path).catch(() => {})
+        throw error
+      }
+      return { id }
+    }
     if (operation.startsWith('internal.chat.')) return this.chat.execute(operation, raw)
     if (operation === 'internal.project.upsert') {
       const { path } = raw as { path: string }
@@ -308,6 +363,13 @@ export class DataStore {
         )
         return settings
       }
+      case 'sessions.general': {
+        const path = join(this.root, 'general-chat')
+        await mkdir(path, { recursive: true, mode: 0o700 })
+        const project = (await this.execute('internal.project.upsert', { path })) as { id: string }
+        this.run('UPDATE projects SET managed=1,name=? WHERE id=?', '通用聊天', project.id)
+        return this.execute('sessions.create', { projectId: project.id, title: '新会话' })
+      }
       case 'sessions.create': {
         this.requireProject(projectId!)
         const id = randomUUID()
@@ -354,6 +416,22 @@ export class DataStore {
           sessionId!,
         )
         return this.session(row)
+      }
+      case 'sessions.recent': {
+        const cursor = args.cursor as { time: number; id: string } | null,
+          limit = Number(args.limit)
+        const rows = this.all(
+          `SELECT s.* FROM sessions s JOIN projects p ON p.id=s.project_id WHERE p.removed=0 AND s.archived=? ${cursor ? 'AND (s.updated_at < ? OR (s.updated_at = ? AND s.id < ?))' : ''} ORDER BY s.updated_at DESC,s.id DESC LIMIT ?`,
+          args.archived ? 1 : 0,
+          ...(cursor ? [cursor.time, cursor.time, cursor.id] : []),
+          limit + 1,
+        )
+        const items = rows.slice(0, limit),
+          last = items.at(-1)
+        return {
+          items: items.map((row) => this.session(row)),
+          nextCursor: rows.length > limit && last ? { time: last.updated_at, id: last.id } : null,
+        }
       }
       case 'sessions.get':
         return this.session(this.requireSession(projectId!, sessionId!))
@@ -414,7 +492,7 @@ export class DataStore {
         const cursor = args.cursor as { time: number; id: string } | null
         const limit = Number(args.limit)
         const rows = this.all(
-          `SELECT m.*,t.status AS turn_state,t.error,t.usage,t.finish,t.provider_id,t.model FROM messages m LEFT JOIN turns t ON t.id=m.turn_id WHERE m.session_id=? ${cursor ? 'AND (m.created_at < ? OR (m.created_at = ? AND m.id < ?))' : ''} ORDER BY m.created_at DESC,m.id DESC LIMIT ?`,
+          `SELECT m.*,t.status AS turn_state,t.error,t.usage,t.finish,t.provider_id,t.model,t.agent_info FROM messages m LEFT JOIN turns t ON t.id=m.turn_id WHERE m.session_id=? ${cursor ? 'AND (m.created_at < ? OR (m.created_at = ? AND m.id < ?))' : ''} ORDER BY m.created_at DESC,m.id DESC LIMIT ?`,
           sessionId!,
           ...(cursor ? [cursor.time, cursor.time, cursor.id] : []),
           limit + 1,
@@ -434,6 +512,8 @@ export class DataStore {
             finish: row.finish ?? null,
             providerId: row.provider_id ?? null,
             model: row.model ?? '',
+            agent: row.agent_info ? JSON.parse(String(row.agent_info)) : undefined,
+            tools: row.role === 'assistant' ? this.chat.tools(String(row.turn_id)) : [],
             parts: this.all(
               'SELECT id,type,text,blob_id FROM message_parts WHERE message_id=? ORDER BY position',
               String(row.id),

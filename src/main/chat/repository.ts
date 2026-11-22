@@ -8,6 +8,7 @@ import {
   type ChatTurn,
 } from '../../shared/chat-contracts'
 import type { Message } from '../../shared/provider-contracts'
+import { agentInfoSchema, agentToolSchema } from '../../shared/agent-contracts'
 
 type Row = Record<string, unknown>
 type Scope = { projectId: string; sessionId: string }
@@ -44,6 +45,7 @@ export class ChatRepository {
       error: row.error ? JSON.parse(String(row.error)) : null,
       usage: row.usage ? JSON.parse(String(row.usage)) : null,
       finish: row.finish,
+      agent: row.agent_info ? JSON.parse(String(row.agent_info)) : undefined,
     })
   }
   bind(args: Scope & { providerId: string; model: string; allowHistory: boolean }): void {
@@ -72,6 +74,11 @@ export class ChatRepository {
   execute(operation: string, raw: unknown): unknown {
     const args = raw as Scope & Record<string, unknown>
     if (operation === 'internal.chat.recover') {
+      this.db
+        .prepare(
+          "UPDATE tool_calls SET state='failed',payload=json_set(payload,'$.state','failed','$.error','INTERRUPTED') WHERE state IN ('proposed','running') AND payload != '{}'",
+        )
+        .run()
       return this.run(
         "UPDATE turns SET status='failed',phase='failed',ended_at=?,error=? WHERE status IN ('pending','running')",
         Date.now(),
@@ -84,7 +91,58 @@ export class ChatRepository {
       ).changes
     }
     const session = this.requireSession(args.projectId, args.sessionId)
+    if (operation === 'internal.chat.tool' || operation === 'internal.chat.agent') {
+      const turn = this.one(
+        'SELECT * FROM turns WHERE id=? AND session_id=?',
+        String(args.turnId),
+        args.sessionId,
+      )
+      if (!turn || !['pending', 'running'].includes(String(turn.status)))
+        throw new ContractError(failure('NOT_FOUND'))
+      if (operation === 'internal.chat.agent') {
+        const info = agentInfoSchema.parse(args.info)
+        this.run(
+          'UPDATE turns SET agent_info=? WHERE id=?',
+          JSON.stringify(info),
+          String(args.turnId),
+        )
+      } else {
+        const tool = agentToolSchema.parse(args.tool)
+        const old = this.one('SELECT turn_id,session_id FROM tool_calls WHERE id=?', tool.id)
+        if (old && (old.turn_id !== args.turnId || old.session_id !== args.sessionId))
+          throw new ContractError(failure('FORBIDDEN'))
+        this.run(
+          'INSERT INTO tool_calls(id,turn_id,session_id,name,state,payload,position) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,state=excluded.state,payload=excluded.payload',
+          tool.id,
+          String(args.turnId),
+          args.sessionId,
+          tool.name,
+          tool.state,
+          JSON.stringify(tool),
+          tool.position,
+        )
+      }
+      return { updated: true }
+    }
     if (operation === 'internal.chat.context') {
+      if (args.compact) {
+        const rows = this.db
+          .prepare(
+            `SELECT m.role,CASE WHEN length(p.text)>4000 THEN substr(p.text,1,4000)||char(10)||'[Historical excerpt truncated; full text remains in local history]' ELSE p.text END AS text FROM messages m JOIN turns t ON t.id=m.turn_id JOIN message_parts p ON p.message_id=m.id WHERE m.session_id=? AND t.status='completed' AND p.type='text' AND m.role IN ('user','assistant') ORDER BY m.created_at DESC,m.id DESC LIMIT 101`,
+          )
+          .all(args.sessionId) as Row[]
+        const messages = rows
+          .slice(0, 100)
+          .reverse()
+          .map((row) => ({ role: row.role, content: row.text })) as Message[]
+        if (rows.length > 100)
+          messages.unshift({
+            role: 'user',
+            content:
+              '[Earlier conversation is outside the bounded context window; full history remains in local storage. Do not assume omitted details.]',
+          })
+        return messages
+      }
       const rows = this.db
         .prepare(
           `SELECT m.role,p.text FROM messages m JOIN turns t ON t.id=m.turn_id JOIN message_parts p ON p.message_id=m.id WHERE m.session_id=? AND t.status='completed' AND p.type='text' AND m.role IN ('user','assistant') ORDER BY m.created_at,m.id LIMIT 201`,
@@ -156,7 +214,7 @@ export class ChatRepository {
             userId,
             assistantId,
           ) &&
-          session.title === '新任务'
+          (session.title === '新任务' || session.title === '新会话')
         )
           this.run(
             'UPDATE sessions SET title=? WHERE id=?',
@@ -164,6 +222,12 @@ export class ChatRepository {
             args.sessionId,
           )
         this.run('UPDATE sessions SET updated_at=? WHERE id=?', now + 1, args.sessionId)
+        if (args.agent)
+          this.run(
+            'UPDATE turns SET agent_info=? WHERE id=?',
+            JSON.stringify(agentInfoSchema.parse(args.agent)),
+            String(args.turnId),
+          )
         return this.turn(this.one('SELECT * FROM turns WHERE id=?', String(args.turnId))!)
       })()
     }
@@ -218,8 +282,21 @@ export class ChatRepository {
             String(row.assistant_message_id),
           )
         : undefined
-      return { turn: row ? this.turn(row) : null, text: String(part?.text ?? '') }
+      return {
+        turn: row ? this.turn(row) : null,
+        text: String(part?.text ?? ''),
+        tools: row ? this.tools(String(row.id)) : [],
+      }
     }
     throw new ContractError(failure('INVALID_REQUEST'))
+  }
+  tools(turnId: string) {
+    return (
+      this.db
+        .prepare(
+          "SELECT payload FROM tool_calls WHERE turn_id=? AND payload != '{}' ORDER BY position,id LIMIT 40",
+        )
+        .all(turnId) as Row[]
+    ).map((row) => agentToolSchema.parse(JSON.parse(String(row.payload))))
   }
 }

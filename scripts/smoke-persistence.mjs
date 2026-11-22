@@ -42,11 +42,13 @@ async function selectOption(label, text) {
   await page.getByRole('combobox', { name: label, exact: true }).click()
   await page.getByRole('option', { name: text, exact: true }).click()
 }
-async function choose(path) {
+async function choose(path, createSession = false) {
   await application.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
   }, path)
-  await page.getByRole('button', { name: '打开项目', exact: true }).click()
+  await page
+    .getByRole('button', { name: createSession ? '新聊天' : '打开项目', exact: true })
+    .click()
   await page
     .locator('.project-item')
     .getByText(path === a ? '项目 A' : '项目 B', { exact: true })
@@ -54,6 +56,27 @@ async function choose(path) {
 }
 try {
   await launch()
+  await expect(page.getByRole('region', { name: '项目', exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: '最近聊天', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '新聊天', exact: true })).toBeEnabled()
+  await application.evaluate(({ dialog }) => {
+    dialog.showOpenDialog = async () => ({ canceled: true, filePaths: [] })
+  })
+  await page.getByRole('button', { name: '新聊天', exact: true }).click()
+  await expect(page.getByRole('button', { name: '新聊天', exact: true })).toBeEnabled()
+  const generalBoot = await data('bootstrap')
+  assert.ok(generalBoot.activeSessionId)
+  assert.equal(
+    await page.locator('.project-item').count(),
+    0,
+    'general chats do not appear as projects',
+  )
+  await data('sessions.rename', {
+    projectId: generalBoot.activeProjectId,
+    sessionId: generalBoot.activeSessionId,
+    title: '独立通用聊天',
+  })
+  await page.reload()
   const native = await application.evaluate(async ({ safeStorage, app }) => {
     if (
       !safeStorage.isEncryptionAvailable() ||
@@ -84,9 +107,11 @@ try {
   await choose(a)
   let boot = await data('bootstrap')
   const aId = boot.activeProjectId
-  await page.getByRole('button', { name: '新任务', exact: true }).click()
-  await page.locator('.session-title').getByText('新任务', { exact: true }).waitFor()
-  await page.getByRole('button', { name: '重命名 新任务', exact: true }).click()
+  await page.getByRole('button', { name: '新聊天', exact: true }).click()
+  await page.locator('.session-title').getByText('新会话', { exact: true }).waitFor()
+  assert.equal(await page.locator('.project-section .session-row').count(), 0)
+  await expect(page.locator('.session-scope')).toContainText('所有项目')
+  await page.getByRole('button', { name: '重命名 新会话', exact: true }).click()
   await page.getByRole('textbox', { name: '会话名称' }).fill('A 的独立会话')
   await page.getByRole('textbox', { name: '会话名称' }).press('Enter')
   await page.locator('.session-title').getByText('A 的独立会话', { exact: true }).waitFor()
@@ -104,10 +129,11 @@ try {
   await choose(b)
   boot = await data('bootstrap')
   const bId = boot.activeProjectId
-  assert.equal(await page.locator('.session-title').count(), 0)
-  await page.getByRole('button', { name: '新任务', exact: true }).click()
-  await page.locator('.session-title').getByText('新任务', { exact: true }).waitFor()
-  await page.getByRole('button', { name: '重命名 新任务', exact: true }).click()
+  await expect(page.locator('.session-title').first()).toBeVisible()
+  assert.ok((await data('sessions.recent', { limit: 20 })).items.some((s) => s.projectId === aId))
+  await page.getByRole('button', { name: '新聊天', exact: true }).click()
+  await page.locator('.session-title').getByText('新会话', { exact: true }).waitFor()
+  await page.getByRole('button', { name: '重命名 新会话', exact: true }).click()
   await page.getByRole('textbox', { name: '会话名称' }).fill('B 的独立会话')
   await page.getByRole('textbox', { name: '会话名称' }).press('Enter')
   await page.locator('.session-title').getByText('B 的独立会话', { exact: true }).waitFor()
@@ -124,7 +150,7 @@ try {
   application = undefined
   await launch()
   boot = await data('bootstrap')
-  assert.equal(boot.projects.length, 2)
+  assert.equal(boot.projects.filter((project) => !project.managed).length, 2)
   assert.equal(boot.activeProjectId, bId)
   assert.equal(boot.activeSessionId, bSession)
   assert.equal((await data('settings.get', { projectId: bId })).defaultModel, 'B-model')
@@ -150,6 +176,15 @@ try {
     .getByText('项目 B', { exact: true })
     .waitFor({ state: 'hidden' })
   assert.ok((await stat(b)).isDirectory())
+  const created = join(root, '新建项目 C')
+  await application.evaluate(({ dialog }, filePath) => {
+    dialog.showSaveDialog = async () => ({ canceled: false, filePath })
+  }, created)
+  await page.getByRole('button', { name: '新建项目', exact: true }).click()
+  await expect(page.locator('.project-item').getByText('新建项目 C', { exact: true })).toBeVisible()
+  assert.ok((await stat(created)).isDirectory())
+  await page.locator('.session-title').getByText('A 的独立会话', { exact: true }).click()
+  await expect.poll(async () => (await data('bootstrap')).activeProjectId).toBe(aId)
   const provider = await data('providers.save', {
     name: 'Fixture',
     protocol: 'responses',
@@ -218,6 +253,15 @@ try {
   )
   await page.getByRole('button', { name: '返回工作台', exact: true }).click()
   await page.screenshot({ path: 'output/sessions-persisted.png' })
+  await page.setViewportSize({ width: 960, height: 680 })
+  await expect(page.getByRole('button', { name: '新聊天', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '打开设置', exact: true })).toBeVisible()
+  const bounded = await page.evaluate(() => ({
+    root: document.documentElement.scrollHeight <= innerHeight,
+    sidebar: document.querySelector('.sidebar').getBoundingClientRect().bottom <= innerHeight,
+  }))
+  assert.deepEqual(bounded, { root: true, sidebar: true })
+  await page.screenshot({ path: 'output/sidebar-projects-recent-compact.png' })
   assert.deepEqual(pageErrors, [])
   await application.close()
   application = undefined
@@ -242,6 +286,7 @@ try {
           'actual OS safeStorage encrypt/write/decrypt without plaintext return',
           'native IPC project selection and two-project restart persistence',
           'UI session create/rename/archive/restore and remembered selection',
+          'separate project/recent-chat sections, standalone general chat, cross-project selection and native project creation',
           'per-project preferences and persisted light/dark theme',
           'project removal preserves directory',
           'credential plaintext injection rejected at IPC boundary',

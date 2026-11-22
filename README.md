@@ -2,7 +2,7 @@
 
 支持第三方模型 API 的本地桌面 AI 编程工作台，目标对齐 Codex 类似的编程与任务交互能力。采用 Electron、React、TypeScript、原版 AI Elements、Tailwind CSS、Lucide React 与 Zustand；主路线为自研 Agent 与 Provider 适配层。
 
-当前已接入 **普通聊天、流式文本、停止/重新发送、会话模型绑定、历史分页与重启续聊**，并保留供应商配置/诊断、项目、设置与系统保护凭据。2026-11-22 已修复火山方舟中间帧省略 finish_reason 的兼容问题；该端点的 DeepSeek 模型通过真实文本/流式/工具探测与包内重启续聊验收，见 LOG-041。Agent、工具执行、审批、编辑器和终端业务仍未接入。见 [聊天说明](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
+当前已接入 **独立普通聊天、跨项目最近聊天、原生新建项目、只读 Agent、流式文本、停止/重新发送与历史恢复**。只读 Agent 可安全搜索/读取所选项目，显示原 AI Elements 工具卡片及脱敏日志；火山方舟指定 DeepSeek 模型已通过真实搜索→读取→回答与重启验收（LOG-043）。写入、命令、审批、编辑器和终端业务留待后续阶段。见 [只读 Agent](./docs/read-only-agent.md)、[聊天说明](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
 
 ## 启动
 
@@ -17,31 +17,35 @@ pnpm dev
 
 ## 常用命令
 
-| 命令                             | 作用                                                        |
-| -------------------------------- | ----------------------------------------------------------- |
-| `pnpm dev`                       | 启动 Electron 开发应用                                      |
-| `pnpm build`                     | 类型检查并构建 main、preload、renderer                      |
-| `pnpm start`                     | 启动构建产物                                                |
-| `pnpm check`                     | 统一运行类型、Lint、格式、关键测试、文档、原组件与生产构建  |
-| `pnpm audit:dependencies`        | 生成本机安装依赖与许可证清单                                |
-| `pnpm verify:vendor`             | 离线核对原 AI Elements/UI 来源哈希                          |
-| `pnpm typecheck`                 | TypeScript 检查                                             |
-| `pnpm lint`                      | ESLint 检查                                                 |
-| `pnpm test`                      | 基础契约测试                                                |
-| `pnpm format:check`              | 格式检查                                                    |
-| `pnpm verify:no-codex`           | 在隔离 PATH 中验证无 Codex 启动与 Provider 入口             |
-| `pnpm verify:data`               | Worker/SQLite 数据、迁移与存储集成检查                      |
-| `pnpm verify:persistence`        | 真实桌面双项目重启、设置与系统凭据检查                      |
-| `pnpm verify:provider`           | Electron 供应商界面与本地 HTTP 协议替身验证（非供应商实测） |
-| `pnpm verify:model-picker`       | 首页原版模型选择、搜索、重启与项目隔离，确认不发送 API 请求 |
-| `pnpm verify:chat`               | SQLite/独立聊天运行时、取消/错误/上下文/迁移与恢复检查      |
-| `pnpm verify:chat-ui`            | 实际输入、HTTP 文本流、会话隔离、分页、滚动与重启续聊       |
-| `pnpm verify:icons`              | 357 个离线品牌 SVG、目录及 MIT 通知完整性检查               |
-| `pnpm verify:provider-icons`     | 图标匹配、深浅主题、包内资源加载与零外部请求检查            |
-| `pnpm verify:native`             | 在 Electron Node 中验证 SQLite 和 PTY                       |
-| `node scripts/smoke-desktop.mjs` | 启动桌面应用，检查 IPC、目录选择和 AI 组件，生成截图        |
-| `pnpm run pack`                  | 构建当前平台应用目录                                        |
-| `pnpm dist`                      | 构建当前平台安装包                                          |
+| 命令                             | 作用                                                          |
+| -------------------------------- | ------------------------------------------------------------- |
+| `pnpm dev`                       | 启动 Electron 开发应用                                        |
+| `pnpm build`                     | 类型检查并构建 main、preload、renderer                        |
+| `pnpm start`                     | 启动构建产物                                                  |
+| `pnpm check`                     | 统一运行类型、Lint、格式、关键测试、文档、原组件与生产构建    |
+| `pnpm audit:dependencies`        | 生成本机安装依赖与许可证清单                                  |
+| `pnpm verify:vendor`             | 离线核对原 AI Elements/UI 来源哈希                            |
+| `pnpm typecheck`                 | TypeScript 检查                                               |
+| `pnpm lint`                      | ESLint 检查                                                   |
+| `pnpm test`                      | 基础契约测试                                                  |
+| `pnpm format:check`              | 格式检查                                                      |
+| `pnpm verify:no-codex`           | 在隔离 PATH 中验证无 Codex 启动与 Provider 入口               |
+| `pnpm verify:data`               | Worker/SQLite 数据、迁移与存储集成检查                        |
+| `pnpm verify:persistence`        | 真实桌面双项目重启、设置与系统凭据检查                        |
+| `pnpm verify:provider`           | Electron 供应商界面与本地 HTTP 协议替身验证（非供应商实测）   |
+| `pnpm verify:model-picker`       | 首页原版模型选择、搜索、重启与项目隔离，确认不发送 API 请求   |
+| `pnpm verify:chat`               | SQLite/独立聊天运行时、取消/错误/上下文/迁移与恢复检查        |
+| `pnpm verify:agent`              | SQLite/真实适配器的只读工具循环与预算集成（本地替身）         |
+| `pnpm verify:agent-ui`           | 原 Tool、日志查看、取消、重启与只读模式桌面验收               |
+| `pnpm verify:chat-ui`            | 实际输入、HTTP 文本流、会话隔离、分页、滚动与重启续聊         |
+| `pnpm verify:agent`              | 真实适配器/SQLite Worker 的只读循环、工具边界、日志和预算检查 |
+| `pnpm verify:agent-ui`           | 原 Tool 卡片、模式/范围、日志查看、取消和重启恢复             |
+| `pnpm verify:icons`              | 357 个离线品牌 SVG、目录及 MIT 通知完整性检查                 |
+| `pnpm verify:provider-icons`     | 图标匹配、深浅主题、包内资源加载与零外部请求检查              |
+| `pnpm verify:native`             | 在 Electron Node 中验证 SQLite 和 PTY                         |
+| `node scripts/smoke-desktop.mjs` | 启动桌面应用，检查 IPC、目录选择和 AI 组件，生成截图          |
+| `pnpm run pack`                  | 构建当前平台应用目录                                          |
+| `pnpm dist`                      | 构建当前平台安装包                                            |
 
 ## 目录
 
@@ -60,7 +64,7 @@ tests/                          基础测试
 docs/                           架构、技术选型、实施计划和搭建记录
 ```
 
-首页使用原版 AI Elements ModelSelector 选择已保存模型，支持按模型/供应商搜索；无项目时保存应用默认值，有项目时保存该项目默认值，重启保留。选择器提供供应商管理入口，侧栏设置仍可管理配置；环境检查和原 AI 组件预览收进开发者选项。供应商连接诊断与普通聊天已接入，Agent 工具循环待后续阶段。正常启动不探测 Codex，不要求安装 Codex 或登录 ChatGPT；独立握手脚本保留为可选技术储备。见 [产品入口](./docs/provider-entry.md)。
+首页使用原版 AI Elements ModelSelector 选择已保存模型，支持按模型/供应商搜索；无项目时保存应用默认值，有项目时保存该项目默认值，重启保留。选择器提供供应商管理入口，侧栏设置仍可管理配置；环境检查和原 AI 组件预览收进开发者选项。供应商连接诊断与普通聊天已接入，只读 Agent 已接入，写入/命令/审批待后续阶段。正常启动不探测 Codex，不要求安装 Codex 或登录 ChatGPT；独立握手脚本保留为可选技术储备。见 [产品入口](./docs/provider-entry.md)。
 
 后续按 [工作总表](./docs/work-plan.md) 推进，每项完成后在 [工作日志](./docs/work-log.md) 记录实现与验证；仓库执行约定见 [AGENTS.md](./AGENTS.md)。
 
@@ -70,7 +74,7 @@ Renderer 的模块职责与检查范围见 [feature 边界](./docs/renderer-stru
 
 桌面通信协议见 [B02 契约](./docs/ipc-contracts.md)，本地与双平台 CI 入口见 [B04 检查计划](./docs/quality-checks.md)，维护版本、许可证与发行阻断见 [V01 依赖评估](./docs/dependency-review.md)。
 
-阶段 1–4 已验收，真实供应商范围限定为 LOG-041 记录的火山方舟端点/模型。下一项为阶段 5/5.1/T01；阶段 5 尚未开始。
+阶段 1–4 已验收；阶段 5 的真实只读闭环通过，最终包内复核收尾见 LOG-043，验收后下一项为阶段 6/6.1/T04。真实供应商范围限定为记录的火山方舟端点/模型。
 
 供应商列表及模型选择器包含 357 个本地品牌 SVG，按域名、名称和模型系列识别，未知配置显示通用图标；不依赖远程图片。来源和匹配边界见 [供应商图标](./docs/provider-icons.md)。
 

@@ -7,6 +7,12 @@ import {
 } from './chat-contracts'
 import { usageSchema } from './provider-contracts'
 import {
+  agentLimitsSchema,
+  defaultAgentLimits,
+  agentInfoSchema,
+  agentToolSchema,
+} from './agent-contracts'
+import {
   compatibilitySchema,
   providerReportSchema,
   probeKind,
@@ -24,6 +30,7 @@ export const settingsSchema = z
     projectPermission: z.enum(['read-only', 'ask']),
     maxTokens: z.number().int().min(256).max(1000000),
     maxCost: z.number().finite().min(0).max(10000),
+    agentLimits: agentLimitsSchema.default(defaultAgentLimits),
   })
   .strict()
 export type Settings = z.infer<typeof settingsSchema>
@@ -35,6 +42,7 @@ export const defaultSettings: Settings = {
   projectPermission: 'read-only',
   maxTokens: 8192,
   maxCost: 5,
+  agentLimits: defaultAgentLimits,
 }
 export const recentProjectSchema = z
   .object({
@@ -43,6 +51,7 @@ export const recentProjectSchema = z
     name: text,
     lastOpenedAt: z.number().int(),
     available: z.boolean(),
+    managed: z.boolean().default(false),
   })
   .strict()
 export type RecentProject = z.infer<typeof recentProjectSchema>
@@ -122,6 +131,7 @@ export const blobSchema = session
 export const operationArgs = {
   bootstrap: z.object({}).strict(),
   'projects.list': z.object({}).strict(),
+  'projects.create': z.object({}).strict(),
   'projects.switch': project,
   'projects.remove': project,
   'providers.list': z.object({}).strict(),
@@ -143,8 +153,10 @@ export const operationArgs = {
   'settings.export': z.object({ projectId: entityId.nullable() }).strict(),
   'settings.get': z.object({ projectId: entityId.nullable() }).strict(),
   'settings.save': z.object({ projectId: entityId.nullable(), settings: settingsSchema }).strict(),
-  'sessions.create': project.extend({ title: text.default('新任务') }).strict(),
+  'sessions.create': project.extend({ title: text.default('新会话') }).strict(),
+  'sessions.general': z.object({}).strict(),
   'sessions.list': project.extend({ archived: z.boolean().default(false), ...page }).strict(),
+  'sessions.recent': z.object({ archived: z.boolean().default(false), ...page }).strict(),
   'sessions.rename': session.extend({ title: text }).strict(),
   'sessions.archive': session.extend({ archived: z.boolean() }).strict(),
   'sessions.get': session,
@@ -164,6 +176,8 @@ export const operationArgs = {
       text: z.string().trim().min(1).max(32768),
       expectedProviderId: entityId,
       expectedModel: z.string().trim().min(1).max(200),
+      mode: z.enum(['chat', 'read-only']).default('chat'),
+      selectedPaths: z.array(z.string().min(1).max(1000)).max(12).default([]),
     })
     .strict(),
   'chat.read': session,
@@ -196,6 +210,14 @@ export const messageSchema = z
     finish: z.string().nullable().default(null),
     providerId: entityId.nullable().default(null),
     model: z.string().max(200).default(''),
+    agent: agentInfoSchema.default({
+      mode: 'chat',
+      sources: [],
+      summaries: [],
+      rounds: 0,
+      calls: 0,
+    }),
+    tools: z.array(agentToolSchema).max(40).default([]),
     parts: z.array(
       z
         .object({
@@ -229,6 +251,7 @@ const ack = z.object({ removed: z.boolean() }).strict()
 export const operationResults = {
   bootstrap: bootstrapSchema,
   'projects.list': z.array(recentProjectSchema),
+  'projects.create': recentProjectSchema.nullable(),
   'projects.switch': recentProjectSchema,
   'projects.remove': ack,
   'providers.list': z.array(providerSchema),
@@ -244,7 +267,9 @@ export const operationResults = {
   'settings.get': settingsSchema,
   'settings.save': settingsSchema,
   'sessions.create': sessionSchema,
+  'sessions.general': sessionSchema,
   'sessions.list': sessionPage,
+  'sessions.recent': sessionPage,
   'sessions.rename': sessionSchema,
   'sessions.archive': sessionSchema,
   'sessions.get': sessionSchema,

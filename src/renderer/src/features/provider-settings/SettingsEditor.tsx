@@ -139,7 +139,36 @@ export function SettingsEditor({ value, providers, onSave, onExport }: Props) {
             />
           </div>
         </div>
-        <p className="settings-footnote">工具权限与费用限额将在相应功能启用后生效。</p>
+        <div className="settings-group-fields">
+          {(
+            [
+              ['maxCalls', 'Agent 工具次数', 1, 40],
+              ['maxRounds', 'Agent 模型轮数', 1, 20],
+              ['maxDurationMs', 'Agent 时间上限（毫秒）', 1000, 300000],
+              ['maxOutputChars', 'Agent 输出字符上限', 1024, 262144],
+              ['contextChars', 'Agent 上下文字节上限', 4096, 200000],
+            ] as const
+          ).map(([key, label, min, max]) => (
+            <div className="settings-field" key={key}>
+              <Label htmlFor={`${id}-${key}`}>{label}</Label>
+              <Input
+                id={`${id}-${key}`}
+                type="number"
+                required
+                min={min}
+                max={max}
+                value={draft.agentLimits[key]}
+                onChange={(event) =>
+                  update('agentLimits', { ...draft.agentLimits, [key]: event.target.valueAsNumber })
+                }
+              />
+            </div>
+          ))}
+        </div>
+        <p className="settings-footnote">
+          只读 Agent 使用次数、轮数、时间、输出与上下文限额；Token
+          为累计输出额度，无用量时按请求预留额扣减。费用数值仍为偏好，尚不能保证美元计费硬上限；写入和命令未启用。
+        </p>
       </SettingsGroup>
       {error && (
         <p role="alert" className="error-text">

@@ -84,7 +84,7 @@ export type Message =
       role: 'user'
       content: Array<{ type: 'text'; text: string } | { type: 'image'; url: string }>
     }
-  | { role: 'assistant'; content: string; toolCalls?: ToolCall[] }
+  | { role: 'assistant'; content: string; toolCalls?: ToolCall[]; reasoning?: string }
   | { role: 'tool'; content: string; toolCallId: string }
 export type Tool = { name: string; description: string; parameters: Record<string, unknown> }
 export type CompletionInput = {
@@ -97,6 +97,7 @@ export type CompletionInput = {
 }
 export type Completion = {
   text: string
+  reasoning?: string
   toolCalls: ToolCall[]
   usage: Usage
   finish: 'stop' | 'tools' | 'length' | 'filtered' | 'unknown'

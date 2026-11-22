@@ -59,6 +59,9 @@ importers:
       electron-log:
         specifier: ^5.4.0
         version: 5.4.4
+      ignore:
+        specifier: 7.0.16
+        version: 7.0.16
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.3.1)

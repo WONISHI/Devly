@@ -455,6 +455,38 @@
 - 状态变化：P05 待验证 → 完成；阶段 3、4 各项验收有独立证据后改为完成并归档，下一项阶段 5/5.1/T01，待开始。真实结果仅对上述端点/模型/当次配置成立；工具探测不是 Agent 闭环，视觉/结构化/其他协议、Windows、远端 CI、签名/公证和正式发行仍未验收。本轮不实现阶段 5。
 - 本机应用：release/mac-arm64/Devly.app 已更新为修复版本，当前运行中的旧进程需要退出后重开才能载入 Main 改动；没有强制关闭用户窗口。按既有要求提交并同步 GitHub，最终提交哈希和推送回执见 Git。
 
+## LOG-042｜L02/L06/U02：项目与最近聊天独立、新建入口
+
+- 日期：2026-11-22；用户要求会话和分组分开，随后提供“新聊天 / 项目 / 最近”侧栏参考。本轮按截图实现独立项目区和跨项目最近聊天，而非自定义分组实体。
+- 实际修改：顶部固定“新聊天”；项目区分别提供原生“新建项目”和“打开项目”；最近聊天全局按更新时间分页，点击后切换所属项目并恢复会话。项目区、最近区使用同源 ScrollArea，根窗口/设置按钮保持固定；新建期间禁用重复入口。空会话默认“新会话”，原“新任务”默认标题仍兼容首次消息命名。SessionRow 保留重命名、归档与恢复。
+- 无项目聊天：sessions.general 在私有存储中建立 managed 的内部归属；用户可直接新建或发送普通聊天，无需选文件夹，该归属不显示成项目。Main 拒绝对 managed 归属启动只读 Agent；普通聊天不读取文件。真实项目仍由用户原生选择或创建，移除只删记录。跨项目最近列表各操作按 session.projectId 核对，避免对当前项目错发重命名/归档。
+- 数据与文件：SQLite v6 的 projects.managed 保留原项目 ID；新增 sessions.recent、sessions.general、projects.create 严格契约。涉及 data-contracts、DataStore/LocalDataService、Main 原生提示、WorkspaceSidebar、store、App、ChatWorkspace/use-chat、use-create-project、样式和桌面脚本。
+- 验证：类型与静态检查通过；此前隔离桌面 persistence 检查已通过项目/最近区、新建项目、跨项目选择、重命名/归档/分页/重启、960×680 有界布局及 OS 凭据往返。新增通用聊天的最终回归和最终包内结果在本日志末尾追加；不把代码存在当作已运行。截图 output/sidebar-projects-recent-compact.png 已复核，并修正 Radix viewport 子层 table 导致的长标题撑宽。
+- 边界：新建项目只在用户原生对话框确认后创建空目录，不覆盖已有路径，不是模型工具；不增加自定义分组表。当前进程的显式模式选择只记到对应会话，重启默认普通聊天；工具历史保留。原用户资料不用于桌面替身测试，不强制关闭用户应用。
+
+- 最终复核：修正旧测试仍预期“新聊天弹选目录”的脚本后，最终包内 verify:persistence 退出 0，独立通用聊天、原生新建项目、跨项目最近选择、分页/归档/重启、OS 密文往返及 960×680 布局通过。verify:chat-ui 退出 0，22 次 loopback 请求含无项目首条聊天、会话隔离和历史续聊；根与侧栏无溢出。应用已更新，侧栏与工具实际截图复核完成。LOG-042 事项完成。
+
+## LOG-043｜阶段 5：只读工具、上下文、多轮 Agent 与真实验收
+
+- 日期：2026-11-22；用户要求完成阶段 5，按 5.1–5.9 实现 T01/T02/T03/T09/A02/A03/A04/A05/U03。本记录覆盖各步骤实现与验收，完整机制和使用见 read-only-agent.md。
+- 5.1/T01：独立只读注册表仅暴露 list_files/read_file/search_text；Zod strict 参数及 JSON Schema，原始模型字符串不进入命令或任意函数执行。未知 write_file/__proto__、未知字段、错类型、无效 JSON 均验证拒绝。
+- 5.2/T02、5.3/T03：canonical 项目根、相对路径/16 层限制、逐层符号链接拒绝、最终 NOFOLLOW、inode/大小/mtime 及读后检查；UTF-8/二进制/256 KiB 文件边界、行号/分页、12000 字符正文；字面量搜索、500 文件/2000 项/16 层上限及明确截断。固定敏感目录/文件和根/嵌套 .gitignore 过滤，当前 Key 与常见秘密文本拒绝发送。
+- 5.4/T09：流式参数 proposed、实际执行 running、真实完成/失败/取消记录；参数、结果脱敏后写 SQLite payload。完整脱敏工具输出落 UUID blob，卡片保留摘要、截断标志和日志引用；超存储配额/写失败明确返回本地错误。沿用 256 MiB 总配额、分页读取/显式 prune，日志清理后提示失败，不伪造恢复。没有未脱敏“原始秘密备份”。
+- 5.5/A02：只读系统策略优先于当前用户任务和低可信项目资料；根及选中文件祖先 AGENTS.md 有路径/作用域顺序，read_file 动态附带嵌套约定。项目文件/工具输出不升级成 system。历史数据库有界摘录、最近消息、明确标注的旧历史摘要、选中文件和工具来源可追踪；当前请求不静默截断。
+- 5.6/A03、5.7/A04：模型 SSE → 完整调用与参数校验 → 顺序执行只读工具 → 对应 toolCallId 回传 → 再次模型请求，直到真实终答。支持多个调用和参数分片；未收到有效终态 + [DONE] 不派发。思考模式 reasoning 在 Main 回合内回放，保持 API 兼容，不混入 Renderer 正文/工具日志。重复调用 ID、断流、坏 JSON 不执行。
+- 5.8/A05：应用/项目 agentLimits 约束轮数、调用次数、模型/工具循环时间、累计文本/工具输出、上下文字节；maxTokens 是累计输出额度，每轮最多预留 2048，缺用量则保守扣预留，真实用量未知保持 null。较早历史/工具结果压缩为显式不完整摘录，保留本地记录和调用关联；不足时明确停止。费用 USD 仍是偏好，未宣称计费硬上限。
+- 5.9/U03：显式模式开关、发送范围/选中文件、原 Message/Tool 卡片、调用 ID、参数/结果、脱敏日志查看、错误/取消状态均接入真实运行记录。工具卡片重启恢复；活动回合/调用在重启标中断，不重放。普通聊天不自动调用文件工具；通用聊天由 Main 拒绝 Agent 文件范围。
+- 文件：src/main/agent/{tools,context,runner}.ts，chat/runtime/repository，providers/chat-completions，data/{store,service,migrations}，shared/agent/chat/data/provider 契约；Renderer AgentTrace/ChatWorkspace/ChatHistory/use-chat/SettingsEditor 与 sidebar/store；agent-tools.test、agent.integration、verify-agent、smoke-agent、verify-agent-live/live-agent-seed、check/package/lock、打包许可证及说明文档。
+- 本地验证：新增 9 项工具/上下文单测，现共 84 项；verify:data、verify:chat（30 次注入请求）、verify:agent（17 次注入请求）通过。Agent 集成检查真实适配器/SQLite Worker、搜索→读取→回答、参数半包与坏 JSON、未知写工具拒绝、日志和重启、取消/超时/调用/轮数/Token/输出限额；verify:agent-ui 的 4 次 loopback 请求通过原 Tool、日志查看、重启不重放、半包取消与紧凑布局。普通聊天 21 次旧替身回归通过；通用聊天及最终应用的复核结果末尾追加。
+- 真实验收：火山方舟 https://ark.cn-beijing.volces.com/api/v3，chat-completions，deepseek-v4-1-flash-261017。显式选定受保护配置，在独立临时 profile/自动生成的样例项目完成 3 轮、2 次工具调用：search_text completed → read_file completed → 随机口令匹配；两次调用 ID 对应且都有本地日志引用，重启恢复工具与回复。原项目代码与原会话未发送/改写，Key 只在包内 Main 解密，不进入输出。一次性脚本必须显式给 profile/Provider UUID/包路径，不纳入 check/CI；返回安全结果，不记录口令、Key 或原始响应。
+- 新依赖：固定 ignore 7.0.16，MIT，离线复用缓存，Git 忽略语义测试通过；原许可证打入应用 licenses/ignore.LICENSE。依赖盘点 61 个直接依赖、922 个 name@version；没有将此盘点冒称远程安全审计或消除旧发行阻断。
+- 边界与下一步：本阶段只读，无写入、命令、审批或 OS 沙箱完成承诺；应用层路径检查不代替后续平台隔离。Windows、远端 CI、签名、公证/正式安装包仍未验收。最终包内回归完成后归档阶段 5，唯一下一项阶段 6/6.1/T04，不在本轮展开。
+
+- 最终交付复核：最终源码 pnpm check 退出 0（类型/Lint/格式、84 项测试、24 份 Markdown/106 ID/43 连续日志、26 份原组件与品牌资源校验、生产构建、verify:data、verify:chat 30 次注入请求、verify:agent 17 次注入请求）。最终未签名应用目录打包退出 0，包内 verify:agent-ui（4 次 loopback）、verify:persistence、verify:chat-ui（22 次 loopback）全部退出 0；ignore 许可证包内文件与原文 cmp 一致。最终包再次真实验收退出 0：chat-completions / deepseek-v4-1-flash-261017，3 轮/2 工具、随机口令匹配、两条完整日志引用和重启恢复通过。原项目未用作真实 API 样例，没有输出 Key 或原始供应商响应。
+- 额外边界修正：输出额度不足或日志保存失败时，已读取但尚未持久化终态的工具统一收尾为明确失败，避免卡片残留“执行中”；新增 no-output-left 集成用例，17 次请求验证额度不足后的失败状态与空日志引用。JSON 属性形式的秘密及 Unicode 转义 Key 也有脱敏/拒绝回归，单测总数仍为 84。
+- 工具终态修正后复核：最新源码类型/Lint/格式通过，生产构建和 17 次 Agent 注入请求通过；最新包的 verify:agent-ui 及真实 API 验收再次退出 0，仍为 3 轮/2 次成功工具、日志引用与重启恢复，打包 ignore 许可证逐字一致。普通聊天/项目桌面回归在工具终态修正前通过；修正后的包内复核覆盖 Agent 与真实 API。
+- 最终状态：阶段 5 的 9/9 项及 3 条阶段验收完成并归档；当前唯一下一项阶段 6/6.1/T04，待开始。本轮没有启用写入、命令或审批。release/mac-arm64/Devly.app 已更新；用户需完全退出旧进程后重开。按既有要求提交同步，哈希/推送回执见 Git。
+
 ## 追加记录模板
 
 ```text

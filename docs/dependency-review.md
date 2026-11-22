@@ -210,3 +210,7 @@ LOG-033/034 补充：同一固定来源增加 ScrollArea、ModelSelector、Dialo
 LOG-035 补充：静态收集 @lobehub/icons-static-svg 1.104.0 的 357 个品牌 SVG，没有新增 npm 依赖或升级锁文件。源 tarball SHA-512、每份 SVG SHA-256、固定源码提交及 MIT 原文均保存；打包分发包含原版权通知。不需要 @lobehub/ui/新的 React peer，运行时离线加载。品牌商标权与代码许可证分别保留；不据此声称已完成全部分发许可审查。详见 [来源与更新规则](./provider-icons.md)。
 
 阶段 4 补充（LOG-038）：同一固定提交新增 Prompt Input + DropdownMenu/HoverCard/InputGroup/Spinner，当前 7 AI + 18 UI + LICENSE 共 26 份哈希核对。新增直接依赖 nanoid 精确锁定 3.3.20（沿用锁文件既有版本，MIT）；仅新增 importer 引用，离线安装没有升级依赖、下载新包或运行生命周期。类型、生产构建和实际键盘/输入检查通过；此处只验证所用 nanoid API 兼容，不声称该旧主版本是最新维护线。原组件 Apache 通知新增随包资源，其他维护/发行风险仍保持。
+
+## 阶段 5 新增运行时依赖（2026-11-22）
+
+新增精确直接依赖 ignore 7.0.16，用于 Git 风格 .gitignore 匹配；离线复用现有缓存，没有升级 Electron 等基线版本。核对本机 package.json 与 LICENSE-MIT，来源为 kaelzhang/node-ignore，MIT 原文随应用放入 licenses/ignore.LICENSE。pnpm audit:dependencies 当前报告为 61 个直接依赖、922 个 name@version；来源/许可证盘点不等于新的远程安全审计或维护期限承诺，前述发行阻断仍保留。类型、构建、根/嵌套忽略与否定规则测试作为此次兼容性证据；原 AI Elements 文件未修改。

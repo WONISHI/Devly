@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { providerErrorSchema, usageSchema } from './provider-contracts'
+import { agentInfoSchema, agentToolSchema } from './agent-contracts'
 
 export const turnStateSchema = z.enum(['pending', 'running', 'completed', 'failed', 'cancelled'])
 export const taskPhaseSchema = z.enum([
@@ -55,6 +56,13 @@ export const chatTurnSchema = z
     usage: usageSchema.nullable(),
     finish: z.enum(['stop', 'length', 'filtered', 'tools', 'unknown']).nullable(),
     error: chatErrorSchema.nullable(),
+    agent: agentInfoSchema.default({
+      mode: 'chat',
+      sources: [],
+      summaries: [],
+      rounds: 0,
+      calls: 0,
+    }),
   })
   .strict()
 export type ChatTurn = z.infer<typeof chatTurnSchema>
@@ -62,6 +70,7 @@ export const chatSnapshotSchema = z
   .object({
     turn: chatTurnSchema.nullable(),
     text: z.string().max(262144),
+    tools: z.array(agentToolSchema).max(40).default([]),
   })
   .strict()
 export type ChatSnapshot = z.infer<typeof chatSnapshotSchema>

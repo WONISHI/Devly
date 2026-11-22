@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { ChevronDown, FolderOpen, Paperclip } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { SelectField } from '@/components/forms/SelectField'
 import {
   Dialog,
   DialogContent,
@@ -32,6 +35,9 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
   const [inputError, setInputError] = useState<string | null>(null)
   const [choice, setChoice] = useState<Choice | null>(null)
   const [changing, setChanging] = useState(false)
+  const preferences = session ? state.chatPreferences[session.id] : undefined
+  const [mode, setMode] = useState<'chat' | 'read-only'>(preferences?.mode ?? 'chat')
+  const [selectedPaths, setSelectedPaths] = useState(preferences?.selectedPaths.join(', ') ?? '')
   const baseSettings = state.project ? state.projectSettings : state.settings
   const settings = session
     ? { ...baseSettings, defaultProviderId: session.providerId, defaultModel: session.model }
@@ -70,6 +76,44 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
   }
   const composer = (
     <>
+      <fieldset className="agent-mode-controls" disabled={chat.busy || blocked}>
+        <SelectField
+          label="运行模式"
+          value={mode}
+          onValueChange={(value) => setMode(value as typeof mode)}
+          options={[
+            { value: 'chat', label: '普通聊天' },
+            {
+              value: 'read-only',
+              label: '只读 Agent',
+              disabled:
+                !state.project ||
+                state.project.managed ||
+                state.providers
+                  .find((p) => p.id === settings.defaultProviderId)
+                  ?.report?.checks.find((check) => check.kind === 'tools')?.ok === false ||
+                state.providers.find((p) => p.id === settings.defaultProviderId)?.compatibility
+                  .tools === 'disabled',
+            },
+          ]}
+        />
+        {mode === 'read-only' && (
+          <div className="agent-selected-files">
+            <Label htmlFor="agent-selected-paths">选中文件（可选）</Label>
+            <Input
+              id="agent-selected-paths"
+              placeholder="项目相对路径，用逗号分隔"
+              value={selectedPaths}
+              onChange={(event) => setSelectedPaths(event.target.value)}
+            />
+          </div>
+        )}
+      </fieldset>
+      {mode === 'read-only' && (
+        <p className="agent-scope-notice">
+          将向当前模型发送项目约定、选中文件及工具读取的内容；只允许目录、文件与文本搜索，不执行写入或命令。
+        </p>
+      )}
       <PromptInput
         className="task-composer"
         maxFiles={0}
@@ -80,6 +124,14 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
           await chat.send(text, {
             providerId: settings.defaultProviderId,
             model: settings.defaultModel,
+            mode,
+            selectedPaths:
+              mode === 'read-only'
+                ? selectedPaths
+                    .split(',')
+                    .map((p) => p.trim())
+                    .filter(Boolean)
+                : [],
           })
           setDraft('')
         }}
@@ -117,7 +169,9 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
               className="task-project-selector"
             >
               <FolderOpen size={15} />
-              <span>{state.project?.name || '选择项目'}</span>
+              <span>
+                {state.project && !state.project.managed ? state.project.name : '选择项目'}
+              </span>
               <ChevronDown size={12} />
             </Button>
           </PromptInputTools>
@@ -138,7 +192,10 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
               disabled={
                 chat.busy
                   ? chat.starting || chat.stopping
-                  : blocked || !state.project || !configured || !draft.trim()
+                  : blocked ||
+                    !configured ||
+                    !draft.trim() ||
+                    (mode === 'read-only' && (!state.project || state.project.managed))
               }
             />
           </div>
@@ -151,11 +208,11 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
             ? '正在停止…'
             : chat.busy
               ? '正在生成，可停止或切换会话'
-              : !state.project
-                ? '选择本地项目后开始对话；只发送输入和会话历史'
+              : !state.project || state.project.managed
+                ? '可直接聊天；选择本地项目后可使用只读 Agent'
                 : !configured
                   ? '请选择已配置的供应商和模型'
-                  : 'Enter 发送 · Shift+Enter 换行 · 当前为普通聊天'}
+                  : `Enter 发送 · Shift+Enter 换行 · 当前为${mode === 'read-only' ? '只读 Agent' : '普通聊天'}`}
       </p>
       {(inputError || chat.error) && (
         <div role="alert" className="chat-error">
@@ -216,6 +273,7 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
           </p>
         ) : chat.messages.length > 0 ? (
           <ChatHistory
+            projectId={state.project!.id}
             messages={chat.messages}
             busy={chat.busy}
             hasOlder={chat.hasOlder}
@@ -225,6 +283,14 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
               chat.send(text, {
                 providerId: settings.defaultProviderId,
                 model: settings.defaultModel,
+                mode,
+                selectedPaths:
+                  mode === 'read-only'
+                    ? selectedPaths
+                        .split(',')
+                        .map((p) => p.trim())
+                        .filter(Boolean)
+                    : [],
               })
             }
           />

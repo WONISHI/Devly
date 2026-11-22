@@ -118,6 +118,28 @@ try {
     settings: { ...settings, defaultProviderId: pa.id, defaultModel: pa.model },
   })
   await page.reload()
+  await send('general question')
+  await complete()
+  const generalBoot = await data('bootstrap')
+  assert.equal(
+    generalBoot.projects.find((project) => project.id === generalBoot.activeProjectId).managed,
+    true,
+  )
+  assert.equal(
+    await page.locator('.project-item').count(),
+    0,
+    'general chat is independent from projects',
+  )
+  assert.equal(
+    (
+      await data('chat.read', {
+        projectId: generalBoot.activeProjectId,
+        sessionId: generalBoot.activeSessionId,
+      })
+    ).tools.length,
+    0,
+  )
+  const generalRequests = requests.length
   await openProject(projectPath)
   const projectId = (await data('bootstrap')).activeProjectId
   await expect(
@@ -127,7 +149,7 @@ try {
   await expect(page.getByRole('button', { name: '发送消息', exact: true })).toBeDisabled()
   await page.getByRole('textbox', { name: '任务输入', exact: true }).fill('line one')
   await page.getByRole('textbox', { name: '任务输入', exact: true }).press('Shift+Enter')
-  assert.equal(requests.length, 0)
+  assert.equal(requests.length, generalRequests)
   await send('first question', true)
   await complete()
   const aId = (await data('bootstrap')).activeSessionId
@@ -138,11 +160,11 @@ try {
     ['first question', '本地替身回复：first question', 'second question'],
   )
   assert.equal(requests[0].tools, undefined)
-  await page.getByRole('button', { name: '新任务', exact: true }).click()
+  await page.getByRole('button', { name: '新聊天', exact: true }).click()
   await send('slow A')
   await expect(page.locator('.chat-messages')).toContainText('仅属于 A 的增量一')
   const streamingId = (await data('bootstrap')).activeSessionId
-  await page.getByRole('button', { name: '新任务', exact: true }).click()
+  await page.getByRole('button', { name: '新聊天', exact: true }).click()
   await send('session B')
   await complete()
   await expect(page.locator('.chat-messages')).not.toContainText('仅属于 A')

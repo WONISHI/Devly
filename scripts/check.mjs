@@ -12,6 +12,7 @@ for (const script of [
   'build:bundle',
   'verify:data',
   'verify:chat',
+  'verify:agent',
 ]) {
   console.log(`\n[check] ${script}`)
   const result =

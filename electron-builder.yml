@@ -6,6 +6,8 @@ files:
   - out/**
   - package.json
 extraResources:
+  - from: node_modules/ignore/LICENSE-MIT
+    to: licenses/ignore.LICENSE
   - from: src/renderer/src/components/ai-elements/LICENSE
     to: licenses/ai-elements.LICENSE
   - from: build/icon.png

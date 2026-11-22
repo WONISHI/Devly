@@ -1,6 +1,20 @@
 import { desktop } from '@/platform/desktop'
 import { useWorkspace } from '@/store'
 import type { Settings } from '@shared/data-contracts'
+export async function readAgentLog(projectId: string, sessionId: string, blobId: string) {
+  const result = await desktop.data('blobs.read', {
+    projectId,
+    sessionId,
+    blobId,
+    offset: 0,
+    length: 65536,
+  })
+  const bytes = Uint8Array.from(atob(result.base64), (c) => c.charCodeAt(0))
+  return (
+    new TextDecoder().decode(bytes) +
+    (result.truncated ? '\n[日志超过单次读取上限，仅显示前 64 KiB]' : '')
+  )
+}
 
 export async function changeChatModel(input: {
   projectId: string | null
@@ -16,7 +30,7 @@ export async function changeChatModel(input: {
     let sessionId = input.sessionId
     if (input.newSession && input.projectId)
       sessionId = (
-        await desktop.data('sessions.create', { projectId: input.projectId, title: '新任务' })
+        await desktop.data('sessions.create', { projectId: input.projectId, title: '新会话' })
       ).id
     if (input.projectId && sessionId) {
       await desktop.data('sessions.bind', {

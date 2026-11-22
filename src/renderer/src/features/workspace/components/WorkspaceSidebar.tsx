@@ -2,6 +2,8 @@ import {
   Archive,
   ArchiveRestore,
   FolderOpen,
+  FolderPlus,
+  MessageSquare,
   Pencil,
   Plus,
   Settings2,
@@ -11,6 +13,7 @@ import {
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import type { Session } from '@shared/data-contracts'
 import type { useWorkspace } from '@/store'
 import devlyLogo from '../../../../../../resources/branding/devly-logo-dark-v2.png'
@@ -19,6 +22,8 @@ type State = ReturnType<typeof useWorkspace.getState>
 type Props = {
   state: State
   openProject: () => Promise<void>
+  newSession: () => Promise<void>
+  createProject: () => Promise<void>
   run: (operation: () => Promise<void>) => void
 }
 function SessionRow({
@@ -72,10 +77,12 @@ function SessionRow({
             variant="ghost"
             type="button"
             className="session-title"
+            aria-current={state.activeSession?.id === session.id ? 'page' : undefined}
             onClick={() => run(() => state.selectSession(session.id))}
             title={session.title}
           >
-            {session.title}
+            <MessageSquare size={13} />
+            <span>{session.title}</span>
           </Button>
           <Button
             variant="ghost"
@@ -103,7 +110,17 @@ function SessionRow({
     </div>
   )
 }
-export function WorkspaceSidebar({ state, openProject, run }: Props) {
+export function WorkspaceSidebar({ state, openProject, newSession, createProject, run }: Props) {
+  const [creating, setCreating] = useState(false)
+  async function createSession() {
+    if (creating) return
+    setCreating(true)
+    try {
+      await newSession()
+    } finally {
+      setCreating(false)
+    }
+  }
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -117,72 +134,104 @@ export function WorkspaceSidebar({ state, openProject, run }: Props) {
       <Button
         variant="ghost"
         type="button"
-        className={`nav-item ${state.tab === 'workspace' ? 'active' : ''}`}
-        disabled={state.loading || !!state.loadError}
-        onClick={() => run(state.newSession)}
+        className="nav-item new-session-button"
+        disabled={creating || state.loading || !!state.loadError}
+        onClick={() => run(createSession)}
       >
         <SquarePen size={16} />
-        新任务
+        {creating ? '正在新建…' : '新聊天'}
       </Button>
-      <div className="project-section-heading">
-        <span>项目</span>
-        <Button variant="ghost" size="icon" onClick={openProject} aria-label="打开项目">
-          <Plus size={15} />
-        </Button>
-      </div>
-      <div className="project-list">
-        {state.projects.map((project) => (
-          <div
-            className={`project-row ${project.id === state.project?.id ? 'selected' : ''}`}
-            key={project.id}
-          >
+      <section className="project-section" aria-label="项目">
+        <div className="project-section-heading">
+          <span>项目</span>
+          <div className="sidebar-section-actions">
             <Button
-              variant="ghost"
-              type="button"
-              className="project-item"
-              onClick={() => run(() => state.selectProject(project.id))}
-              title={project.path}
-            >
-              <FolderOpen size={15} />
-              <span>{project.name}</span>
-              {!project.available && <span className="path-invalid">路径失效</span>}
-            </Button>
-            <Button
-              variant="ghost"
-              type="button"
-              className="row-action"
-              aria-label={`移除项目 ${project.name}`}
-              title="仅移除记录，保留文件"
-              onClick={() => run(() => state.removeProject(project.id))}
-            >
-              <X size={13} />
-            </Button>
-          </div>
-        ))}
-      </div>
-      {!state.projects.length && (
-        <p className="sidebar-empty">{state.loading ? '加载中…' : '未打开项目'}</p>
-      )}
-      {state.project && (
-        <section className="session-section" aria-label="项目会话">
-          <div className="project-section-heading">
-            <span>{state.archived ? '已归档' : '会话'}</span>
-            <Button
-              type="button"
               variant="ghost"
               size="icon"
-              aria-label={state.archived ? '查看活动会话' : '查看已归档会话'}
-              onClick={() => run(() => state.showArchived(!state.archived))}
+              onClick={() => run(createProject)}
+              aria-label="新建项目"
+              title="创建项目文件夹"
             >
-              {state.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+              <FolderPlus size={15} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openProject}
+              aria-label="打开项目"
+              title="打开已有项目"
+            >
+              <Plus size={15} />
             </Button>
           </div>
+        </div>
+        <ScrollArea className="project-scroll-area" type="auto">
+          <div className="project-list">
+            {state.projects
+              .filter((project) => !project.managed)
+              .map((project) => (
+                <div
+                  className={`project-row ${project.id === state.project?.id ? 'selected' : ''}`}
+                  key={project.id}
+                >
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    className="project-item"
+                    aria-pressed={project.id === state.project?.id}
+                    onClick={() => run(() => state.selectProject(project.id))}
+                    title={project.path}
+                  >
+                    <FolderOpen size={15} />
+                    <span>{project.name}</span>
+                    {!project.available && <span className="path-invalid">路径失效</span>}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    className="row-action"
+                    aria-label={`移除项目 ${project.name}`}
+                    title="仅移除记录，保留文件"
+                    onClick={() => run(() => state.removeProject(project.id))}
+                  >
+                    <X size={13} />
+                  </Button>
+                </div>
+              ))}
+          </div>
+          {!state.projects.some((project) => !project.managed) && (
+            <p className="sidebar-empty">{state.loading ? '加载中…' : '未打开项目'}</p>
+          )}
+        </ScrollArea>
+      </section>
+      <section className="session-section" aria-label="最近聊天">
+        <div className="project-section-heading">
+          <span>{state.archived ? '已归档聊天' : '最近'}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={state.archived ? '查看活动会话' : '查看已归档会话'}
+            disabled={state.loading}
+            onClick={() => run(() => state.showArchived(!state.archived))}
+          >
+            {state.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+          </Button>
+        </div>
+        <p className="session-scope">所有项目的最近聊天</p>
+        <ScrollArea className="session-scroll-area" type="auto">
           <div className="session-list">
             {state.sessions.map((session) => (
               <SessionRow key={session.id} session={session} state={state} run={run} />
             ))}
             {!state.sessions.length && (
-              <p className="sidebar-empty">{state.archived ? '暂无归档' : '暂无会话'}</p>
+              <p className="sidebar-empty">
+                {!state.project
+                  ? '还没有会话'
+                  : state.archived
+                    ? '暂无归档会话'
+                    : '暂无会话，点击上方新建'}
+              </p>
             )}
             {state.nextCursor && (
               <Button
@@ -195,8 +244,8 @@ export function WorkspaceSidebar({ state, openProject, run }: Props) {
               </Button>
             )}
           </div>
-        </section>
-      )}
+        </ScrollArea>
+      </section>
       <div className="sidebar-footer">
         <Button
           variant="ghost"

@@ -12,7 +12,7 @@ const merge = (previous: ChatMessage[], incoming: ChatMessage[]) =>
   )
 export function useChat(projectId: string | undefined, sessionId: string | undefined) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [snapshot, setSnapshot] = useState<ChatSnapshot>({ turn: null, text: '' })
+  const [snapshot, setSnapshot] = useState<ChatSnapshot>({ turn: null, text: '', tools: [] })
   const [cursor, setCursor] = useState<Cursor>(null)
   const [loading, setLoading] = useState(!!sessionId)
   const [paging, setPaging] = useState(false)
@@ -74,6 +74,8 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
                     error: turn.error,
                     usage: turn.usage,
                     finish: turn.finish,
+                    tools: next.tools,
+                    agent: turn.agent,
                   }
                 : message,
             ),
@@ -103,11 +105,15 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
   }, [projectId, sessionId, loadLatest, retry])
   async function send(
     text: string,
-    binding: { providerId: string | null; model: string },
+    binding: {
+      providerId: string | null
+      model: string
+      mode?: 'chat' | 'read-only'
+      selectedPaths?: string[]
+    },
   ): Promise<void> {
     if (!text.trim() || sending.current || isGenerating(snapshot.turn?.state))
       throw new Error('请等待当前生成完成')
-    if (!projectId) throw new Error('请先选择项目')
     if (!binding.providerId || !binding.model.trim()) throw new Error('请先选择模型')
     sending.current = true
     setStarting(true)
@@ -115,20 +121,29 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
     const version = generation.current
     let accepted = false
     try {
-      const target: Pick<Session, 'id'> = sessionId
-        ? { id: sessionId }
-        : await desktop.data('sessions.create', { projectId, title: '新任务' })
+      const general = projectId ? null : await desktop.data('sessions.general', {})
+      const targetProjectId = projectId ?? general!.projectId
+      const target: Pick<Session, 'id'> =
+        general ??
+        (sessionId
+          ? { id: sessionId }
+          : await desktop.data('sessions.create', { projectId: targetProjectId, title: '新会话' }))
+      useWorkspace
+        .getState()
+        .rememberChat(target.id, binding.mode ?? 'chat', binding.selectedPaths ?? [])
       const turn = await desktop.data('chat.start', {
-        ...scope(projectId, target.id),
+        ...scope(targetProjectId, target.id),
         turnId: crypto.randomUUID(),
         text,
         expectedProviderId: binding.providerId,
         expectedModel: binding.model,
+        mode: binding.mode ?? 'chat',
+        selectedPaths: binding.selectedPaths ?? [],
       })
       accepted = true
       if (version === generation.current) {
         acceptedTurn.current = { id: turn.id, time: turn.startedAt ?? Date.now() }
-        setSnapshot({ turn, text: '' })
+        setSnapshot({ turn, text: '', tools: [] })
         await loadLatest(version).catch(() => setError('消息已发送，聊天记录刷新失败，请重新读取'))
       }
       // Accepted messages are never auto-resubmitted if a later UI refresh fails.

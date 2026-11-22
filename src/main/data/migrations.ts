@@ -53,6 +53,18 @@ export const migrations = [
     CREATE UNIQUE INDEX one_active_turn_per_session ON turns(session_id) WHERE status IN ('pending','running');
     CREATE INDEX turns_latest ON turns(session_id,started_at DESC,id DESC);`,
   },
+  {
+    version: 5,
+    sql: `ALTER TABLE turns ADD COLUMN agent_info TEXT;
+    ALTER TABLE tool_calls ADD COLUMN payload TEXT NOT NULL DEFAULT '{}';
+    ALTER TABLE tool_calls ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+    CREATE INDEX tools_turn_order ON tool_calls(turn_id,position,id);
+    CREATE INDEX recent_sessions ON sessions(archived,updated_at DESC,id DESC);`,
+  },
+  {
+    version: 6,
+    sql: 'ALTER TABLE projects ADD COLUMN managed INTEGER NOT NULL DEFAULT 0 CHECK(managed IN (0,1));',
+  },
 ] as const
 export async function applyMigrations(db: Database.Database, backups: string): Promise<void> {
   let version = db.pragma('user_version', { simple: true }) as number

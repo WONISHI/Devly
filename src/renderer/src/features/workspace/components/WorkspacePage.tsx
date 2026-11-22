@@ -11,7 +11,7 @@ export function WorkspacePage({ title, history, composer, hasMessages }: Props) 
       {hasMessages ? (
         <>
           <h1 id="task-title" className="chat-session-title">
-            {title || '新任务'}
+            {title || '新会话'}
           </h1>
           {history}
           <div className="chat-composer-dock">{composer}</div>

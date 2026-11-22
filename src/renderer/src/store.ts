@@ -11,6 +11,8 @@ import { modelOptions } from '@/features/workspace/model-options'
 export type WorkspaceTab = 'workspace' | 'components' | 'providers'
 type Cursor = { time: number; id: string } | null
 type WorkspaceState = {
+  chatPreferences: Record<string, { mode: 'chat' | 'read-only'; selectedPaths: string[] }>
+  rememberChat: (id: string, mode: 'chat' | 'read-only', selectedPaths: string[]) => void
   project: RecentProject | null
   projects: RecentProject[]
   sessions: Session[]
@@ -38,6 +40,11 @@ type WorkspaceState = {
 }
 let revision = 0
 export const useWorkspace = create<WorkspaceState>((set, get) => ({
+  chatPreferences: {},
+  rememberChat: (id, mode, selectedPaths) =>
+    set((state) => ({
+      chatPreferences: { ...state.chatPreferences, [id]: { mode, selectedPaths } },
+    })),
   project: null,
   projects: [],
   sessions: [],
@@ -58,13 +65,10 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
       const boot = await desktop.data('bootstrap', {})
       const project = boot.projects.find((item) => item.id === boot.activeProjectId) ?? null
       const [page, projectSettings, activeSession] = await Promise.all([
-        project
-          ? desktop.data('sessions.list', {
-              projectId: project.id,
-              archived: get().archived,
-              limit: 20,
-            })
-          : Promise.resolve({ items: [], nextCursor: null }),
+        desktop.data('sessions.recent', {
+          archived: get().archived,
+          limit: 20,
+        }),
         project
           ? desktop.data('settings.get', { projectId: project.id })
           : Promise.resolve(boot.settings),
@@ -121,30 +125,34 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   newSession: async () => {
     const project = get().project
     if (!project) {
-      set({ tab: 'workspace' })
+      await desktop.data('sessions.general', {})
+      set({ tab: 'workspace', archived: false })
+      await get().refresh()
       return
     }
-    await desktop.data('sessions.create', { projectId: project.id, title: '新任务' })
+    await desktop.data('sessions.create', { projectId: project.id, title: '新会话' })
     set({ tab: 'workspace', archived: false })
     await get().refresh()
   },
   selectSession: async (id) => {
-    const project = get().project
-    if (!project) return
-    await desktop.data('sessions.select', { projectId: project.id, sessionId: id })
+    const target = get().sessions.find((s) => s.id === id)
+    if (!target) return
+    if (get().project?.id !== target.projectId)
+      await desktop.data('projects.switch', { projectId: target.projectId })
+    await desktop.data('sessions.select', { projectId: target.projectId, sessionId: id })
     set({ tab: 'workspace' })
     await get().refresh()
   },
   renameSession: async (id, title) => {
-    const project = get().project
-    if (!project) return
-    await desktop.data('sessions.rename', { projectId: project.id, sessionId: id, title })
+    const target = get().sessions.find((s) => s.id === id)
+    if (!target) return
+    await desktop.data('sessions.rename', { projectId: target.projectId, sessionId: id, title })
     await get().refresh()
   },
   archiveSession: async (id, archived) => {
-    const project = get().project
-    if (!project) return
-    await desktop.data('sessions.archive', { projectId: project.id, sessionId: id, archived })
+    const target = get().sessions.find((s) => s.id === id)
+    if (!target) return
+    await desktop.data('sessions.archive', { projectId: target.projectId, sessionId: id, archived })
     await get().refresh()
   },
   showArchived: async (archived) => {
@@ -154,8 +162,7 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   loadMore: async () => {
     const { project, nextCursor, archived } = get()
     if (!project || !nextCursor) return
-    const page = await desktop.data('sessions.list', {
-      projectId: project.id,
+    const page = await desktop.data('sessions.recent', {
       archived,
       limit: 20,
       cursor: nextCursor,

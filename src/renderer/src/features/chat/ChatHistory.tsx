@@ -6,8 +6,11 @@ import { ScrollBar } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import type { ChatMessage } from '@shared/data-contracts'
 import { isGenerating } from '@shared/chat-contracts'
+import { AgentTrace } from './AgentTrace'
+import { readAgentLog } from './actions'
 
 type Props = {
+  projectId: string
   messages: ChatMessage[]
   busy: boolean
   hasOlder: boolean
@@ -15,7 +18,15 @@ type Props = {
   onLoadOlder(): Promise<void>
   onRetry(text: string): Promise<void>
 }
-function HistoryContent({ messages, busy, hasOlder, paging, onLoadOlder, onRetry }: Props) {
+function HistoryContent({
+  projectId,
+  messages,
+  busy,
+  hasOlder,
+  paging,
+  onLoadOlder,
+  onRetry,
+}: Props) {
   const { scrollRef, contentRef, stopScroll } = useStickToBottomContext()
   async function older() {
     stopScroll()
@@ -58,6 +69,13 @@ function HistoryContent({ messages, busy, hasOlder, paging, onLoadOlder, onRetry
                 data-message-state={message.state || ''}
               >
                 <MessageContent>
+                  {message.role === 'assistant' && message.agent.mode === 'read-only' && (
+                    <AgentTrace
+                      tools={message.tools}
+                      info={message.agent}
+                      onReadLog={(blobId) => readAgentLog(projectId, message.sessionId, blobId)}
+                    />
+                  )}
                   {message.parts
                     .filter((part) => part.type === 'text')
                     .map((part) =>

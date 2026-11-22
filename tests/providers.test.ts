@@ -158,9 +158,17 @@ describe('Chat Completions adapter', () => {
     ])
     expect(events.at(-1)).toEqual({
       type: 'finish',
-      result: { text: '你好', toolCalls: [], usage: unknownUsage, finish: 'stop' },
+      result: {
+        text: '你好',
+        reasoning: 'fixture reasoning',
+        toolCalls: [],
+        usage: unknownUsage,
+        finish: 'stop',
+      },
     })
-    expect(JSON.stringify(events)).not.toContain('fixture reasoning')
+    expect(events.filter((event) => event.type === 'text')).toEqual([
+      { type: 'text', delta: '你好' },
+    ])
   })
   it('assembles tool fragments when intermediate finish_reason is omitted', async () => {
     const wire =

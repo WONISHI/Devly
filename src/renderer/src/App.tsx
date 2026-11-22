@@ -9,12 +9,17 @@ import { useEnvironment } from '@/features/environment'
 import { WorkspaceSidebar, useOpenProject } from '@/features/workspace'
 import { useWorkspace } from '@/store'
 import { ChatWorkspace } from '@/features/chat'
+import { useCreateProject } from '@/features/workspace/hooks/use-create-project'
 
 export function App() {
   const state = useWorkspace()
   const { project, tab, setTab } = state
   const openProject = useOpenProject()
   const environmentState = useEnvironment()
+  async function newSession() {
+    await useWorkspace.getState().newSession()
+  }
+  const createProject = useCreateProject()
 
   useEffect(() => {
     void useWorkspace
@@ -44,7 +49,15 @@ export function App() {
       scrollKey={tab}
       chatLayout={tab === 'workspace'}
       isMac={environmentState.isMac}
-      sidebar={<WorkspaceSidebar state={state} openProject={openProject} run={run} />}
+      sidebar={
+        <WorkspaceSidebar
+          state={state}
+          openProject={openProject}
+          newSession={newSession}
+          createProject={createProject}
+          run={run}
+        />
+      }
       header={<AppHeader project={project} tab={tab} />}
     >
       {state.loadError && (

@@ -1,6 +1,6 @@
 # 阶段 2：本地数据、项目与设置
 
-实施：2026-11-21；任务 L01–L07。此阶段保存本地元数据、设置、凭据引用与日志索引，此处描述阶段 2 基础；阶段 4 普通聊天扩展见 [聊天说明](./chat.md)，仍不运行工具。验收结果以工作日志和工作总表为准。
+实施：2026-11-21；任务 L01–L07。此阶段保存本地元数据、设置、凭据引用与日志索引，此处描述阶段 2 基础；阶段 4 普通聊天扩展见 [聊天说明](./chat.md)，阶段 5 的只读工具扩展见 [只读 Agent](./read-only-agent.md)。验收结果以工作日志和工作总表为准。
 
 ## 存储与进程
 
@@ -82,3 +82,7 @@ Renderer 不能传任意磁盘路径，blobs.import 通过 Main 原生文件对�
 构建后可用 DEVLY_EXECUTABLE 指向包内程序做同样的桌面持久化检查。Windows、远端 CI、签名、迁移后的正式升级包、模型调用等未执行内容必须保持单独的未验证标记；当前依赖维护风险仍见 V01 评估。
 
 主要实现：src/main/data/、src/shared/data-contracts.ts、共享 IPC、Renderer store/设置/侧栏；实际完成记录见 LOG-014–LOG-021。
+
+## 阶段 5 数据扩展
+
+SQLite 当前 v6：v5 新增回合 agent_info、tool_calls 的结构化 payload/顺序和近期会话索引；v6 新增 projects.managed，保存内部通用聊天归属，原项目/会话 ID 不变。工具日志使用既有 UUID blob 配额/索引/读取/保留策略，只存脱敏输出。sessions.recent 跨未移除项目分页，select/rename/archive 仍按会话项目配对验证。sessions.general 建立不显示为项目的私有聊天归属；Main 禁止其文件工具。projects.create 只接受原生对话框选定的新目录，拒绝覆盖。详见 LOG-042/LOG-043。

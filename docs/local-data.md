@@ -85,4 +85,4 @@ Renderer 不能传任意磁盘路径，blobs.import 通过 Main 原生文件对�
 
 ## 阶段 5 数据扩展
 
-SQLite 当前 v6：v5 新增回合 agent_info、tool_calls 的结构化 payload/顺序和近期会话索引；v6 新增 projects.managed，保存内部通用聊天归属，原项目/会话 ID 不变。工具日志使用既有 UUID blob 配额/索引/读取/保留策略，只存脱敏输出。sessions.recent 跨未移除项目分页，select/rename/archive 仍按会话项目配对验证。sessions.general 建立不显示为项目的私有聊天归属；Main 禁止其文件工具。projects.create 只接受原生对话框选定的新目录，拒绝覆盖。详见 LOG-042/LOG-043。
+SQLite 当前 v7：v7 新增 provider_usage_budgets 和供应商回合用量聚合索引，保存每供应商预算/计数起点，已有 turns.usage 保持真实上报与缺失值，详见 [用量与额度](./usage-and-budget.md)；v5 新增回合 agent_info、tool_calls 的结构化 payload/顺序和近期会话索引；v6 新增 projects.managed，保存内部通用聊天归属，原项目/会话 ID 不变。工具日志使用既有 UUID blob 配额/索引/读取/保留策略，只存脱敏输出。sessions.recent 跨未移除项目分页，select/rename/archive 仍按会话项目配对验证。sessions.general 建立不显示为项目的私有聊天归属；Main 禁止其文件工具。projects.create 只接受原生对话框选定的新目录，拒绝覆盖。详见 LOG-042/LOG-043。

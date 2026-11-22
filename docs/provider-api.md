@@ -116,3 +116,7 @@ Main 内部的 `ProviderStreamEvent` 包含 text/tool/usage/finish。阶段 3 �
 火山方舟的实测 SSE 中间帧省略 finish_reason，末帧返回 stop。适配器已兼容该形式，仍要求语义终态和 [DONE]，不会把 EOF/断流当作成功。测试连接的非流式成功不能替代流式检查；详细行为见 [聊天说明](./chat.md)。协议参照：[火山方舟 Chat API](https://docs.volcengine.com/docs/ark/chat-api?lang=zh)、[流式输出与终态判定](https://docs.volcengine.com/docs/ark/streaming-output?lang=zh)。
 
 LOG-043 补充真实 Agent 验收：同一火山方舟模型完成 3 轮搜索→读取→终答、2 条有日志引用的工具调用及重启恢复。回合内 reasoning 仅在 Main 用于思考工具协议往返，不进入业务正文/工具日志。此结果不证明可写工具、其他协议或任意端点兼容。
+
+## 用量与账户余额
+
+设置新增独立“用量与额度”分组。本地累计读取已保存的真实 usage，并单独保存预算；缺失、零值和部分上报分别展示。账户查询当前仅接入 DeepSeek 官方金额余额，火山方舟等平台的管理额度接口尚未接入。不会凭模型品牌将 Key 发到另一家平台。支持范围、IPC、验证边界见 [用量与额度](./usage-and-budget.md)。

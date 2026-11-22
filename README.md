@@ -2,7 +2,7 @@
 
 支持第三方模型 API 的本地桌面 AI 编程工作台，目标对齐 Codex 类似的编程与任务交互能力。采用 Electron、React、TypeScript、原版 AI Elements、Tailwind CSS、Lucide React 与 Zustand；主路线为自研 Agent 与 Provider 适配层。
 
-当前已接入 **独立普通聊天、跨项目最近聊天、原生新建项目、只读 Agent、流式文本、停止/重新发送与历史恢复**。只读 Agent 可安全搜索/读取所选项目，显示原 AI Elements 工具卡片及脱敏日志；火山方舟指定 DeepSeek 模型已通过真实搜索→读取→回答与重启验收（LOG-043）。写入、命令、审批、编辑器和终端业务留待后续阶段。见 [只读 Agent](./docs/read-only-agent.md)、[聊天说明](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
+当前已接入 **独立普通聊天、跨项目最近聊天、原生新建项目、只读 Agent、流式文本、停止/重新发送与历史恢复**。只读 Agent 可安全搜索/读取所选项目，显示原 AI Elements 工具卡片及脱敏日志；火山方舟指定 DeepSeek 模型已通过真实搜索→读取→回答与重启验收（LOG-043）。写入、命令、审批、编辑器和终端业务留待后续阶段。新增“设置 → 用量与额度”：本地真实 Token 统计、供应商预算与可查询的账户余额，范围见 [用量说明](./docs/usage-and-budget.md)。见 [只读 Agent](./docs/read-only-agent.md)、[聊天说明](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
 
 ## 启动
 
@@ -24,6 +24,7 @@ pnpm dev
 | `pnpm start`                     | 启动构建产物                                                  |
 | `pnpm check`                     | 统一运行类型、Lint、格式、关键测试、文档、原组件与生产构建    |
 | `pnpm audit:dependencies`        | 生成本机安装依赖与许可证清单                                  |
+| `pnpm verify:usage-ui`           | 隔离验证用量、预算与重启界面                                  |
 | `pnpm verify:vendor`             | 离线核对原 AI Elements/UI 来源哈希                            |
 | `pnpm typecheck`                 | TypeScript 检查                                               |
 | `pnpm lint`                      | ESLint 检查                                                   |

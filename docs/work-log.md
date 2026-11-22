@@ -498,6 +498,19 @@
 
 - 最终交付复核：未签名 macOS 应用目录更新成功；包内 verify:desktop、verify:persistence、verify:provider 全部退出 0，覆盖 5 组唯一可见/高亮一致、草稿与按组保存、双项目重启、OS 密文往返、960×680 主滚动边界，以及供应商 26 次 loopback 请求/4 次取消。实际复核 output/settings-category-developer.png 与 appearance.png，截图等待颜色过渡结束。pnpm check:docs 检查 24 份 Markdown/106 ID/44 连续日志通过；工作位置仍为阶段 6/T04 待开始。release/mac-arm64/Devly.app 已更新，用户完全退出旧进程后重开；按既有要求提交同步，哈希见 Git。
 
+## LOG-045｜供应商用量、预算与可查询账户额度
+
+- 日期：2026-11-22。
+- 阶段 / 步骤 / 任务 ID：用户指定补充 U06（部分完成）、L01/L04/P06；阶段 6 写入/命令主线不因本次补充而跳过验收。
+- 用户目标：同时展示本地已用 Token、本地预算剩余与可查询的第三方账户额度。
+- 实际完成：第六个设置分类“用量与额度”独立显示；按供应商汇总输入/输出/累计 Token 和已上报回合覆盖数，区分缺失与 0、已确认下限和剩余上限。预算独立保存、校验、清空、重启恢复及从现在重新计数；不删除历史、不阻止请求。Main 接入 DeepSeek 官方金额余额查询，精确匹配配置域名，禁止跳转、超时/大小/并发受限、归属取消、配置变更抑制和固定错误；火山/代理显示未接入而非虚构剩余 Token。
+- 涉及文件：shared/usage-contracts.ts 与 data-contracts.ts；Main 的 data migrations/store/service 和 providers/account-usage.ts；设置 UsagePanel/usage-hooks/SettingsGroup/ProviderSettingsPage、styles；usage.test.ts、usage.integration.mjs、smoke-usage.mjs，以及原有 data/chat/desktop 验证入口；README、usage-and-budget、local-data、provider-api、architecture 与本计划/日志。
+- 已完成验证：pnpm typecheck、pnpm lint 退出 0；pnpm test 106 项通过；pnpm build:bundle 和 verify:data 退出 0。SQLite Worker 实际验证累计/未知/零值、预算非法参数不覆盖、重启、独立供应商与重新计数、移除预算保留历史。新 smoke 首次定位器使用“设置”而现有按钮 aria-label 为“打开设置”，修正测试定位器后 verify:usage-ui 退出 0：两次 loopback 聊天、精确/上限/超额预算、切换供应商、重启、账户未接入/无 Key 提示与 960×680 根边界。账户测试初次配置变更 fixture 共享了可变对象，改为模拟 Worker 的结构化拷贝后测试通过。
+- 人工证据：检查 output/usage-local-budget.png、usage-compact.png 与最终包内 usage-ark-account.png，确认独立分类、统计卡片、≥ 下限、至多剩余、账户未接入说明和主滚动布局。截图均是隔离替身数据，不是用户真实账户或计费证据。
+- 未覆盖：未使用真实 DeepSeek 官方账户 Key 验证余额接口；火山管理鉴权与其他账户适配器未实现，账户级累计/剩余 Token 无通用来源。连接测试和跨设备消耗不纳入本机聊天统计，现有 Agent 缺失轮次不反推用量。U06 的回合上下文占用/未知费用界面仍未完整验收。
+- 最终检查：pnpm check 全部退出 0，含 106 项单测、25 份 Markdown/106 ID/45 连续日志、26 原组件校验、图标校验、生产构建和 data/chat/agent 集成。electron-builder --dir（identity=null）成功更新 release/mac-arm64/Devly.app；包内 verify:usage-ui 和 verify:desktop 均退出 0，覆盖两次 loopback 聊天、预算重启与六组唯一可见，Renderer 无 pageerror。
+- 状态与下一步：本次新增用量界面完成；U06 总项保持部分完成，阶段 6 原主线仍待开始。用户须完全退出旧 Devly 进程后重开更新的应用目录；按既有授权提交同步，哈希以 Git 为准。Windows/远端 CI/签名和正式安装包不依据本轮 macOS 验证判通过。
+
 ## 追加记录模板
 
 ```text

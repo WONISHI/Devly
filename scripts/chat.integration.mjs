@@ -408,7 +408,7 @@ try {
     (await upgraded.execute('sessions.get', { projectId: pid, sessionId: sid })).title,
     'legacy session',
   )
-  assert.equal((await upgraded.execute('internal.status')).schemaVersion, 6)
+  assert.equal((await upgraded.execute('internal.status')).schemaVersion, 7)
   assert.equal(
     (await upgraded.execute('chat.read', { projectId: pid, sessionId: sid })).turn.state,
     'failed',

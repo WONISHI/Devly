@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { verifyUsage } from './usage.integration.mjs'
 import {
   mkdtemp,
   mkdir,
@@ -33,6 +34,10 @@ try {
     projectB = join(root, '项目 B')
   await mkdir(projectA)
   await mkdir(projectB)
+  await verifyUsage(root, projectA)
+  passed.push(
+    'provider usage: real SQLite sums, unknown/zero distinction, budgets restart/reset, per-provider isolation and removal retention',
+  )
   client = new DatabaseClient(storage)
   assert.ok((await client.ready) > 0)
   const a = await client.execute('internal.project.upsert', { path: projectA }),

@@ -101,8 +101,8 @@ try {
   await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
   await page.getByRole('button', { name: '添加供应商', exact: true }).waitFor()
   const settingsGroups = page.getByRole('navigation', { name: '设置分组', exact: true })
-  await expect(settingsGroups.getByRole('button')).toHaveCount(5)
-  for (const label of ['模型供应商', '外观', '默认模型', '权限与限额', '开发者']) {
+  await expect(settingsGroups.getByRole('button')).toHaveCount(6)
+  for (const label of ['模型供应商', '用量与额度', '外观', '默认模型', '权限与限额', '开发者']) {
     await settingsGroups.getByRole('button', { name: label, exact: true }).click()
     const selectedGroup = settingsGroups.getByRole('button', { name: label, exact: true })
     await expect(selectedGroup).toHaveAttribute('aria-pressed', 'true')
@@ -114,10 +114,11 @@ try {
       .evaluate((element) => getComputedStyle(element).color)
     await expect(selectedGroup).toHaveCSS('color', foreground)
     await expect(page.getByRole('combobox', { name: '设置范围', exact: true })).toHaveCount(
-      ['模型供应商', '开发者'].includes(label) ? 0 : 1,
+      ['模型供应商', '用量与额度', '开发者'].includes(label) ? 0 : 1,
     )
     const key = {
       模型供应商: 'providers',
+      用量与额度: 'usage',
       外观: 'appearance',
       默认模型: 'models',
       权限与限额: 'permissions',

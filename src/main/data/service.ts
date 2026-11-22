@@ -11,6 +11,7 @@ import { ContractError, failure } from '../../shared/contracts'
 import type { DatabaseClient } from './client'
 import type { CredentialVault } from './vault'
 import { ProviderRuntime } from '../providers/runtime'
+import { AccountUsageRuntime } from '../providers/account-usage'
 import { ChatRuntime } from '../chat/runtime'
 
 type Prompts = {
@@ -23,6 +24,7 @@ export class LocalDataService {
   private promptingCredential = false
   private providers: ProviderRuntime
   private chats: ChatRuntime
+  private accounts: AccountUsageRuntime
   constructor(
     private database: DatabaseClient,
     private vault: CredentialVault,
@@ -30,12 +32,15 @@ export class LocalDataService {
   ) {
     this.providers = new ProviderRuntime(database, vault)
     this.chats = new ChatRuntime(database, vault)
+    this.accounts = new AccountUsageRuntime(database, vault)
   }
   clearOwner(owner: string): void {
     this.providers.clearOwner(owner)
+    this.accounts.clearOwner(owner)
   }
   async close(): Promise<void> {
     this.providers.close()
+    this.accounts.close()
     await this.chats.close()
   }
   async initialize(): Promise<void> {
@@ -60,6 +65,14 @@ export class LocalDataService {
       data = await this.providers.execute(operation, args, owner, isActive)
     } else
       switch (operation) {
+        case 'usage.account.cancel': {
+          data = this.accounts.cancel(owner, String(args.providerId))
+          break
+        }
+        case 'usage.account': {
+          data = await this.accounts.query(String(args.providerId), owner, isActive)
+          break
+        }
         case 'projects.create': {
           const path = await this.prompts.project?.()
           if (!path) {
@@ -81,6 +94,7 @@ export class LocalDataService {
           if (args.id) {
             this.providers.clearProvider(String(args.id))
             this.chats.clearProvider(String(args.id))
+            this.accounts.clearProvider(String(args.id))
           }
           data = await this.database.execute(operation, args)
           break
@@ -133,6 +147,7 @@ export class LocalDataService {
             try {
               this.providers.clearProvider(providerId)
               this.chats.clearProvider(providerId)
+              this.accounts.clearProvider(providerId)
               const previous = await this.database.execute<string | null>(
                 'internal.credential.ref',
                 {
@@ -157,6 +172,7 @@ export class LocalDataService {
         case 'credentials.clear': {
           this.providers.clearProvider(String(args.providerId))
           this.chats.clearProvider(String(args.providerId))
+          this.accounts.clearProvider(String(args.providerId))
           const previous = await this.database.execute<string | null>('internal.credential.ref', {
             providerId: args.providerId,
             ref: null,
@@ -168,6 +184,7 @@ export class LocalDataService {
         case 'providers.remove': {
           this.providers.clearProvider(String(args.providerId))
           this.chats.clearProvider(String(args.providerId))
+          this.accounts.clearProvider(String(args.providerId))
           const previous = await this.database.execute<string | null>('internal.credential.ref', {
             providerId: args.providerId,
           })

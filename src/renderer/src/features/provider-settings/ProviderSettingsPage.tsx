@@ -1,3 +1,4 @@
+import { UsagePanel } from './UsagePanel'
 import { useRef, useState } from 'react'
 import { SettingsEditor } from './SettingsEditor'
 import { savePreferences, exportPreferences } from './hooks'
@@ -6,6 +7,7 @@ import { SettingsGroup, type SettingsGroupId } from './SettingsGroup'
 import { useWorkspace } from '@/store'
 import {
   ArrowLeft,
+  ChartNoAxesCombined,
   Blocks,
   Bot,
   ChevronRight,
@@ -21,6 +23,7 @@ import { EnvironmentPanel, type useEnvironment } from '@/features/environment'
 
 const groups = [
   { id: 'providers', label: '模型供应商', icon: PlugZap },
+  { id: 'usage', label: '用量与额度', icon: ChartNoAxesCombined },
   { id: 'appearance', label: '外观', icon: Palette },
   { id: 'models', label: '默认模型', icon: Bot },
   { id: 'permissions', label: '权限与限额', icon: ShieldCheck },
@@ -87,6 +90,15 @@ export function ProviderSettingsPage({
           >
             <ProviderManager />
           </SettingsGroup>
+          {activeGroup === 'usage' && (
+            <SettingsGroup
+              id="usage"
+              title="用量与额度"
+              description="查看本机 Token 消耗、本地预算与可查询的账户余额。"
+            >
+              <UsagePanel />
+            </SettingsGroup>
+          )}
           {preferenceGroup && (
             <div className="settings-scope">
               <span>设置范围</span>

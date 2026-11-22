@@ -1,6 +1,6 @@
 # Devly 当前架构：第三方 API 与本地 Agent
 
-本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前已实现本地数据、会话/消息持久化、设置、Chat Completions 诊断与普通聊天生命周期；阶段 3 真实端点待验收，图中的 Agent 与大部分工具服务仍待后续实现。实际状态以 [工作总表](./work-plan.md) 为准，已落地的 Provider 数据流见 [Provider API](./provider-api.md)。
+本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前已实现本地数据、会话/消息持久化、设置、Chat Completions 诊断与普通聊天生命周期；阶段 3–5 指定真实端点与只读 Agent 已验收，图中的写入、命令与审批等工具服务仍待后续实现。实际状态以 [工作总表](./work-plan.md) 为准，已落地的 Provider 数据流见 [Provider API](./provider-api.md)。
 
 旧的 Codex App Server 优先方案保存在 [历史架构](./archive/codex-app-server-architecture.md)，不再作为主路线。它的初始化握手验证可保留，但不等于自研 Agent 已经实现。
 
@@ -339,3 +339,7 @@ stateDiagram-v2
 - [工作日志](./work-log.md)：已完成事项和证据。
 
 阶段 4 实际架构、数据库 v4、回合状态、模型切换授权与局部消息 ScrollArea 见 [普通聊天说明](./chat.md)。这是已落地的普通聊天；图中工具/审批/执行器仍是后续目标。
+
+## 已实现的用量与额度路径
+
+设置的独立用量分类通过严格 IPC 在数据库 Worker 聚合 turns.usage，v7 provider_usage_budgets 保存本地预算与计数起点；账户余额查询由 Main 按实际配置域名选择已实现的适配器并读取 Vault，不根据模型品牌跨站发送 Key。当前仅 DeepSeek 官方金额余额可手动查询，其他平台明确显示未接入；详情与数据流见 [用量与额度](./usage-and-budget.md)。

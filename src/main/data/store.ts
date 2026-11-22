@@ -134,6 +134,46 @@ export class DataStore {
       JSON.parse(String((local ?? global)?.value ?? JSON.stringify(defaultSettings))),
     )
   }
+  private usageSummary(providerId: string) {
+    if (!this.one('SELECT id FROM providers WHERE id=?', providerId))
+      throw new ContractError(failure('NOT_FOUND'))
+    const budget = this.one('SELECT * FROM provider_usage_budgets WHERE provider_id=?', providerId)
+    const stats = (since: number) => {
+      const row = this.one(
+        `SELECT COUNT(*) AS turns,
+        COALESCE(SUM(json_extract(usage,'$.inputTokens')),0) AS input,
+        COUNT(json_extract(usage,'$.inputTokens')) AS input_count,
+        COALESCE(SUM(json_extract(usage,'$.outputTokens')),0) AS output,
+        COUNT(json_extract(usage,'$.outputTokens')) AS output_count,
+        COALESCE(SUM(json_extract(usage,'$.totalTokens')),0) AS total,
+        COUNT(json_extract(usage,'$.totalTokens')) AS total_count
+        FROM turns WHERE provider_id=? AND status NOT IN ('pending','running') AND COALESCE(started_at,0)>=?`,
+        providerId,
+        since,
+      )!
+      return {
+        turns: Number(row.turns),
+        input: { tokens: Number(row.input), reportedTurns: Number(row.input_count) },
+        output: { tokens: Number(row.output), reportedTurns: Number(row.output_count) },
+        total: { tokens: Number(row.total), reportedTurns: Number(row.total_count) },
+      }
+    }
+    const since = Number(budget?.since ?? 0)
+    return {
+      providerId,
+      lifetime: stats(0),
+      period: stats(since),
+      activeTurns: Number(
+        this.one(
+          "SELECT COUNT(*) AS count FROM turns WHERE provider_id=? AND status IN ('pending','running')",
+          providerId,
+        )!.count,
+      ),
+      budgetTokens: budget?.budget_tokens == null ? null : Number(budget.budget_tokens),
+      since,
+      updatedAt: Number(budget?.updated_at ?? 0),
+    }
+  }
   private activeProjectId(): string | null {
     const row = this.one("SELECT value FROM app_state WHERE key='active_project'")
     return row ? String(row.value) : null
@@ -307,6 +347,21 @@ export class DataStore {
           this.run('UPDATE projects SET removed=1 WHERE id=? AND removed=0', projectId!).changes > 0
         if (this.activeProjectId() === projectId) this.active(null)
         return { removed }
+      }
+      case 'usage.summary':
+        return this.usageSummary(String(args.providerId))
+      case 'usage.budget.save': {
+        const providerId = String(args.providerId)
+        const previous = this.usageSummary(providerId)
+        const now = Date.now()
+        this.run(
+          'INSERT INTO provider_usage_budgets(provider_id,budget_tokens,since,updated_at) VALUES(?,?,?,?) ON CONFLICT(provider_id) DO UPDATE SET budget_tokens=excluded.budget_tokens,since=excluded.since,updated_at=excluded.updated_at',
+          providerId,
+          args.budgetTokens as number | null,
+          args.reset ? now : previous.since,
+          now,
+        )
+        return this.usageSummary(providerId)
       }
       case 'providers.list':
         return this.all('SELECT * FROM providers ORDER BY name,id').map((row) => this.provider(row))

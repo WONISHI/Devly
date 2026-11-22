@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 
-export type SettingsGroupId = 'providers' | 'appearance' | 'models' | 'permissions' | 'developer'
-export type PreferenceGroupId = Exclude<SettingsGroupId, 'providers' | 'developer'>
+export type SettingsGroupId =
+  'providers' | 'usage' | 'appearance' | 'models' | 'permissions' | 'developer'
+export type PreferenceGroupId = Exclude<SettingsGroupId, 'providers' | 'usage' | 'developer'>
 export function SettingsGroup({
   id,
   title,

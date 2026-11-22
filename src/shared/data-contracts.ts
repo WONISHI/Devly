@@ -1,3 +1,4 @@
+import { usageSummarySchema, accountQuerySchema } from './usage-contracts'
 import { z } from 'zod'
 import {
   chatSnapshotSchema,
@@ -134,6 +135,16 @@ export const operationArgs = {
   'projects.create': z.object({}).strict(),
   'projects.switch': project,
   'projects.remove': project,
+  'usage.summary': z.object({ providerId: entityId }).strict(),
+  'usage.budget.save': z
+    .object({
+      providerId: entityId,
+      budgetTokens: z.number().int().min(0).max(1_000_000_000_000).nullable(),
+      reset: z.boolean().default(false),
+    })
+    .strict(),
+  'usage.account.cancel': z.object({ providerId: entityId }).strict(),
+  'usage.account': z.object({ providerId: entityId }).strict(),
   'providers.list': z.object({}).strict(),
   'providers.save': providerInputSchema,
   'providers.remove': z.object({ providerId: entityId }).strict(),
@@ -254,6 +265,10 @@ export const operationResults = {
   'projects.create': recentProjectSchema.nullable(),
   'projects.switch': recentProjectSchema,
   'projects.remove': ack,
+  'usage.summary': usageSummarySchema,
+  'usage.budget.save': usageSummarySchema,
+  'usage.account': accountQuerySchema,
+  'usage.account.cancel': ack,
   'providers.list': z.array(providerSchema),
   'providers.save': providerSchema,
   'providers.remove': ack,

@@ -33,6 +33,7 @@
     "audit:dependencies": "node scripts/dependency-inventory.mjs",
     "verify:vendor": "node scripts/verify-vendor.mjs",
     "verify:icons": "node scripts/provider-icons.mjs",
+    "verify:usage-ui": "node scripts/smoke-usage.mjs",
     "verify:provider-icons": "node scripts/smoke-provider-icons.mjs",
     "verify:chat": "node scripts/verify-chat.mjs",
     "verify:agent": "node scripts/verify-agent.mjs",

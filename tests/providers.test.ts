@@ -142,6 +142,61 @@ describe('Chat Completions adapter', () => {
       },
     })
   })
+  it('accepts Ark intermediate chunks without finish_reason until an explicit terminal frame', async () => {
+    const intermediate = (delta: unknown) =>
+      `data: ${JSON.stringify({ choices: [{ index: 0, delta }], usage: null })}\n\n`
+    const wire =
+      intermediate({ content: '', reasoning_content: 'fixture reasoning' }) +
+      intermediate({ content: '你好', reasoning_content: '' }) +
+      frame({ content: '' }, 'stop') +
+      'data: [DONE]\n\n'
+    const events = await collect(
+      adapter(async () => streamResponse(wire, true)).stream(input, signal()),
+    )
+    expect(events.filter((event) => event.type === 'text')).toEqual([
+      { type: 'text', delta: '你好' },
+    ])
+    expect(events.at(-1)).toEqual({
+      type: 'finish',
+      result: { text: '你好', toolCalls: [], usage: unknownUsage, finish: 'stop' },
+    })
+    expect(JSON.stringify(events)).not.toContain('fixture reasoning')
+  })
+  it('assembles tool fragments when intermediate finish_reason is omitted', async () => {
+    const wire =
+      'data: {"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_a","type":"function","function":{"name":"a","arguments":"{"}}]}}]}\n\n' +
+      'data: {"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"}"}}]}}]}\n\n' +
+      frame({}, 'tool_calls') +
+      'data: [DONE]\n\n'
+    const events = await collect(adapter(async () => streamResponse(wire)).stream(input, signal()))
+    expect(events.at(-1)).toMatchObject({
+      type: 'finish',
+      result: { toolCalls: [{ id: 'call_a', name: 'a', arguments: '{}' }], finish: 'tools' },
+    })
+  })
+  it.each([
+    'data: {"choices":[{"index":0,"delta":{"content":"partial"}}]}\n\ndata: [DONE]\n\n',
+    'data: {"choices":[{"index":0,"delta":{"content":"partial"}}]}\n\n',
+  ])('does not accept omitted finish_reason as a successful terminal state', async (wire) => {
+    await expect(
+      collect(adapter(async () => streamResponse(wire)).stream(input, signal())),
+    ).rejects.toMatchObject({ info: { code: 'DISCONNECTED' } })
+  })
+  it('still rejects malformed finish reasons and content after a terminal frame', async () => {
+    for (const wire of [
+      'data: {"choices":[{"index":0,"delta":{},"finish_reason":false}]}\n\n',
+      frame({}, 'stop') + 'data: {"choices":[{"index":0,"delta":{"content":"late"}}]}\n\n',
+    ]) {
+      await expect(
+        collect(adapter(async () => streamResponse(wire)).stream(input, signal())),
+      ).rejects.toMatchObject({ info: { code: 'INVALID_RESPONSE' } })
+    }
+    await expect(
+      adapter(async () =>
+        Response.json({ choices: [{ index: 0, message: { content: 'unfinished' } }] }),
+      ).complete(input, signal()),
+    ).rejects.toMatchObject({ info: { code: 'INVALID_RESPONSE' } })
+  })
   it.each([
     frame({ content: 'partial' }),
     frame({}, 'stop'),

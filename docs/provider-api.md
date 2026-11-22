@@ -1,6 +1,6 @@
 # 第一个第三方 API：实现与验收（P01–P06）
 
-更新：2026-11-22。代码及本地 HTTP/桌面验证已落地；**真实供应商验收待完成，阶段 3 保持待验证**。已确认保存了 DeepSeek 配置，但隔离验收无法读取原密钥；本文和工作日志不保存秘密。
+更新：2026-11-22。代码、本地 HTTP/桌面验证及火山方舟指定 DeepSeek 模型的真实文本、流式、工具往返验收均已通过，阶段 3 完成（LOG-041）。本文和工作日志不保存秘密。
 
 ## 使用方式
 
@@ -102,13 +102,15 @@ Main 内部的 `ProviderStreamEvent` 包含 text/tool/usage/finish。阶段 3 �
 
 | 检查 | 当前证据 | 边界 |
 | --- | --- | --- |
-| pnpm test | 56 项通过，其中新增 26 项适配/能力/归属测试 | 注入 fetch fixture，不是供应商实测 |
+| pnpm test | 当前 75 项通过，providers.test.ts 含 31 项适配/能力/归属测试，其中 5 项覆盖本次缺省结束字段兼容与拒绝非法终态 | 注入 fetch fixture，不是供应商实测 |
 | pnpm verify:data | SQLite Worker、凭据生命周期、报告版本失效、v2→v3 迁移/回滚/备份通过 | 加密生命周期用注入 AES；真实 OS 保护另有桌面验证 |
 | pnpm verify:provider | 真实 Electron + loopback HTTP，UI CRUD、SSE 增量、工具往返、模型 404 兜底、结构化输出、重启报告、错误/超时/取消通过；实际 OS 加密 Key 替换、重启后 Main 解密并认证、UI 清除与临时 profile 明文扫描通过 | 使用 Main 内注入的测试密钥和原生 prompt 替身，不自动填写真实密钥或声称供应商通过 |
-| 真实供应商 | 待用户在应用内保存有效配置 | 尚无真实协议/模型/时间的通过记录 |
+| 真实供应商 | 2026-11-22 火山方舟 / chat-completions / deepseek-v4-1-flash-261017：文本、SSE、固定工具调用与结果回传通过，见 LOG-041 | 仅该端点/模型/当次配置；不等于 Agent 工具循环或其他能力已通过 |
 
-真实验收后在工作日志记录日期、协议、模型、文本/流式/工具结果。不要记录 Key、Authorization 或包含凭据的 URL。当前不能勾选真实端点验收；阶段 4 按用户后续新指令完成代码和本地验证，不能据此倒推阶段 3 已通过。
+真实验收后在工作日志记录日期、协议、模型、文本/流式/工具结果。不要记录 Key、Authorization 或包含凭据的 URL。LOG-041 已提供独立真实端点证据，阶段 3/P05 与阶段 4 验收通过；其他供应商、视觉、结构化输出和上下文窗口仍需分别检查。
 
 协议参照：[Chat API 官方定义](https://developers.openai.com/api/reference/resources/chat)、[Models list 官方定义](https://developers.openai.com/api/reference/resources/models/methods/list)。这些资料只定义协议，本项目对第三方端点的支持仍以实际检查为准。
 
-2026-11-22 真实尝试：DeepSeek / chat-completions / deepseek-v4-1-flash-261017，在隔离资料中复用密文时得到 CREDENTIAL，未达到 HTTP 请求阶段；没有获得真实文本/流式/工具通过记录。此结果不能等同于 API 401，也未改写原用户资料。详见 LOG-039。
+2026-11-22 早先隔离开发构建复用密文返回 CREDENTIAL，未达到 HTTP 阶段（LOG-039）。后续包内受保护配置读取与真实验收通过（LOG-041），前次失败不等同于 API 401，也未改写原用户资料。
+
+火山方舟的实测 SSE 中间帧省略 finish_reason，末帧返回 stop。适配器已兼容该形式，仍要求语义终态和 [DONE]，不会把 EOF/断流当作成功。测试连接的非流式成功不能替代流式检查；详细行为见 [聊天说明](./chat.md)。协议参照：[火山方舟 Chat API](https://docs.volcengine.com/docs/ark/chat-api?lang=zh)、[流式输出与终态判定](https://docs.volcengine.com/docs/ark/streaming-output?lang=zh)。

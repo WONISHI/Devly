@@ -14,7 +14,7 @@ const passed = [],
   captured = [],
   secret = 'sk-fixture-should-never-be-visible'
 const frame = (delta, finish = null) =>
-  `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`
+  `data: ${JSON.stringify({ choices: [{ index: 0, delta, ...(finish === null ? {} : { finish_reason: finish }) }] })}\n\n`
 const fetcher = async (_url, init) => {
   const body = JSON.parse(init.body),
     prompt = body.messages.at(-1).content

@@ -2,7 +2,7 @@
 
 支持第三方模型 API 的本地桌面 AI 编程工作台，目标对齐 Codex 类似的编程与任务交互能力。采用 Electron、React、TypeScript、原版 AI Elements、Tailwind CSS、Lucide React 与 Zustand；主路线为自研 Agent 与 Provider 适配层。
 
-当前已接入 **普通聊天、流式文本、停止/重新发送、会话模型绑定、历史分页与重启续聊**，并保留供应商配置/诊断、项目、设置与系统保护凭据。阶段 4 代码及本地 HTTP/桌面检查通过；隔离环境复用原受保护密钥返回 CREDENTIAL，真实端点尚待正常系统凭据环境验收。Agent、工具执行、审批、编辑器和终端业务仍未接入。见 [聊天说明](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
+当前已接入 **普通聊天、流式文本、停止/重新发送、会话模型绑定、历史分页与重启续聊**，并保留供应商配置/诊断、项目、设置与系统保护凭据。2026-11-22 已修复火山方舟中间帧省略 finish_reason 的兼容问题；该端点的 DeepSeek 模型通过真实文本/流式/工具探测与包内重启续聊验收，见 LOG-041。Agent、工具执行、审批、编辑器和终端业务仍未接入。见 [聊天说明](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
 
 ## 启动
 
@@ -70,7 +70,7 @@ Renderer 的模块职责与检查范围见 [feature 边界](./docs/renderer-stru
 
 桌面通信协议见 [B02 契约](./docs/ipc-contracts.md)，本地与双平台 CI 入口见 [B04 检查计划](./docs/quality-checks.md)，维护版本、许可证与发行阻断见 [V01 依赖评估](./docs/dependency-review.md)。
 
-阶段 2 已验收；阶段 3/P05 真实验收保留待验证。按用户要求推进的阶段 4 已实现并通过本地验收，当前下一项为正常系统凭据环境下的真实消息与重启续聊验收；阶段 5 尚未开始。
+阶段 1–4 已验收，真实供应商范围限定为 LOG-041 记录的火山方舟端点/模型。下一项为阶段 5/5.1/T01；阶段 5 尚未开始。
 
 供应商列表及模型选择器包含 357 个本地品牌 SVG，按域名、名称和模型系列识别，未知配置显示通用图标；不依赖远程图片。来源和匹配边界见 [供应商图标](./docs/provider-icons.md)。
 

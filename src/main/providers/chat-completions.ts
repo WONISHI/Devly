@@ -45,7 +45,8 @@ const chunkWire = z.object({
     .array(
       z.object({
         index: z.literal(0),
-        finish_reason: finishWire,
+        // Ark omits this on intermediate chunks; only a terminal string ends a choice.
+        finish_reason: finishWire.optional(),
         delta: z.object({
           content: z.string().nullable().optional(),
           tool_calls: z
@@ -368,7 +369,7 @@ export class ChatCompletionsAdapter implements ProviderAdapter {
           arguments: part.function?.arguments,
         }
       }
-      if (choice.finish_reason !== null) {
+      if (choice.finish_reason != null) {
         reason = finish(choice.finish_reason)
         seenFinish = true
       }

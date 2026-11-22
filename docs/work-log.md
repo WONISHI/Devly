@@ -443,6 +443,18 @@
 - 最终复核：pnpm check 退出 0（70 项测试、23 份 Markdown/106 ID/40 连续日志、26 份原组件、品牌资源、生产构建及数据/聊天集成）。未签名 macOS 应用目录更新成功；包内 verify:desktop、verify:persistence、verify:provider 全部退出 0，分组/草稿/单层滚动/960×680、真实 OS 密文往返和原供应商 26 次替身请求/4 次取消保持通过。设置界面实际截图已复核；应用目录为 release/mac-arm64/Devly.app。
 - 边界：无新增依赖、无主进程/数据库变更；阶段 4 的真实 API 验收仍待正常凭据环境完成，Windows/远端 CI 不据本机检查自动判通过。后续进行包内复核并按既有要求提交同步。
 
+## LOG-041｜P03/P04/A01/U02：火山方舟流式帧兼容修复与真实验收
+
+- 日期：2026-11-22；用户报告已添加供应商、非流式测试连接成功，聊天却显示 INVALID_RESPONSE。本次为阶段 3/3.3/P03、3.4/P04、3.5/P05 与阶段 4/A01/U02 的兼容修复及验收收尾，不扩展 Agent 功能。
+- 根因与实测：在原资料只读核对失败回合的状态/错误码后，用独立临时资料启动包内 Devly；Main 读取选定 Provider 的受保护密钥，仅发送固定诊断文字。火山方舟返回 HTTP 200、text/event-stream，7 个安全帧摘要显示中间帧省略 finish_reason，最后一帧返回 stop，再有 [DONE]；原 chunkWire 要求字段存在，因此首帧被拒绝。没有输出原始响应、思考内容、Key 或 Authorization；非流式连接检查通过不能替代 SSE 检查。
+- 实际修改：仅流式 chunk 的 finish_reason 改为可省略；只有非 null/undefined 的结束原因才进入终态。非流式结束字段要求保持；流式仍要求明确语义终态与 [DONE]，保留终态后正文拒绝、类型/单 choice/工具 ID 与参数校验。没有自动重试、改变模型/供应商、增加依赖或绕过凭据保护。
+- 回归：providers.test.ts 新增 5 项，覆盖省略字段的思考帧到正文/终态、UTF-8 拆分、工具参数组装、仅 [DONE] 或 EOF 无终态、非法字段类型及终态后正文。聊天 Worker 集成和桌面 loopback 的默认中间帧改为省略字段，原测试继续覆盖 null 形式。
+- 真实验收：协议 chat-completions（OpenAI-compatible Chat Completions）；端点 https://ark.cn-beijing.volces.com/api/v3；模型 deepseek-v4-1-flash-261017；使用用户明确选择且已保存的配置、临时空项目，不读取项目文件。包内 ProviderRuntime 的 text、streaming、tools 三项均 ok；tools 包含模型生成固定诊断调用、Main 返回固定结果后再次请求，不执行本地业务工具。普通聊天收到指定标记；关闭再启动后历史保留，再询问上一轮标记得到匹配回复，数据库共 4 条用户/助手消息。一次性联调脚本与安全结果留在忽略的 .cache，不纳入自动检查，不复制密钥到代码或文档；原用户资料/会话未改写。
+- 涉及文件：src/main/providers/chat-completions.ts、tests/providers.test.ts、scripts/chat.integration.mjs、scripts/smoke-chat.mjs；README.md、docs/chat.md、docs/provider-api.md、docs/development-plan.md、docs/work-plan.md、docs/work-log.md。
+- 验证命令与结果：pnpm check 退出 0（类型/Lint/格式、75 项测试、原组件/图标校验、生产构建、SQLite Worker 和 30 次注入协议聊天请求）；pnpm exec electron-builder --dir --config.electronDist=node_modules/electron/dist --config.mac.identity=null 退出 0；DEVLY_EXECUTABLE 指向 release/mac-arm64/Devly.app 的 verify:chat-ui 退出 0（21 次本地 HTTP、两次启动、会话/项目隔离、停止/重发、分页、上滚保持及历史续聊）。包内一次性真实联调退出 0，text/streaming/tools 与 firstStream/restartContinuation 全部 passed。
+- 状态变化：P05 待验证 → 完成；阶段 3、4 各项验收有独立证据后改为完成并归档，下一项阶段 5/5.1/T01，待开始。真实结果仅对上述端点/模型/当次配置成立；工具探测不是 Agent 闭环，视觉/结构化/其他协议、Windows、远端 CI、签名/公证和正式发行仍未验收。本轮不实现阶段 5。
+- 本机应用：release/mac-arm64/Devly.app 已更新为修复版本，当前运行中的旧进程需要退出后重开才能载入 Main 改动；没有强制关闭用户窗口。按既有要求提交并同步 GitHub，最终提交哈希和推送回执见 Git。
+
 ## 追加记录模板
 
 ```text

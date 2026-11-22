@@ -14,7 +14,7 @@ let application, page
 const requests = [],
   errors = []
 const frame = (content, finish = null) =>
-  `data: ${JSON.stringify({ choices: [{ index: 0, delta: content === null ? {} : { content }, finish_reason: finish }] })}\n\n`
+  `data: ${JSON.stringify({ choices: [{ index: 0, delta: content === null ? {} : { content }, ...(finish === null ? {} : { finish_reason: finish }) }] })}\n\n`
 const server = createServer(async (request, response) => {
   let raw = ''
   for await (const part of request) raw += part

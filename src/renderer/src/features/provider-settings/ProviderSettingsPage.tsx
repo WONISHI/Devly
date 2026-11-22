@@ -43,20 +43,15 @@ export function ProviderSettingsPage({
   const [activeGroup, setActiveGroup] = useState<SettingsGroupId>('providers')
   const pageRef = useRef<HTMLDivElement>(null)
   const settings = scope === 'project' ? state.projectSettings : state.settings
+  const preferenceGroup =
+    activeGroup === 'appearance' || activeGroup === 'models' || activeGroup === 'permissions'
+      ? activeGroup
+      : null
   function goToGroup(id: SettingsGroupId) {
     const page = pageRef.current
     const viewport = page?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
-    const section = page?.querySelector(`#settings-group-${id}`)
-    if (!viewport || !section) return
     setActiveGroup(id)
-    viewport.scrollTo({
-      top:
-        viewport.scrollTop +
-        section.getBoundingClientRect().top -
-        viewport.getBoundingClientRect().top -
-        24,
-      behavior: 'smooth',
-    })
+    viewport?.scrollTo({ top: 0, behavior: 'instant' })
   }
   return (
     <div className="settings-page" ref={pageRef}>
@@ -75,7 +70,7 @@ export function ProviderSettingsPage({
               variant="ghost"
               className="settings-group-link"
               aria-pressed={activeGroup === id}
-              aria-controls={`settings-group-${id}`}
+              aria-controls={activeGroup === id ? `settings-group-${id}` : undefined}
               onClick={() => goToGroup(id)}
             >
               <Icon size={16} />
@@ -88,31 +83,40 @@ export function ProviderSettingsPage({
             id="providers"
             title="模型供应商"
             description="管理 API 地址、密钥和模型，检查连接状态。"
+            hidden={activeGroup !== 'providers'}
           >
             <ProviderManager />
           </SettingsGroup>
-          <div className="settings-scope">
-            <h2>偏好设置</h2>
-            <SelectField
-              label="设置范围"
-              value={scope}
-              onValueChange={(value) => setScope(value as typeof scope)}
-              options={[
-                { value: 'global', label: '应用默认值' },
-                { value: 'project', label: '当前项目', disabled: !state.project },
-              ]}
-            />
-          </div>
+          {preferenceGroup && (
+            <div className="settings-scope">
+              <span>设置范围</span>
+              <SelectField
+                label="设置范围"
+                value={scope}
+                onValueChange={(value) => setScope(value as typeof scope)}
+                options={[
+                  { value: 'global', label: '应用默认值' },
+                  { value: 'project', label: '当前项目', disabled: !state.project },
+                ]}
+              />
+            </div>
+          )}
           <SettingsEditor
             onExport={() => exportPreferences(scope === 'project' ? state.project!.id : null)}
             key={`${scope}:${state.project?.id ?? 'global'}`}
             value={settings}
+            activeGroup={preferenceGroup}
             providers={state.providers}
             onSave={(value) =>
               savePreferences(scope === 'project' ? state.project!.id : null, value)
             }
           />
-          <SettingsGroup id="developer" title="开发者" description="查看环境诊断和 AI 组件预览。">
+          <SettingsGroup
+            id="developer"
+            title="开发者"
+            description="查看环境诊断和 AI 组件预览。"
+            hidden={activeGroup !== 'developer'}
+          >
             <Collapsible className="developer-options">
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" type="button" className="developer-trigger">

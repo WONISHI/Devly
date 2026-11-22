@@ -1247,13 +1247,13 @@ button:disabled {
   margin: 16px 0 0;
   line-height: 1.6;
 }
-.settings-group-content > .settings-group:last-child {
-  margin-top: 24px;
+.settings-group[hidden] {
+  display: none;
 }
 .settings-group-content .settings-scope {
-  margin: 24px 0 16px;
+  margin: 0 0 16px;
 }
-.settings-scope h2 {
+.settings-scope > span {
   margin: 0;
   font-size: 13px;
   font-weight: 500;

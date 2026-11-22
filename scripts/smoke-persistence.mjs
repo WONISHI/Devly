@@ -42,6 +42,16 @@ async function selectOption(label, text) {
   await page.getByRole('combobox', { name: label, exact: true }).click()
   await page.getByRole('option', { name: text, exact: true }).click()
 }
+async function group(label) {
+  await page
+    .getByRole('navigation', { name: '设置分组', exact: true })
+    .getByRole('button', { name: label, exact: true })
+    .click()
+}
+async function saveSettings() {
+  await page.getByRole('button', { name: '保存设置', exact: true }).click()
+  await page.getByRole('button', { name: '已保存', exact: true }).waitFor()
+}
 async function choose(path, createSession = false) {
   await application.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
@@ -120,8 +130,20 @@ try {
     await data('sessions.create', { projectId: aId, title: `分页验证 ${index}` })
   await data('sessions.select', { projectId: aId, sessionId: aSession })
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
+  await group('默认模型')
   await selectOption('设置范围', '当前项目')
   await page.getByRole('textbox', { name: '默认模型', exact: true }).fill('A-model')
+  await group('权限与限额')
+  await page.getByLabel('Token 上限', { exact: true }).fill('0')
+  await group('外观')
+  await saveSettings()
+  assert.equal((await data('settings.get', { projectId: aId })).defaultModel, '')
+  assert.equal((await data('settings.get', { projectId: aId })).maxTokens, 8192)
+  await group('默认模型')
+  await expect(page.getByRole('textbox', { name: '默认模型', exact: true })).toHaveValue('A-model')
+  await saveSettings()
+  await group('权限与限额')
+  await expect(page.getByLabel('Token 上限', { exact: true })).toHaveValue('0')
   await page.getByLabel('Token 上限', { exact: true }).fill('4096')
   await page.getByRole('button', { name: '保存设置', exact: true }).click()
   await page.getByRole('button', { name: '已保存', exact: true }).waitFor()
@@ -139,9 +161,12 @@ try {
   await page.locator('.session-title').getByText('B 的独立会话', { exact: true }).waitFor()
   const bSession = (await data('bootstrap')).activeSessionId
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
+  await group('默认模型')
   await selectOption('设置范围', '当前项目')
   assert.equal(await page.getByRole('textbox', { name: '默认模型', exact: true }).inputValue(), '')
   await page.getByRole('textbox', { name: '默认模型', exact: true }).fill('B-model')
+  await saveSettings()
+  await group('外观')
   await selectOption('主题', '浅色')
   await page.getByRole('button', { name: '保存设置', exact: true }).click()
   await page.getByRole('button', { name: '已保存', exact: true }).waitFor()
@@ -222,6 +247,7 @@ try {
   assert.equal(bad.ok, false)
   assert.equal(bad.error.code, 'NOT_FOUND')
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
+  await group('默认模型')
   await selectOption('设置范围', '当前项目')
   assert.equal(
     await page.getByRole('textbox', { name: '默认模型', exact: true }).inputValue(),
@@ -239,6 +265,7 @@ try {
   assert.ok(!('credentialRef' in exported))
   await mkdir('output', { recursive: true })
   await page.screenshot({ path: 'output/settings-persisted.png' })
+  await group('外观')
   const themeSelect = page.getByRole('combobox', { name: '主题', exact: true })
   await themeSelect.click()
   await page.getByRole('option', { name: '跟随系统', exact: true }).waitFor()

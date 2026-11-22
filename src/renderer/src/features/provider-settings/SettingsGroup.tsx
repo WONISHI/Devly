@@ -1,21 +1,25 @@
 import type { ReactNode } from 'react'
 
 export type SettingsGroupId = 'providers' | 'appearance' | 'models' | 'permissions' | 'developer'
+export type PreferenceGroupId = Exclude<SettingsGroupId, 'providers' | 'developer'>
 export function SettingsGroup({
   id,
   title,
   description,
   children,
+  hidden = false,
 }: {
   id: SettingsGroupId
   title: string
   description: string
   children: ReactNode
+  hidden?: boolean
 }) {
   return (
     <section
       id={`settings-group-${id}`}
       className="settings-group"
+      hidden={hidden}
       aria-labelledby={`settings-group-${id}-title`}
     >
       <header className="settings-group-heading">

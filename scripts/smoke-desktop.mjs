@@ -102,6 +102,29 @@ try {
   await page.getByRole('button', { name: '添加供应商', exact: true }).waitFor()
   const settingsGroups = page.getByRole('navigation', { name: '设置分组', exact: true })
   await expect(settingsGroups.getByRole('button')).toHaveCount(5)
+  for (const label of ['模型供应商', '外观', '默认模型', '权限与限额', '开发者']) {
+    await settingsGroups.getByRole('button', { name: label, exact: true }).click()
+    const selectedGroup = settingsGroups.getByRole('button', { name: label, exact: true })
+    await expect(selectedGroup).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('.settings-group:visible')).toHaveCount(1)
+    await expect(page.getByRole('heading', { name: label, exact: true })).toBeVisible()
+    await page.mouse.move(900, 120)
+    const foreground = await page
+      .getByRole('heading', { name: label, exact: true })
+      .evaluate((element) => getComputedStyle(element).color)
+    await expect(selectedGroup).toHaveCSS('color', foreground)
+    await expect(page.getByRole('combobox', { name: '设置范围', exact: true })).toHaveCount(
+      ['模型供应商', '开发者'].includes(label) ? 0 : 1,
+    )
+    const key = {
+      模型供应商: 'providers',
+      外观: 'appearance',
+      默认模型: 'models',
+      权限与限额: 'permissions',
+      开发者: 'developer',
+    }[label]
+    await page.screenshot({ path: `output/settings-category-${key}.png` })
+  }
   await settingsGroups.getByRole('button', { name: '默认模型', exact: true }).click()
   await expect(page.getByRole('heading', { name: '默认模型', exact: true })).toBeInViewport()
   await page.getByRole('textbox', { name: '默认模型', exact: true }).fill('unsaved-group-draft')
@@ -121,7 +144,7 @@ try {
   assert.equal(await page.getByRole('button', { name: /登录|安装 Codex|连接测试/ }).count(), 0)
   assert.equal(
     await page
-      .getByRole('button', { name: '开发者选项', exact: true })
+      .locator('#settings-group-developer button.developer-trigger')
       .getAttribute('aria-expanded'),
     'false',
   )
@@ -141,6 +164,7 @@ try {
   )
   await page.screenshot({ path: 'output/providers-compact.png' })
   await page.getByRole('button', { name: '添加供应商', exact: true }).click()
+  await page.getByLabel('供应商名称', { exact: true }).fill('unsaved-provider-draft')
   const viewport = page.locator('.main-scroll-area > [data-slot="scroll-area-viewport"]')
   await viewport.evaluate((element) => {
     element.scrollTop = 0
@@ -165,6 +189,7 @@ try {
     fixedPosition,
     'header and sidebar stay fixed while content scrolls',
   )
+  await settingsGroups.getByRole('button', { name: '外观', exact: true }).click()
   await page.getByRole('combobox', { name: '主题', exact: true }).click()
   await page.keyboard.press('Escape')
   const scrollBounds = await page.evaluate(() => ({
@@ -179,7 +204,8 @@ try {
   assert.ok(scrollBounds.rootHeight <= scrollBounds.rootClient + 1, JSON.stringify(scrollBounds))
   assert.equal(scrollBounds.rootWidth, scrollBounds.width)
   assert.equal(scrollBounds.top, 0)
-  assert.equal(scrollBounds.scrollbars, 1)
+  assert.ok(scrollBounds.scrollbars <= 1)
+  await settingsGroups.getByRole('button', { name: '开发者', exact: true }).click()
   await viewport.evaluate((element) => {
     element.scrollTop = element.scrollHeight
   })
@@ -194,6 +220,8 @@ try {
     element.scrollTop = 0
   })
   await page.screenshot({ path: 'output/settings-scrollarea-compact.png' })
+  await settingsGroups.getByRole('button', { name: '模型供应商', exact: true }).click()
+  await expect(page.getByLabel('供应商名称', { exact: true })).toHaveValue('unsaved-provider-draft')
   await page.getByRole('button', { name: '关闭', exact: true }).click()
   await page.getByRole('button', { name: '返回工作台', exact: true }).click()
   assert.equal(
@@ -209,6 +237,7 @@ try {
   await page.waitForFunction(() => window.innerWidth === 1440)
   await page.getByRole('button', { name: '打开设置', exact: true }).click()
   await page.getByRole('heading', { name: '模型供应商', exact: true }).waitFor()
+  await settingsGroups.getByRole('button', { name: '开发者', exact: true }).click()
   await page.getByText('开发者选项', { exact: true }).click()
   await page.getByRole('button', { name: '重新检查' }).click()
   await page.waitForFunction(() => !document.querySelector('.environment-section button')?.disabled)

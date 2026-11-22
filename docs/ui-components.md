@@ -48,8 +48,12 @@ AppShell 的标题栏和侧栏固定，主内容区统一由原版 ScrollArea �
 
 阶段 4 原 Prompt Input 及 DropdownMenu/HoverCard/InputGroup/Spinner 来自同一固定提交，只改既定别名与 UI 格式；新增 nanoid 直接依赖锁定既有 3.3.20（MIT），未升级依赖树。ChatHistory 使用 Conversation 的底部跟随上下文配合 Radix ScrollArea/同源 ScrollBar，未改原 Conversation/Message。Apache-2.0 通知随应用打包。
 
-## 设置分组（LOG-040）
+## 设置分组（LOG-040 → LOG-044）
 
-ProviderSettingsPage 使用现有 Button 组成五项快速导航；SettingsGroup 是本项目的纯 section/header 布局组件，分别承载模型供应商、外观、默认模型、权限与限额、开发者。点击分类只在 AppShell 已有 ScrollArea 的 viewport 内定位，不增加页面级滚动，也不卸载编辑器；偏好设置仍为同一表单，切换分组保留草稿，应用/项目范围切换沿用原行为。开发者诊断继续使用原 Collapsible，所有输入/选择/保存仍复用现有 shadcn/ui。没有新增依赖或修改上游 AI Elements。实际 Electron 检查包含五组导航、草稿保留、960×680 布局、单层滚动，以及原设置持久化/重启回归。
+ProviderSettingsPage 使用现有 Button 切换模型供应商、外观、默认模型、权限与限额、开发者五个独立内容页；右侧同一时间仅有当前组可见，分类切换把 AppShell 原 ScrollArea 复位到顶部，不增加页面级滚动。供应商和开发者面板隐藏保留状态，偏好编辑器保留字段草稿并只渲染当前组的控件；设置范围与保存/导出仅出现在偏好组。SettingsGroup 仍为纯布局组件，不访问平台 API。
+
+外观只保存 theme；默认模型只保存 defaultProviderId/defaultModel；权限与限额只保存 projectPermission/maxTokens/maxCost/agentLimits。其他分类未保存输入不随本组保存提交，也不会触发隐藏字段的浏览器表单验证；组间草稿保留，应用/项目范围切换按独立作用域重新读取。导出仍导出本范围已保存的全部偏好，不包含秘密或未保存草稿。保存状态/错误关联发起的组，异步保存完成后只清理匹配提交值的草稿，不覆盖新编辑。
+
+开发者诊断沿用原 Collapsible，控件复用现有 shadcn/ui，没有新增依赖或修改上游 AI Elements。桌面检查覆盖五组唯一可见、供应商/模型草稿往返、隐藏非法值与按组保存、持久化、主题、导出、960×680 边界及单层主滚动。LOG-040 的滚动锚点方案已由本次用户指令替换，历史记录保留。
 
 阶段 5 的 AgentTrace 已将原 Message/Tool 接入真实调用状态、ID、JSON 参数/结果和脱敏 blob 日志；上游组件文件未修改。只读模式、可选文件及 Agent 限额仍复用 shadcn/Radix 基础控件。项目/最近列表及日志使用同源 ScrollArea，独立原生新建项目与新聊天见 LOG-042/LOG-043。

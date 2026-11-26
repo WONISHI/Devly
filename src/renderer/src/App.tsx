@@ -10,6 +10,8 @@ import { WorkspaceSidebar, useOpenProject } from '@/features/workspace'
 import { useWorkspace } from '@/store'
 import { ChatWorkspace } from '@/features/chat'
 import { useCreateProject } from '@/features/workspace/hooks/use-create-project'
+import { ProjectWorkbench } from '@/features/editor/ProjectWorkbench'
+import { useEditorStore, isDirty } from '@/features/editor/store'
 
 export function App() {
   const state = useWorkspace()
@@ -26,6 +28,16 @@ export function App() {
       .getState()
       .refresh()
       .catch(() => {})
+  }, [])
+  useEffect(() => {
+    const guard = (event: BeforeUnloadEvent) => {
+      if (Object.values(useEditorStore.getState().documents).some(isDirty)) {
+        event.preventDefault()
+        event.returnValue = false
+      }
+    }
+    window.addEventListener('beforeunload', guard)
+    return () => window.removeEventListener('beforeunload', guard)
   }, [])
   useEffect(() => {
     const theme = state.project ? state.projectSettings.theme : state.settings.theme
@@ -69,10 +81,12 @@ export function App() {
         </div>
       )}
       {tab === 'workspace' ? (
-        <ChatWorkspace
-          key={`${project?.id || 'none'}:${state.activeSession?.id || 'new'}`}
-          openProject={openProject}
-        />
+        <ProjectWorkbench projectId={project && !project.managed ? project.id : null}>
+          <ChatWorkspace
+            key={`${project?.id || 'none'}:${state.activeSession?.id || 'new'}`}
+            openProject={openProject}
+          />
+        </ProjectWorkbench>
       ) : tab === 'providers' ? (
         <ProviderSettingsPage
           onClose={() => setTab('workspace')}

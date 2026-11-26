@@ -1,6 +1,6 @@
 # Renderer feature 边界（B01）
 
-本文记录 B01 建立的展示与桌面访问边界。后续 B02 补充通信契约；B03 增加 Provider 设置入口，阶段 2 增加会话元数据持久化，阶段 3 增加 ProviderManager/Editor 和 useProviderProbe。界面使用 shared 类型与 feature hooks，网络/密钥仍在 Main；真实供应商待验收，阶段 4 普通聊天已实现，Agent 仍未实现。详见 [入口说明](./provider-entry.md) 与 [Provider API](./provider-api.md)。
+本文记录 B01 建立的展示与桌面访问边界及后续扩展。B02 通信契约、B03 Provider 入口、阶段 2–4 数据/设置/普通聊天、阶段 5–6 Agent/审批，以及阶段 7 本地编辑器均已接入。界面使用 shared 类型和 feature 模块，网络/密钥、实际文件与执行仍在 Main。证据以工作计划为准，见 [入口说明](./provider-entry.md)、[Provider API](./provider-api.md)、[编辑器与 Diff](./editor-and-diff.md)。
 
 ## 目录与职责
 
@@ -9,7 +9,8 @@
 | ---------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------ |
 | App.tsx                                              | 读取应用状态，装配 shell 与当前页面                    | 不直接调 preload，不包含具体展示内容       |
 | app/AppShell.tsx                                     | 页面框架与 slot 装配；不显示工程状态栏                 | 接收 ReactNode，不访问系统能力             |
-| app/AppHeader.tsx                                    | 当前项目与页签标题                                     | 只接收 project/tab                         |
+| app/AppHeader.tsx                                    | 当前项目与页签标题、项目文件/更改入口和未保存计数       | project/tab 与编辑器 UI store，不调用系统 |
+| features/editor/                                    | 文件树/监听、项目隔离缓冲区、本地 Monaco 与 Diff          | 通过 desktop 网关，系统读写/凭据不在 Renderer |
 | features/workspace/components/                       | 项目侧栏、任务/聊天布局和项目/模型选择组合  | 只接收数据和回调                           |
 | features/workspace/hooks/use-open-project.ts         | 目录选择、取消、错误提示与当前项目更新                 | 调 platform 网关，使用 Zustand 状态        |
 | features/environment/components/EnvironmentPanel.tsx | 环境值、加载、错误和重新检查按钮                       | 只展示 hook 返回值并调用回调               |

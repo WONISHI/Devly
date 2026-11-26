@@ -1,3 +1,4 @@
+import { editorArguments, editorResults } from './editor-contracts'
 import { usageSummarySchema, accountQuerySchema } from './usage-contracts'
 import { z } from 'zod'
 import {
@@ -130,6 +131,7 @@ export const blobSchema = session
   })
   .strict()
 export const operationArgs = {
+  ...editorArguments,
   bootstrap: z.object({}).strict(),
   'projects.list': z.object({}).strict(),
   'projects.create': z.object({}).strict(),
@@ -187,12 +189,21 @@ export const operationArgs = {
       text: z.string().trim().min(1).max(32768),
       expectedProviderId: entityId,
       expectedModel: z.string().trim().min(1).max(200),
-      mode: z.enum(['chat', 'read-only']).default('chat'),
+      mode: z.enum(['chat', 'read-only', 'project-write']).default('chat'),
       selectedPaths: z.array(z.string().min(1).max(1000)).max(12).default([]),
     })
     .strict(),
   'chat.read': session,
   'chat.cancel': session.extend({ turnId: entityId }).strict(),
+  'chat.approve': session
+    .extend({
+      turnId: entityId,
+      callId: z.string().min(1).max(200),
+      approvalId: entityId,
+      digest: z.string().regex(/^[a-f0-9]{64}$/),
+      allowed: z.boolean(),
+    })
+    .strict(),
   'blobs.import': session.extend({ kind: z.enum(['log', 'attachment']) }).strict(),
   'blobs.list': session.extend(page).strict(),
   'blobs.read': session
@@ -223,6 +234,7 @@ export const messageSchema = z
     model: z.string().max(200).default(''),
     agent: agentInfoSchema.default({
       mode: 'chat',
+      git: null,
       sources: [],
       summaries: [],
       rounds: 0,
@@ -260,6 +272,7 @@ export type Bootstrap = z.infer<typeof bootstrapSchema>
 export type ChatMessage = z.infer<typeof messageSchema>
 const ack = z.object({ removed: z.boolean() }).strict()
 export const operationResults = {
+  ...editorResults,
   bootstrap: bootstrapSchema,
   'projects.list': z.array(recentProjectSchema),
   'projects.create': recentProjectSchema.nullable(),
@@ -293,6 +306,7 @@ export const operationResults = {
   'chat.start': chatTurnSchema,
   'chat.read': chatSnapshotSchema,
   'chat.cancel': ack,
+  'chat.approve': ack,
   'sessions.messages': z
     .object({ items: z.array(messageSchema), nextCursor: cursorSchema.nullable() })
     .strict(),

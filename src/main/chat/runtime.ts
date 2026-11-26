@@ -1,3 +1,4 @@
+import { captureGitBaseline } from '../agent/git-baseline'
 import type { DatabaseClient } from '../data/client'
 import type { CredentialVault } from '../data/vault'
 import type { Provider, Session, Settings, RecentProject } from '../../shared/data-contracts'
@@ -5,7 +6,7 @@ import type { AgentInfo, AgentLimits } from '../../shared/agent-contracts'
 import { defaultAgentLimits } from '../../shared/agent-contracts'
 import { ReadOnlyToolbox, ToolFailure } from '../agent/tools'
 import { assembleContext } from '../agent/context'
-import { runReadOnlyAgent } from '../agent/runner'
+import { runAgent } from '../agent/runner'
 import { ContractError, failure } from '../../shared/contracts'
 import { isGenerating, type ChatTurn, type ChatError } from '../../shared/chat-contracts'
 import type { Message, Usage, Completion } from '../../shared/provider-contracts'
@@ -13,6 +14,11 @@ import { ChatCompletionsAdapter } from '../providers/chat-completions'
 import { ProviderError, providerError } from '../providers/errors'
 import { SecretRedactor } from './redactor'
 import { realpath } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { sep } from 'node:path'
+import { ApprovalBroker } from '../agent/approval-broker'
+import { ExecutionTools, executionTools } from '../agent/execution-tools'
+import { executeProjectCommand } from '../agent/command-executor'
 
 type Scope = { projectId: string; sessionId: string }
 type Config = Provider & { credentialRef: string | null }
@@ -25,6 +31,7 @@ type Run = Scope & {
 }
 export class ChatRuntime {
   private runs = new Map<string, Run>()
+  private approvals = new ApprovalBroker()
   private closing = false
   constructor(
     private database: Pick<DatabaseClient, 'execute'>,
@@ -48,6 +55,7 @@ export class ChatRuntime {
   }
   async close(): Promise<void> {
     this.closing = true
+    this.approvals.close()
     const runs = [...this.runs.values()]
     for (const run of runs) run.controller.abort(new ProviderError('CANCELLED'))
     await Promise.all(runs.map((run) => run.done))
@@ -62,10 +70,45 @@ export class ChatRuntime {
       text: string
       expectedProviderId: string
       expectedModel: string
-      mode?: 'chat' | 'read-only'
+      mode?: 'chat' | 'read-only' | 'project-write'
       selectedPaths?: string[]
     }
     if (operation === 'chat.read') return this.database.execute(operation, args)
+    if (operation === 'chat.approve') {
+      await this.database.execute('sessions.get', {
+        projectId: args.projectId,
+        sessionId: args.sessionId,
+      })
+      const run = this.runs.get(args.sessionId)
+      if (
+        !active() ||
+        !run ||
+        run.turnId !== args.turnId ||
+        run.projectId !== args.projectId ||
+        run.controller.signal.aborted
+      )
+        return { removed: false }
+      const response = raw as Scope & {
+        turnId: string
+        callId: string
+        approvalId: string
+        digest: string
+        allowed: boolean
+      }
+      return {
+        removed: this.approvals.respond(
+          {
+            projectId: args.projectId,
+            sessionId: args.sessionId,
+            turnId: args.turnId,
+            callId: response.callId,
+          },
+          response.approvalId,
+          response.digest,
+          response.allowed,
+        ),
+      }
+    }
     if (operation === 'chat.cancel') {
       await this.database.execute('sessions.get', {
         projectId: args.projectId,
@@ -118,7 +161,7 @@ export class ChatRuntime {
         throw new ContractError(failure('BINDING_CHANGED'))
       const history = await this.database.execute<Message[]>('internal.chat.context', {
         ...args,
-        compact: args.mode === 'read-only',
+        compact: args.mode === 'read-only' || args.mode === 'project-write',
       })
       let messages: Message[] = [...history, { role: 'user', content: args.text }]
       if (Buffer.byteLength(JSON.stringify(messages)) > 262144)
@@ -135,7 +178,12 @@ export class ChatRuntime {
       }
       if (secret && args.text.includes(secret)) throw new ContractError(failure('INVALID_REQUEST'))
       let agent: { toolbox: ReadOnlyToolbox; info: AgentInfo; limits: AgentLimits } | undefined
-      if (args.mode === 'read-only') {
+      if (args.mode === 'read-only' || args.mode === 'project-write') {
+        if (
+          args.mode === 'project-write' &&
+          (settings.projectPermission !== 'ask' || process.platform !== 'darwin')
+        )
+          throw new ContractError(failure('FORBIDDEN'))
         if (
           config.compatibility.tools === 'disabled' ||
           config.report?.checks.find((check) => check.kind === 'tools')?.ok === false
@@ -150,6 +198,23 @@ export class ChatRuntime {
         try {
           const limits = settings.agentLimits ?? defaultAgentLimits
           const toolbox = await ReadOnlyToolbox.create(project.path, run.controller.signal, secret)
+          if (args.mode === 'project-write') {
+            const home = await realpath(homedir())
+            if (
+              home === toolbox.root ||
+              home.startsWith(toolbox.root + sep) ||
+              /\/(?:\.ssh|\.aws|\.codex|Library)(?:\/|$)/i.test(toolbox.root)
+            )
+              throw new ToolFailure('PATH_DENIED')
+            // Verify the actual OS boundary before exposing mutation tools. No unsandboxed fallback.
+            const probe = await executeProjectCommand(
+              toolbox.root,
+              { command: 'printf devly-isolation-ready', timeoutMs: 3000 },
+              run.controller.signal,
+            )
+            if (probe.state !== 'completed' || probe.stdout !== 'devly-isolation-ready')
+              throw new ToolFailure('ISOLATION_UNAVAILABLE')
+          }
           const assembled = await assembleContext(
             toolbox,
             history,
@@ -158,7 +223,33 @@ export class ChatRuntime {
             limits,
             secret,
           )
+          assembled.info.git = {
+            before: await captureGitBaseline(project.path, run.controller.signal).catch(() => ({
+              root: null,
+              head: null,
+              entries: [],
+              fingerprint: '',
+              available: false,
+            })),
+            after: null,
+          }
           messages = assembled.messages
+          if (args.mode === 'project-write') {
+            assembled.info.mode = 'project-write'
+            messages[0] = {
+              role: 'system',
+              content: String(messages[0].content)
+                .replace('a read-only coding agent', 'a project coding agent')
+                .replace(
+                  'Tools available: list_files, read_file, search_text. You cannot write files, execute commands, access other directories or use the network.',
+                  'Tools available: list_files, read_file, search_text, update_plan, apply_patch, run_command. Use update_plan for task steps; completed steps require successful tool call references from this turn. Every project mutation requires user approval for the exact proposal. Read files before editing and use their contentHash as expectedHash. Run only bounded foreground validation commands. Never detach processes. No extra-directory or network access is authorized. Denial and conflicts must be respected. Never repeat a mutation just because a previous run was cancelled or interrupted; inspect the current files first.',
+                )
+                .replace(
+                  'Never claim edits or tests have been executed.',
+                  'Only claim edits or tests when their tool result confirms them.',
+                ),
+            }
+          }
           agent = { toolbox, info: assembled.info, limits }
         } catch (cause) {
           throw new ContractError(
@@ -257,8 +348,25 @@ export class ChatRuntime {
           lastFlush = Date.now()
         }
       }
-      if (agent)
-        result = await runReadOnlyAgent({
+      if (agent) {
+        const execution =
+          agent.info.mode === 'project-write'
+            ? new ExecutionTools(
+                this.database,
+                this.approvals,
+                agent.toolbox,
+                { projectId: run.projectId, sessionId: run.sessionId, turnId: run.turnId },
+                signal,
+                secret,
+                async () => {
+                  const settings = await this.database.execute<Settings>('settings.get', {
+                    projectId: run.projectId,
+                  })
+                  return settings.projectPermission === 'ask' && !signal.aborted
+                },
+              )
+            : null
+        result = await runAgent({
           database: this.database,
           adapter,
           toolbox: agent.toolbox,
@@ -267,14 +375,18 @@ export class ChatRuntime {
           info: agent.info,
           limits: agent.limits,
           maxTokens,
+          contextWindow: adapter.capabilities.contextWindow,
           secret,
           signal,
+          ...(execution
+            ? { tools: executionTools, executeTool: execution.execute.bind(execution) }
+            : {}),
           onText: append,
           onUsage: (next) => {
             usage = next
           },
         })
-      else {
+      } else {
         for await (const event of adapter.stream(
           { model: turn.model, messages, maxTokens },
           signal,
@@ -310,25 +422,38 @@ export class ChatRuntime {
     } catch (cause) {
       const normalized = providerError(cause, signal)
       error =
-        cause instanceof ContractError
+        cause instanceof ToolFailure && cause.code === 'EXECUTION_STATE_UNKNOWN'
           ? {
-              code: cause.info.code === 'LIMIT_EXCEEDED' ? 'LIMIT' : 'STORAGE',
+              code: 'EXECUTION_STATE_UNKNOWN',
               message:
-                cause.info.code === 'LIMIT_EXCEEDED'
-                  ? '本地工具日志存储达到配额，请清理后重试'
-                  : '保存工具记录失败，请核对本地存储',
+                '执行器未能确认全部文件结果，已有修改可能保留；请核对项目后再发起新任务，未自动重试。',
               status: null,
               retryAfterSeconds: null,
             }
-          : cause instanceof ToolFailure && !signal.aborted
+          : cause instanceof ContractError
             ? {
-                code: 'LIMIT',
-                message: `只读 Agent 已停止：${({ CONTEXT_BUDGET: '上下文预算不足', TOKEN_BUDGET: 'Token 预算耗尽', OUTPUT_BUDGET: '输出预算耗尽', CALL_BUDGET: '工具调用次数或参数上限', ROUND_BUDGET: '模型轮数上限', DUPLICATE_CALL_ID: '工具调用 ID 重复' } as Record<string, string>)[cause.code] ?? '工具边界检查未通过'}`,
+                code: cause.info.code === 'LIMIT_EXCEEDED' ? 'LIMIT' : 'STORAGE',
+                message:
+                  cause.info.code === 'LIMIT_EXCEEDED'
+                    ? '本地工具日志存储达到配额，请清理后重试'
+                    : '保存工具记录失败，请核对本地存储',
                 status: null,
                 retryAfterSeconds: null,
               }
-            : normalized.info
-      state = normalized.info.code === 'CANCELLED' ? 'cancelled' : 'failed'
+            : cause instanceof ToolFailure && !signal.aborted
+              ? {
+                  code: 'LIMIT',
+                  message: `只读 Agent 已停止：${({ CONTEXT_BUDGET: '上下文预算不足', TOKEN_BUDGET: 'Token 预算耗尽', OUTPUT_BUDGET: '输出预算耗尽', CALL_BUDGET: '工具调用次数或参数上限', ROUND_BUDGET: '模型轮数上限', DUPLICATE_CALL_ID: '工具调用 ID 重复' } as Record<string, string>)[cause.code] ?? '工具边界检查未通过'}`,
+                  status: null,
+                  retryAfterSeconds: null,
+                }
+              : normalized.info
+      state =
+        error.code === 'EXECUTION_STATE_UNKNOWN'
+          ? 'failed'
+          : normalized.info.code === 'CANCELLED'
+            ? 'cancelled'
+            : 'failed'
     } finally {
       clearTimeout(timer)
       adapter.dispose()

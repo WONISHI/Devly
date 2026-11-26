@@ -2,7 +2,7 @@
 
 支持第三方模型 API 的本地桌面 AI 编程工作台，目标对齐 Codex 类似的编程与任务交互能力。采用 Electron、React、TypeScript、原版 AI Elements、Tailwind CSS、Lucide React 与 Zustand；主路线为自研 Agent 与 Provider 适配层。
 
-当前已接入 **独立普通聊天、跨项目最近聊天、原生新建项目、只读 Agent、流式文本、停止/重新发送与历史恢复**。只读 Agent 可安全搜索/读取所选项目，显示原 AI Elements 工具卡片及脱敏日志；火山方舟指定 DeepSeek 模型已通过真实搜索→读取→回答与重启验收（LOG-043）。写入、命令、审批、编辑器和终端业务留待后续阶段。新增“设置 → 用量与额度”：本地真实 Token 统计、供应商预算与可查询的账户余额，范围见 [用量说明](./docs/usage-and-budget.md)。见 [只读 Agent](./docs/read-only-agent.md)、[聊天说明](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
+当前已接入 **独立聊天、跨项目最近聊天、新建项目、只读/项目 Agent、逐次审批、停止、历史、本地 Monaco 编辑与实际 Diff**。macOS 项目 Agent 支持版本检查的文件替换、受限命令与 Git 基线；权限设置选择“每次询问”且系统预检通过后可用，目录外访问与网络不开放。阶段 7 已通过指定火山方舟 DeepSeek 模型的真实搜索→读取→审批修改→审批测试→Monaco Diff 样例（LOG-051），不代表其他模型或平台自动兼容。页头“项目文件/项目更改”打开编辑区，支持文件标签、保存、外部变更冲突及未保存提示，见 [编辑器与 Diff](./docs/editor-and-diff.md) 和 [执行边界](./docs/execution-foundation.md)。交互终端留阶段 8。设置的“用量与额度”提供真实 Token、本地预算与已适配的账户余额，见 [用量说明](./docs/usage-and-budget.md)。更多见 [只读 Agent](./docs/read-only-agent.md)、[聊天](./docs/chat.md)、[Provider API](./docs/provider-api.md) 和 [本地数据](./docs/local-data.md)。
 
 ## 启动
 
@@ -44,6 +44,9 @@ pnpm dev
 | `pnpm verify:icons`              | 357 个离线品牌 SVG、目录及 MIT 通知完整性检查                 |
 | `pnpm verify:provider-icons`     | 图标匹配、深浅主题、包内资源加载与零外部请求检查              |
 | `pnpm verify:native`             | 在 Electron Node 中验证 SQLite 和 PTY                         |
+| `pnpm verify:editor`             | 实际文件/SQLite/隔离保存/外部冲突与 Git Diff 检查（macOS）    |
+| `pnpm verify:editor-ui`          | 文件树/模型/保存/未保存提示/Diff/本地 Worker 桌面检查         |
+| `pnpm verify:editor-live`        | 显式指定既有 Provider 的真实 API 编程样例；受控项目、可能计费 |
 | `node scripts/smoke-desktop.mjs` | 启动桌面应用，检查 IPC、目录选择和 AI 组件，生成截图          |
 | `pnpm run pack`                  | 构建当前平台应用目录                                          |
 | `pnpm dist`                      | 构建当前平台安装包                                            |
@@ -65,7 +68,7 @@ tests/                          基础测试
 docs/                           架构、技术选型、实施计划和搭建记录
 ```
 
-首页使用原版 AI Elements ModelSelector 选择已保存模型，支持按模型/供应商搜索；无项目时保存应用默认值，有项目时保存该项目默认值，重启保留。选择器提供供应商管理入口，侧栏设置仍可管理配置；环境检查和原 AI 组件预览收进开发者选项。供应商连接诊断与普通聊天已接入，只读 Agent 已接入，写入/命令/审批待后续阶段。正常启动不探测 Codex，不要求安装 Codex 或登录 ChatGPT；独立握手脚本保留为可选技术储备。见 [产品入口](./docs/provider-entry.md)。
+首页使用原版 AI Elements ModelSelector 选择已保存模型，支持按模型/供应商搜索；无项目时保存应用默认值，有项目时保存该项目默认值，重启保留。选择器提供供应商管理入口，侧栏设置仍可管理配置；环境检查和原 AI 组件预览收进开发者选项。供应商连接诊断、普通聊天、只读 Agent 与 macOS 逐次审批的项目执行已接入。正常启动不探测 Codex，不要求安装 Codex 或登录 ChatGPT；独立握手脚本保留为可选技术储备。见 [产品入口](./docs/provider-entry.md)。
 
 后续按 [工作总表](./docs/work-plan.md) 推进，每项完成后在 [工作日志](./docs/work-log.md) 记录实现与验证；仓库执行约定见 [AGENTS.md](./AGENTS.md)。
 
@@ -75,8 +78,10 @@ Renderer 的模块职责与检查范围见 [feature 边界](./docs/renderer-stru
 
 桌面通信协议见 [B02 契约](./docs/ipc-contracts.md)，本地与双平台 CI 入口见 [B04 检查计划](./docs/quality-checks.md)，维护版本、许可证与发行阻断见 [V01 依赖评估](./docs/dependency-review.md)。
 
-阶段 1–4 已验收；阶段 5 的真实只读闭环通过，最终包内复核收尾见 LOG-043，验收后下一项为阶段 6/6.1/T04。真实供应商范围限定为记录的火山方舟端点/模型。
+阶段 1–7 的验收见日志；阶段 6 执行与审批见 LOG-047/LOG-048，阶段 7 编辑与真实编程样例见 LOG-049–LOG-051。当前为 macOS ARM64 开发与未签名应用目录；Windows、安装包、公证及正式发行门槛仍待后续阶段。
 
 供应商列表及模型选择器包含 357 个本地品牌 SVG，按域名、名称和模型系列识别，未知配置显示通用图标；不依赖远程图片。来源和匹配边界见 [供应商图标](./docs/provider-icons.md)。
 
 设置按模型供应商、外观、默认模型、权限与限额、开发者分组，右侧只显示当前分类，切换保留未保存输入；偏好保存只提交当前分类，见 [设置分组说明](./docs/ui-components.md)。
+
+项目执行检查：`pnpm verify:execution-host`（macOS 原生边界）、`pnpm verify:execution`（临时项目/SQLite/审批/命令/异常重启）、`pnpm verify:execution-ui`（桌面按钮与历史）。阶段 7 的开发/包内本地 Worker、保存和 Diff 检查与显式 A09 操作见编辑器说明；CI 只运行本地检查，不使用个人 Key 或自动请求第三方服务。

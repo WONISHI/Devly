@@ -11,6 +11,8 @@
 
 ## 设计与搭建资料
 
+- [编辑器与实际 Diff](./editor-and-diff.md)：阶段 7 的按需文件树、本地 Monaco/Worker、有版本保存、未保存保护、真实 Git Diff 与 A09 验收入口。
+
 - [第三方 Provider API](./provider-api.md)：P01–P06 的实现、数据流、协议规则、能力表、错误/取消和真实验收操作。
 
 - [UI 与 AI 组件使用](./ui-components.md)：基础控件统一、原 AI Elements 的分工与来源约束。
@@ -37,3 +39,5 @@
 - [旧技术选型](./archive/codex-app-server-tech-stack.md)。
 
 架构图使用 Mermaid 编写；阅读器需要支持 Mermaid 渲染。计划和文档不代表相应功能已经实现。
+
+阶段 6 的 macOS 项目写入、命令、逐次审批、停止、计划和主机执行边界见 [执行与审批](./execution-foundation.md)。默认跳过的原生检查须另行运行，未签名 .app 不等于正式发行包。

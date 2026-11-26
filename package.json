@@ -44,7 +44,13 @@
     "verify:data": "node scripts/verify-data.mjs",
     "verify:persistence": "node scripts/smoke-persistence.mjs",
     "verify:provider": "node scripts/smoke-provider.mjs",
-    "verify:model-picker": "node scripts/smoke-model-picker.mjs"
+    "verify:model-picker": "node scripts/smoke-model-picker.mjs",
+    "verify:execution": "node scripts/verify-execution.mjs",
+    "verify:execution-ui": "node scripts/smoke-execution.mjs",
+    "verify:execution-host": "DEVLY_VERIFY_HOST_EXECUTION=1 vitest run tests/host-execution.test.ts tests/execution-foundation.test.ts",
+    "verify:editor": "node scripts/verify-editor.mjs",
+    "verify:editor-ui": "node scripts/smoke-editor.mjs",
+    "verify:editor-live": "node scripts/verify-editor-live.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -67,6 +73,7 @@
     "ignore": "7.0.16",
     "lucide-react": "^0.468.0",
     "monaco-editor": "^0.52.2",
+    "motion": "12.42.0",
     "nanoid": "3.3.20",
     "node-pty": "^1.1.0",
     "radix-ui": "^1.8.1",

@@ -11,8 +11,15 @@ import { modelOptions } from '@/features/workspace/model-options'
 export type WorkspaceTab = 'workspace' | 'components' | 'providers'
 type Cursor = { time: number; id: string } | null
 type WorkspaceState = {
-  chatPreferences: Record<string, { mode: 'chat' | 'read-only'; selectedPaths: string[] }>
-  rememberChat: (id: string, mode: 'chat' | 'read-only', selectedPaths: string[]) => void
+  chatPreferences: Record<
+    string,
+    { mode: 'chat' | 'read-only' | 'project-write'; selectedPaths: string[] }
+  >
+  rememberChat: (
+    id: string,
+    mode: 'chat' | 'read-only' | 'project-write',
+    selectedPaths: string[],
+  ) => void
   project: RecentProject | null
   projects: RecentProject[]
   sessions: Session[]

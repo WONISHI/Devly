@@ -511,6 +511,101 @@
 - 最终检查：pnpm check 全部退出 0，含 106 项单测、25 份 Markdown/106 ID/45 连续日志、26 原组件校验、图标校验、生产构建和 data/chat/agent 集成。electron-builder --dir（identity=null）成功更新 release/mac-arm64/Devly.app；包内 verify:usage-ui 和 verify:desktop 均退出 0，覆盖两次 loopback 聊天、预算重启与六组唯一可见，Renderer 无 pageerror。
 - 状态与下一步：本次新增用量界面完成；U06 总项保持部分完成，阶段 6 原主线仍待开始。用户须完全退出旧 Devly 进程后重开更新的应用目录；按既有授权提交同步，哈希以 Git 为准。Windows/远端 CI/签名和正式安装包不依据本轮 macOS 验证判通过。
 
+## LOG-046｜阶段 6 首批基础：Git 基线与未开放的执行/审批原型
+
+- 日期：2026-11-26；任务：6.1/G02、6.2/T04、6.3/T05、6.4/T06、6.5/T07、6.6/T08。阶段 6 整体进行中，未验收，禁止进入阶段 7。
+- G02：只调用系统 Git 的只读 root/HEAD/status 命令，禁用 fsmonitor/可选锁与交互，输出和时间受限；支持非 Git/未首次提交的项目。Agent 准备和 finally 收尾保存前后状态至既有 agent_info，历史恢复和界面可查看初始状态数量。状态差异明确只作观察，不把用户原有变更归因 Agent；指纹是 Git 状态指纹，不是文件内容版本。
+- T04 原型：严格参数、内容摘要预期版本、项目路径/符号链接/硬链接/大小限制、新文件 no-replace 发布、项目级串行、逐文件成功/冲突/失败/取消。临时文件 flush 后发布；部分结果不伪装事务。尚缺完整 diff 预览、审批绑定；既有文件在最终 hash 检查到 rename 间仍存在非协作写入竞态，父目录替换也需进一步约束，因此只标部分完成且不注册工具。
+- T05/T07 原型：只继承明确 PATH/locale，不继承 Provider 环境；macOS deny-default sandbox-exec、cwd 限定、stdout/stderr/信号/退出码、时间/输出预算、进程组 TERM/KILL。为防跨分段秘密泄漏，目前缓冲后脱敏返回，不声称实现实时流输出。缺少受限配置成功验收、逃逸进程树验证和完整敏感目录拒绝规则；不存在无沙箱降级。
+- T06/T08 原型：审批 ID 绑定项目/会话/回合/调用及参数 digest，单次消费、拒绝/过期/取消/关闭收尾均有检查。尚未连接数据库审批表、Renderer 请求、原 Confirmation/Plan/Task，不能作为持久化审批闭环完成证据。
+- 文件：main/agent/{git-baseline,patch-executor,command-executor,approval-broker}.ts、context/runner、chat/runtime；shared agent/chat/data 契约默认兼容旧历史；AgentTrace；execution-foundation/host-execution 测试及 agent.integration；work-plan、execution-foundation、README、architecture。
+- 初步检查：类型/Lint 退出 0；单测 115 通过，1 项原生检查默认跳过。首次四项补丁测试因 macOS /var → /private/var 别名误判失败，修正为拒绝根节点符号链接并基于 canonical 路径串行后通过。默认跳过原生检查不等于主机验收通过。
+- 原生失败证据：显式 DEVLY_VERIFY_HOST_EXECUTION=1 检查在外层沙箱内得到 sandbox_apply: Operation not permitted；经授权在外层之外运行后，受限配置中的 /bin/sh 仍异常终止，exitCode=null 且无输出。允许默认配置的固定文本探针成功，说明受限 profile 仍需修正；补齐系统 metadata/配置读取后仍未通过。未通过的命令能力没有开启，没有发送真实第三方 API 请求、执行用户命令或修改用户项目。
+- 门禁与状态：仅 G02 可标完成；T04/T05/T06/T08 部分完成，T07 待验证；A06/A07/U04/U05/T11 等保持未完成，U06 仍部分完成。readOnlyTools 仍恰好三个只读入口，用户界面/IPC 未增加可写模式。原本未提交的 work-plan 排版改动保留。
+- 下一步：6.2/T04 的预览/审批绑定与写入竞态加固；随后修复原生命令边界、持久化审批与 Renderer 接入，再验证停止/串行/预算并逐项验收。完整统一检查结果在下方追加。
+
+## LOG-047｜阶段 6：隔离执行、持久审批、停止与原组件闭环
+
+- 日期：2026-11-26。
+- 阶段 / 步骤 / 任务 ID：阶段 6，6.1/G02、6.2/T04、6.3/T05、6.4/T06、6.5/T07、6.6/T08、6.7/A06、6.8/A07、6.9/U04、6.10/U05、6.11/U06、6.12/T11。
+- 实际变更：修复 LOG-046 的原生启动失败。系统拒绝日志表明 dyld 缺少根目录本身的读取权限；增加 literal 根目录读取后，严格 profile 可运行，未改为 allow-default。Git 改在只读 Seatbelt 中查询，隔离本地配置/过滤器的写入和网络副作用；Git 不可用不阻断非 Git 项目。
+- 写入与命令：完整文件 contentHash、逐文件结果与冲突，原 inode 恢复路径；固定 Node 补丁助手与 shell 均在 deny-default Seatbelt 内。cwd/环境/输出/时间受限，UTF-8 增量解码与跨块脱敏，完整行可在进程结束前显示。超时/取消清理普通进程组；清理失败显示执行状态未知并停止循环。保留已有修改，没有自动回滚/重放。
+- 审批与调度：Main 绑定项目/会话/回合/调用、approval UUID、参数 digest、60 秒有效期；响应不能替换参数，单次消费；拒绝回传模型。SQLite v8 增加 approvals.payload/index，异常重启使待审批失效。全局单修改操作保护嵌套项目；不同会话只读工作可并行，排队取消立即收尾，活动进程等待清理。
+- 界面：新增项目 Agent 模式，权限为 ask 且实际系统预检通过才执行；其余模式不扩权。原 Confirmation/Plan/Task/Shimmer 与配套 Alert/Card 固定来源接入；update_plan 完成项需关联本回合成功调用。审批自动展开并禁用已提交按钮。取消状态、状态未知与未开放跨重启续跑明确显示；可写回合不自动重发副作用。上下文显示字符估算，费用未知时不计价，maxCost 不冒充硬停止。
+- 文件：main/agent 的 git-baseline、patch-core/patch-executor/patch-worker/isolated-patch、command-executor、approval-broker、execution-tools、plan、runner、context；chat/runtime/repository；shared agent/chat/data 契约；data/migrations；ChatWorkspace/use-chat/ChatHistory/AgentTrace、store、SettingsEditor/styles；原组件/来源清单；electron-vite/Builder；package/lock；execution/host/contract 测试、execution.integration/execution-crash.fixture/smoke-execution/verify-execution、verify-vendor、chat.integration 和 CI；README、架构、选型、数据/聊天/用量/依赖/执行说明及计划。
+- 新依赖：motion 12.42.0，锁定 framer-motion 12.43.0、motion-dom 12.43.0、motion-utils 12.39.0，均 MIT、React 18/19 peer；四份许可证纳入构建资源。verify:vendor 从 26 扩至 32 个固定提交文件；本机依赖盘点 62 直接/926 已安装包，旧 UNKNOWN 与维护/安全发行限制不解除。
+- 已有验证：pnpm test 为 118 通过、2 项原生检查默认跳过；显式 verify:execution-host 为 13 项通过，包含实际 Git 基线、目录/秘密/符号链接/网络拒绝、输出上限、跨块脱敏、命令退出与进程组取消。verify:execution 使用实际 Electron ABI/SQLite/隔离文件与命令，验证审批前无写入、错误归属/digest/重复拒绝、外部编辑冲突、拒绝回传、待审批/进程取消与无延迟写入、重启历史，以及进程突然退出后旧审批失效；HTTP 为本地注入替身。
+- 桌面验证：smoke-execution 实际点击允许/拒绝、读取真实文件与命令结果、停止待审批、重启恢复与根布局；截图 output/execution-approval-pending.png、output/execution-completed.png 已查看，完整参数与按钮可见。后续增加模型计划与完整打包检查的最终结果归档于下一条。
+- 发现与修正：首轮统一检查的并发用例误将获得锁顺序写死，改为只断言一成功一冲突及胜者内容。桌面测试先误断言空输入按钮应启用，修正为输入可编辑；同时发现真实 UI 在轮询刷新前能再次点旧审批，增加已答 ID 锁定，Main 本已拒绝重复。普通聊天在 mode 缺省时被错误套用压缩上下文，完整聊天集成捕获，恢复仅两种 Agent 模式压缩；数据库版本断言改随 migrations.length。Git profile close 回调的 Lint 表达式已修正。新增大小写路径规则时，原生检查发现 JSON 双重转义使 Seatbelt regex 未匹配 `.env`，已恢复常量 regex 字面量的正确转义；最终边界结果以后续显式复核为准。
+- 未覆盖与边界：没有调用用户真实 API、读取真实明文 Key、修改用户项目或代用户执行真实命令。真实 API + 编辑器/Diff 样例由阶段 7/A09 验收；Windows 由阶段 12/T12 实测。不是 VM，脱离进程组的后台进程不在已验证清理保证内；最终检查到 rename 的非协作竞态不能冒充原子 CAS，原 inode 保留以便核对；个人工具链/任意构建命令未全覆盖。现有发行限制不解除。
+- 状态：阶段 6 代码与当前 macOS 关键检查已落地；最后统一检查、模型计划 UI 和包内助手检查后统一收口，不将此前失败记录抹除。下一步 6.12/T11 最终验收，未进入阶段 7 开发。
+
+## LOG-048｜阶段 6 验收归档：当前 macOS 执行链与包内复核
+
+- 日期：2026-11-26。
+- 阶段 / 步骤 / 任务 ID：阶段 6，6.1/G02 至 6.12/T11，共 12 项：G02、T04、T05、T06、T07、T08、A06、A07、U04、U05、U06、T11。
+- 结果：当前 macOS 范围验收完成。LOG-046 的未开放原型与失败是中间记录，LOG-047 的执行链实现经本条最终检查收口。没有展开阶段 7 开发。
+- 最终代码补充：敏感路径按大小写匹配并用 Seatbelt 正则字面量，实际 `.env` 与混合大小写 `.aWs` 拒绝通过；Git 基线只读系统约束通过。UTF-8 BOM 原先被文本解码移除会导致文件摘要不符，修正为保留 BOM 并验证 read_file → SHA-256 → 有版本替换；原始恢复字节保留。拒绝不完整 Unicode 内容，避免提案和写入内容不一致。全局修改并发 1，包含嵌套项目；审批排队超过有效期不能执行。
+- 验证命令与结果：`pnpm check` 退出 0，覆盖类型/Lint/Prettier、119 项通过和 2 项默认跳过的测试、文档、32 个原组件校验、357 个图标校验、生产构建、SQLite/Worker、聊天与只读 Agent 集成；`pnpm verify:execution-host` 退出 0，14 项通过（含前述两个实际主机用例及执行基础用例）；`node scripts/verify-execution.mjs` 退出 0，7 组实际 Electron/SQLite/文件/命令/取消/重启行为。常规通过不掩盖默认跳过的主机检查，两者分开记录。
+- 桌面与打包：`node scripts/smoke-execution.mjs` 在隔离开发配置通过；增加真实 update_plan 初始/完成状态，完成计划引用 read-call、patch-call、command-call，原 Plan/Task/Confirmation 可见，模型计划不是演示任务。`pnpm exec electron-builder --dir --config.electronDist=node_modules/electron/dist` 退出 0，生成 release/mac-arm64/Devly.app；设置 DEVLY_EXECUTABLE 指向该 .app 后再运行 smoke-execution 退出 0，确认 asar 内补丁助手、命令、逐次审批、拒绝、停止、重启历史与根窗口边界可用。四份 motion 系列许可证已在应用 Resources/licenses 核对。
+- 截图与人工核对：output/execution-approval-pending.png、execution-completed.png、execution-plan.png；已查看完整参数、允许/拒绝按钮和计划调用关联，未增加外层滚动。截图/测试数据明确为本地协议替身，只使用自动清理的受控项目；没有发送真实 API 请求、读取用户明文 Key 或修改用户项目。
+- 阶段验收核对：① 用户原有修改有基线，外部编辑冲突保留，逐文件结果/恢复版本可定位；② 审批前无执行，错作用域、错误 digest、重复、过期、拒绝、取消/重启均不扩大授权；③ HTTP、队列、审批、普通进程组的停止通过，状态未知不会伪装成功，已有修改保留且没有自动副作用重试；④ 当前 macOS 文件/敏感路径/网络/进程边界检查通过，Windows 明确留 T12。
+- 边界与未覆盖：不是 VM 或通用原子 CAS；旧 inode 的恢复路径保留用于非协作竞争核对；脱组/双重 fork 后台进程未覆盖，界面明确未知范围，不授权常驻程序。系统 PATH 以外的个人工具链、外置 worktree 元数据、任意项目构建未全覆盖。Token 上下文为明确标注的字符估算，费用未知、maxCost 不承诺美元硬停止；账户覆盖范围沿用 LOG-045。真实 API + 编辑器/Diff 编程样例留阶段 7/A09，跨重启续跑留 R02，Windows 留 T12。未签名、未公证、无 DMG；旧依赖维护/安全发行阻断仍保留，远端 CI 未运行。
+- 涉及文件：LOG-047 所列执行链、契约、原组件/许可证、构建与测试入口；另有 BOM/计划/审批契约回归、SettingsEditor 的费用/执行提示、CI macOS 原生和包内检查步骤；同步 README、architecture、tech-stack、local-data、chat、read-only-agent、usage-and-budget、dependency-review、execution-foundation、文档入口、development-plan 和 work-plan。开工前 work-plan 排版修改保留；没有提交或推送其他仓库。
+- 状态变化：阶段 6 全部步骤与阶段验收改为完成（当前 macOS 范围），阶段总览/当前执行位置/唯一下一步已同步。下一步：阶段 7 → 7.1/G01 文件树按需展开、变化监听、忽略与安全刷新。
+
+## LOG-049｜阶段 7 开工：文件服务、监听与本地编辑器初步接入
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：阶段 7，7.1/G01 起，关联 G03/G04/G05 的接口准备。
+- 实际变更：Main 项目文件服务与严格 editor.* 契约，目录单页 100 项、按展开目录监听、owner/watch UUID 清理、删除/忽略/秘密/二进制/编码/大小限制；Renderer 文件工作区、项目内文件标签、Monaco 本地实例和内联 Worker、项目隔离的内存缓冲区、版本保存、原生未保存离开提示、HEAD→磁盘 Git Diff；保持原聊天和默认折叠文件区。
+- 证据：editor-files.test 的 4 项文件/版本/范围/监听/状态解析检查通过；verify-editor 的实际 Electron/SQLite/受控 Git 文件检查通过，包含保存原版本、外部修改冲突、新增/删除/暂存重命名/二进制与监听降级。类型、Lint 和构建初步通过，原生成功不代表完整桌面流程已完成。
+- 发现与处理：单测 stub 的 /var 路径不是数据库实际使用的 canonical 路径，修正 fixture，未放宽主路径检查。Monaco 公开 ScriptTarget 不导出 ES2022，使用其公开 ESNext 常量。桌面检查发现在 Diff 返回编辑/重新载入时，React wrapper 复用旧模型但没同步新值；已在 onMount 同步缓冲区并按文件实例化，待复核。目录删除不再阻止其他文件刷新；监听释放记录 tombstone 防晚到请求重建句柄；保存任务在退出前等待收尾。
+- 文件：shared/editor-contracts 与 data-contracts、main/editor/{service,git}、agent/tools、data/service、main/index；Renderer features/editor、App/AppHeader/AgentTrace/styles；Vite Worker 配置；editor-files 与 editor.integration/verify-editor/smoke-editor。
+- 状态/限制：G01/G03/G04/G05 尚待最后桌面与包内检查；A09 尚未通过真实 API 样例。没有扩大权限到目录外、没有把内存草稿当作崩溃恢复或 R02。开工前阶段 6 的所有未提交文件保留。
+- 下一步：复核桌面模型与未保存流程，运行开发及包内离线 Worker 检查，再用既有 DeepSeek 配置在生成项目做 A09；不请求在聊天中提供 Key。
+
+## LOG-050｜阶段 7 文件树、编辑保存与 Diff 本机验收
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：7.1/G01、7.2/G03、7.3/G04、7.4/G05。
+- 实际变更：项目文件树按目录分页、忽略/敏感范围复用、按展开目录和打开文件父目录监听及降级刷新；项目隔离的 20 个内存文件缓冲区；Monaco 实例/五类 Worker 本地加载；CtrlCmd+S、版本保存、外部修改冲突、未保存比较和离开确认；真实 HEAD→磁盘 Diff、新增/删除/暂存重命名/二进制状态，以及 Agent 工具记录文件定位入口。
+- 文件：LOG-049 所列 editor 服务/契约、Renderer features/editor、App/AppHeader/AgentTrace、Main 退出清理、Vite/Builder；新增 editor-buffers.test、verify-editor-live、Monaco MIT 通知，package 与 CI 编辑器检查入口；editor-and-diff.md、选型、依赖说明、文档入口与工作计划。
+- 验证：`pnpm check` 退出 0，127 项测试通过、2 项主机检查默认跳过；包含新增 8 项文件/监听/模型并发检查，106 个任务 ID 与连续日志、32 原组件、357 图标、构建及 SQLite/聊天/只读 Agent 集成通过。`node scripts/verify-editor.mjs` 退出 0，实际 Electron/SQLite/隔离保存与 Git 的 4 组检查通过。默认跳过检查沿用阶段 6 的独立主机证据，本次不把跳过当通过。
+- 开发/包内桌面：`DEVLY_EDITOR_VITE_DEV=1 node scripts/smoke-editor.mjs` 和 `DEVLY_EXECUTABLE=release/mac-arm64/Devly.app/Contents/MacOS/Devly node scripts/smoke-editor.mjs` 均退出 0；实际 TS 诊断、Worker 响应、跨文件/项目草稿、保存/外部冲突/BOM/CRLF、取消重载/关闭脏标签/原生关闭窗口、文件删除与四类 Diff、固定根布局均通过。开发 Worker 为 localhost HTTP、包内为 blob；无远程 Renderer 请求、无 Worker 错误、无未处理页面错误。`electron-builder --dir` 退出 0，Resources/licenses 三份 Monaco 系列 MIT 通知存在。
+- 发现与修正：桌面脚本返回项目后目录折叠，修正脚本显式展开 src。实际 Monaco wrapper 在挂载时不自动同步已缓存模型，增加缓冲区同步；Diff 默认先释放模型后销毁 widget，改为实例 URI 和销毁后释放；Monaco 0.52 的同词高亮 Delayer 在销毁时产生未处理 Canceled，关闭 occurrencesHighlight 自动高亮，保留类型诊断与其他编辑能力。没有过滤测试错误或隐藏通用页面异常。监听释放/晚到 setup 的竞态新增回归通过；保存后继续输入与旧刷新覆盖由缓冲区测试覆盖。
+- 人工核对：已查看 output/editor-conflict.png（真实磁盘 5 与本地 4）、editor-git-diff.png（新增 JSON 与实际更改列表），布局有界、标签与按钮可见。测试项目均临时生成并清理，普通桌面检查没有请求第三方 API。
+- 边界：当前 macOS ARM64；其他平台只读预览和后续 T12，未签名未公证、无 DMG。语言服务只覆盖打开模型；未实现 LSP/项目 tsconfig、草稿崩溃恢复、Git 提交/交互终端或持久布局。单块含 Worker 约 22.9 MB，延迟加载不等于已优化首次打开性能。保存沿用阶段 6 外部竞态/恢复版本边界。没有修改用户项目或既有 Provider。
+- 状态变化：G01/G03/G04/G05 → 完成（当前 macOS 范围）；A09 → 待验证。下一步：只使用已保存的指定 DeepSeek 配置，在生成项目完成真实搜索→读取→审批补丁→审批测试→实际 Diff；不把本地替身当作真实编程验收。
+
+## LOG-051｜阶段 7 真实编程 MVP 与阶段验收归档
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：7.5/A09，阶段 7 全部 G01/G03/G04/G05/A09 收口。
+- 实际运行：`DEVLY_EXECUTABLE=release/mac-arm64/Devly.app/Contents/MacOS/Devly DEVLY_LIVE_SOURCE_PROFILE=<既有 userData> DEVLY_LIVE_PROVIDER_ID=<用户已保存的 DeepSeek UUID> node scripts/verify-editor-live.mjs` 退出 0。真实协议 chat-completions，Base URL 为 https://ark.cn-beijing.volces.com/api/v3，模型 deepseek-v4-1-flash-261017；没有记录 Key、密文或凭据引用，没有改变源配置和既有会话。
+- 样例与审批：生成独立临时 Git 项目、错误的 src/total.sh、固定 tests/verify.sh 和项目约定；仅复制指定 Provider 元数据及保护密文到临时 userData，由包内 Main 正常解密。真实模型按要求 search_text 搜索、read_file 读取源代码与测试，提出仅将减号换加号的单文件 apply_patch；操作员通过实际原 Confirmation 按钮仅批准匹配当前哈希/预期内容的补丁，再批准精确 `/bin/sh tests/verify.sh`。未发送用户项目代码、用户既有会话或任意目录内容；其他提案不授权。
+- 真实结果：回合 completed，8 轮、9 次工具调用；搜索成功，3 次读取成功，补丁成功，命令成功且真实 exitCode=0，stdout 中随机测试证明匹配，测试文件字节保持不变。HEAD 原文件、实际磁盘文件和 editor.diff 返回内容一致，通过补丁卡“查看更改：src/total.sh”打开真实 Monaco Diff；output/editor-live-mvp.png 已查看，减号→加号、实际工具输入、允许结果和项目范围说明可见。
+- 失败保留：9 次调用中 2 次 update_plan 为 failed、1 次为 completed；没有把两次失败重标成功，也没有用计划文字作为测试证明。A09 的文件修改/固定测试/Diff 验收独立核对通过，模型计划质量不作为所有调用成功的声明；本样例不证明任意模型、复杂项目或所有工具组合均可用。
+- 其他最终验证：LOG-050 的 `pnpm check`（127 通过、2 默认跳过）、原生 editor 集成、Vite 开发与未签名 .app 内 Worker/保存/Diff 全部通过。新增包内 `DEVLY_EXECUTABLE=release/mac-arm64/Devly.app/Contents/MacOS/Devly node scripts/smoke-execution.mjs` 退出 0，既有允许/拒绝、原 Plan/Task、停止待审批、重启审批历史和根布局回归通过。实时 API 只由本条手工脚本调用，CI 不使用个人配置。
+- 文件与文档：新增 verify-editor-live 与 editor-and-diff.md；实现文件见 LOG-049/LOG-050。同步 README、架构、选型、依赖评估、数据说明、Renderer 边界、质量入口、文档入口、development-plan、work-plan；Builder 保留 Monaco 三份 MIT 通知，CI 增加 macOS 原生/开发/包内编辑器入口，远端 CI 尚未运行。本轮未新增依赖或数据库迁移。
+- 阶段验收逐条：① Monaco/Worker 在实际 Vite 开发与打包 file:// 中本地运行，有响应且没有远程 Renderer 请求/未处理错误，文件/项目切换、保存与未保存提示通过；② 新增/删除/Git 已识别重命名/二进制、失效目录和外部冲突明确显示，内容来源于真实磁盘/Git；③ 指定真实 API 完成搜索→读取→审批修改→审批测试→实际 Diff，退出码与界面一致。
+- 边界与剩余：当前 macOS ARM64、指定协议/端点/模型和受控样例，Windows 留阶段 12/T12；.app 未签名、未公证、无正式 DMG。项目级 LSP、草稿崩溃恢复、交互 PTY、Git 历史/暂存/提交和持久布局尚未实现；上游维护与安全发行阻断不解除。秘密保护沿用既有路径/内容规则，不把未知内容检测当作任意秘密识别保证；保存和子进程边界沿用阶段 6。已清理临时项目/配置；本轮未提交或推送，保留开工前阶段 6 未提交修改。
+- 状态变化：A09 → 完成，阶段 7 → 完成（上述范围）；阶段总览、三项验收与当前执行位置同步，唯一下一步为阶段 8/8.1/G06 真实 Git 历史与原 Commit 组件。本次没有展开阶段 8 开发。
+
+## LOG-052｜阶段 7 收尾：目录分页刷新保留与最终复核
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：阶段 7，7.1/G01，关联 G03/G04/G05 的桌面回归。
+- 实际变更：最终静态复核发现，目录“加载更多”之后，定期/监听刷新可能只取第一页。WorkbenchPanel 现在记录每个目录已经请求的页范围，刷新重新读取该范围；逐目录请求序号拒绝较早响应覆盖新结果。没有增加全项目递归扫描。桌面 fixture 新建 105 个文件，加载第二页后外部新增第 106 个，要求监听刷新可见新增文件并保留原第二页。
+- 文件：features/editor/ProjectWorkbench.tsx、scripts/smoke-editor.mjs；docs/setup.md 的旧“尚未实现”清单明确标为搭建历史快照，并链接当前计划；编辑器/数据说明明确敏感内容检测边界。
+- 验证命令与结果：最终 `pnpm check` 退出 0（127 通过、2 默认跳过；类型/Lint/格式、27 份 Markdown、106 个任务 ID、当时 51 条日志、32 原组件、357 图标、构建及 SQLite/聊天/只读 Agent 集成）。`pnpm build`、`pnpm lint`、`electron-builder --dir` 均退出 0；重新生成当前 release/mac-arm64/Devly.app。实际 Vite 开发与该最终包的 smoke-editor 均退出 0，包含新分页/外部新增场景和此前全部保存/冲突/Diff/本地 Worker 场景；开发 HTTP 与包内 blob Worker 无错误、无远程 Renderer 请求。
+- 未覆盖与影响：仅改变 Renderer 文件树分页，未改供应商/凭据/Agent 执行。A09 沿用 LOG-051 已通过的真实 8 轮/9 调用证据，没有为列表修复重复调用计费 API。macOS/平台、未签名和恢复边界不变；源配置/用户项目未改，远端 CI 未运行，未提交或推送。
+- 状态：阶段 7 保持完成，G01 页范围刷新收尾通过；下一步仍为 8.1/G06。本次阶段 8 未开发。
+
+## LOG-053｜按用户要求提交阶段 6、7 实现
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：阶段 6 的 G02/T04–T08/A06/A07/U04–U06/T11 与阶段 7 的 G01/G03/G04/G05/A09，提交收尾。
+- 用户要求：完成后提交。当前 main 工作区包含此前未提交的阶段 6 执行/审批基础与本次阶段 7 编辑器/真实编程 MVP，依赖关联完整，一起纳入一次本地提交。
+- 范围：已记录的 Main 执行和编辑服务、共享契约、Renderer 原组件接入和编辑工作区、测试/脚本、依赖锁定与许可证、CI/构建及同步文档；构建产物、临时配置、真实凭据与截图目录由既有 ignore 排除。没有新增业务或展开阶段 8。
+- 验证依据：沿用 LOG-048/LOG-050–LOG-052 的实际检查和真实 A09 证据；本次代码未再变更，不重复调用计费 API。提交前复核 git diff --check、文档连续编号与格式；提交结果/哈希以 Git 输出和最终回复为准。
+- 状态与下一步：阶段 6、7 保持已验收，当前唯一下一项仍为 8.1/G06；本次只做本地 commit，未请求远端推送。
+
 ## 追加记录模板
 
 ```text

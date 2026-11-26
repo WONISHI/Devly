@@ -148,7 +148,7 @@ export function SettingsEditor({ value, activeGroup, providers, onSave, onExport
               />
             </div>
             <div className="settings-field">
-              <Label htmlFor={`${id}-cost`}>费用上限（USD）</Label>
+              <Label htmlFor={`${id}-cost`}>费用预算（USD，暂不参与停止）</Label>
               <Input
                 id={`${id}-cost`}
                 aria-label="费用上限"
@@ -192,8 +192,9 @@ export function SettingsEditor({ value, activeGroup, providers, onSave, onExport
             ))}
           </div>
           <p className="settings-footnote">
-            只读 Agent 使用次数、轮数、时间、输出与上下文限额；Token
-            为累计输出额度，无用量时按请求预留额扣减。费用数值仍为偏好，尚不能保证美元计费硬上限；写入和命令未启用。
+            Agent 遵循次数、轮数、时间、输出与上下文限额；Token
+            为累计输出额度，无用量时按请求预留额扣减。选择“每次询问”后，macOS 项目 Agent
+            才可逐次申请写入和命令；目录外访问不开放。费用预算因缺少可信计价来源，暂不参与停止。
           </p>
         </SettingsGroup>
       )}

@@ -29,6 +29,7 @@ export function canTransition(from: TaskPhase, to: TaskPhase): boolean {
 export const toolStateSchema = z.enum([
   'proposed',
   'validating',
+  'queued',
   'waiting_approval',
   'running',
   'completed',
@@ -37,7 +38,12 @@ export const toolStateSchema = z.enum([
   'cancelled',
 ])
 export const chatErrorSchema = providerErrorSchema.extend({
-  code: z.union([providerErrorSchema.shape.code, z.literal('INTERRUPTED'), z.literal('STORAGE')]),
+  code: z.union([
+    providerErrorSchema.shape.code,
+    z.literal('INTERRUPTED'),
+    z.literal('STORAGE'),
+    z.literal('EXECUTION_STATE_UNKNOWN'),
+  ]),
 })
 export type ChatError = z.infer<typeof chatErrorSchema>
 export const chatTurnSchema = z
@@ -58,6 +64,7 @@ export const chatTurnSchema = z
     error: chatErrorSchema.nullable(),
     agent: agentInfoSchema.default({
       mode: 'chat',
+      git: null,
       sources: [],
       summaries: [],
       rounds: 0,

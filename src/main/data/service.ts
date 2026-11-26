@@ -13,6 +13,7 @@ import type { CredentialVault } from './vault'
 import { ProviderRuntime } from '../providers/runtime'
 import { AccountUsageRuntime } from '../providers/account-usage'
 import { ChatRuntime } from '../chat/runtime'
+import { EditorService } from '../editor/service'
 
 type Prompts = {
   project?(): Promise<string | null>
@@ -25,6 +26,7 @@ export class LocalDataService {
   private providers: ProviderRuntime
   private chats: ChatRuntime
   private accounts: AccountUsageRuntime
+  private editor: EditorService
   constructor(
     private database: DatabaseClient,
     private vault: CredentialVault,
@@ -33,15 +35,18 @@ export class LocalDataService {
     this.providers = new ProviderRuntime(database, vault)
     this.chats = new ChatRuntime(database, vault)
     this.accounts = new AccountUsageRuntime(database, vault)
+    this.editor = new EditorService(database)
   }
   clearOwner(owner: string): void {
     this.providers.clearOwner(owner)
     this.accounts.clearOwner(owner)
+    this.editor.release(owner)
   }
   async close(): Promise<void> {
     this.providers.close()
     this.accounts.close()
     await this.chats.close()
+    await this.editor.close()
   }
   async initialize(): Promise<void> {
     await this.database.ready
@@ -59,7 +64,9 @@ export class LocalDataService {
     const args = operationArgs[operation].parse(payload.args) as Record<string, unknown>
     if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
     let data: unknown
-    if (operation.startsWith('chat.')) {
+    if (operation.startsWith('editor.')) {
+      data = await this.editor.execute(operation, args, owner, isActive)
+    } else if (operation.startsWith('chat.')) {
       data = await this.chats.execute(operation, args, isActive)
     } else if (operation.startsWith('providers.probe.')) {
       data = await this.providers.execute(operation, args, owner, isActive)

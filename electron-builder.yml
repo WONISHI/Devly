@@ -6,6 +6,12 @@ files:
   - out/**
   - package.json
 extraResources:
+  - from: node_modules/monaco-editor/LICENSE
+    to: licenses/monaco-editor.LICENSE
+  - from: node_modules/@monaco-editor/react/LICENSE
+    to: licenses/monaco-react.LICENSE
+  - from: resources/vendor/monaco-loader.LICENSE
+    to: licenses/monaco-loader.LICENSE
   - from: node_modules/ignore/LICENSE-MIT
     to: licenses/ignore.LICENSE
   - from: src/renderer/src/components/ai-elements/LICENSE
@@ -14,6 +20,14 @@ extraResources:
     to: icon.png
   - from: resources/vendor/lobe-icons.LICENSE
     to: licenses/lobe-icons.LICENSE
+  - from: resources/vendor/motion.LICENSE
+    to: licenses/motion.LICENSE
+  - from: resources/vendor/framer-motion.LICENSE
+    to: licenses/framer-motion.LICENSE
+  - from: resources/vendor/motion-dom.LICENSE
+    to: licenses/motion-dom.LICENSE
+  - from: resources/vendor/motion-utils.LICENSE
+    to: licenses/motion-utils.LICENSE
 asarUnpack:
   - '**/*.node'
   - node_modules/node-pty/**

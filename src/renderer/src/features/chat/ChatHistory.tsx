@@ -10,6 +10,8 @@ import { AgentTrace } from './AgentTrace'
 import { readAgentLog } from './actions'
 
 type Props = {
+  activeTurnId?: string
+  stopping?: boolean
   projectId: string
   messages: ChatMessage[]
   busy: boolean
@@ -20,6 +22,8 @@ type Props = {
 }
 function HistoryContent({
   projectId,
+  activeTurnId,
+  stopping,
   messages,
   busy,
   hasOlder,
@@ -69,10 +73,16 @@ function HistoryContent({
                 data-message-state={message.state || ''}
               >
                 <MessageContent>
-                  {message.role === 'assistant' && message.agent.mode === 'read-only' && (
+                  {message.role === 'assistant' && message.agent.mode !== 'chat' && (
                     <AgentTrace
                       tools={message.tools}
                       info={message.agent}
+                      scope={
+                        message.turnId
+                          ? { projectId, sessionId: message.sessionId, turnId: message.turnId }
+                          : undefined
+                      }
+                      active={message.turnId === activeTurnId && busy && !stopping}
                       onReadLog={(blobId) => readAgentLog(projectId, message.sessionId, blobId)}
                     />
                   )}
@@ -89,7 +99,13 @@ function HistoryContent({
                           isAnimating={isGenerating(message.state ?? undefined)}
                         >
                           {part.text ||
-                            (isGenerating(message.state ?? undefined) ? '正在等待回复…' : '')}
+                            (isGenerating(message.state ?? undefined)
+                              ? message.tools.some((tool) => tool.state === 'waiting_approval')
+                                ? '等待操作审批…'
+                                : message.tools.some((tool) => tool.state === 'queued')
+                                  ? '等待项目执行队列…'
+                                  : '正在等待回复…'
+                              : '')}
                         </MessageResponse>
                       ),
                     )}
@@ -104,31 +120,52 @@ function HistoryContent({
                       <span role="status">{message.error?.message || '生成失败'}</span>
                     )}
                     {message.state === 'cancelled' && (
-                      <span role="status">已停止，保留已收到的内容</span>
+                      <span role="status">
+                        {message.agent.mode === 'project-write'
+                          ? '回合已停止，保留已有修改；命令仅确认受管进程组清理，脱组后台程序状态未验证。'
+                          : '已停止，保留已收到的内容'}
+                      </span>
                     )}
+                    {message.agent.mode === 'project-write' &&
+                      ['failed', 'cancelled'].includes(message.state || '') && (
+                        <span>已有改动保留，请先核对文件再发送新任务；跨重启续跑尚未开放。</span>
+                      )}
+                    {message.error?.code === 'INTERRUPTED' &&
+                      message.agent.mode === 'project-write' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled
+                          title="跨重启继续需在阶段 9/R02 验收后开放"
+                        >
+                          恢复续跑（尚未开放）
+                        </Button>
+                      )}
+                    {message.usage && <span>费用：供应商未提供，未估价</span>}
                     {message.finish === 'length' && <span>已达到输出上限，可继续提问</span>}
                     {message.usage?.totalTokens != null && (
                       <span>{message.usage.totalTokens} tokens</span>
                     )}
-                    {['failed', 'cancelled'].includes(message.state || '') && (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        disabled={busy}
-                        onClick={() => {
-                          const original = messages.find(
-                            (item) => item.role === 'user' && item.turnId === message.turnId,
-                          )
-                          const text = original?.parts
-                            .filter((part) => part.type === 'text')
-                            .map((part) => part.text)
-                            .join('\n')
-                          if (text) void onRetry(text).catch(() => {})
-                        }}
-                      >
-                        重新发送
-                      </Button>
-                    )}
+                    {['failed', 'cancelled'].includes(message.state || '') &&
+                      message.agent.mode !== 'project-write' && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => {
+                            const original = messages.find(
+                              (item) => item.role === 'user' && item.turnId === message.turnId,
+                            )
+                            const text = original?.parts
+                              .filter((part) => part.type === 'text')
+                              .map((part) => part.text)
+                              .join('\n')
+                            if (text) void onRetry(text).catch(() => {})
+                          }}
+                        >
+                          重新发送
+                        </Button>
+                      )}
                   </div>
                 )}
               </Message>

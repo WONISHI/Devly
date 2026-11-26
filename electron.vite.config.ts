@@ -15,6 +15,7 @@ export default defineConfig({
           vault: resolve('src/main/data/vault.ts'),
           'data-service': resolve('src/main/data/service.ts'),
           'chat-runtime': resolve('src/main/chat/runtime.ts'),
+          'patch-worker': resolve('src/main/agent/patch-worker.ts'),
         },
       },
     },
@@ -24,6 +25,7 @@ export default defineConfig({
     build: { rollupOptions: { output: { format: 'cjs', entryFileNames: '[name].cjs' } } },
   },
   renderer: {
+    worker: { format: 'iife', rollupOptions: { output: { inlineDynamicImports: true } } },
     resolve: { alias: { '@': resolve('src/renderer/src'), '@shared': resolve('src/shared') } },
     plugins: [react(), tailwindcss()],
   },

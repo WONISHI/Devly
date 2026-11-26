@@ -169,6 +169,8 @@ try {
   assert.equal(result.turn.state, 'completed')
   assert.equal(result.turn.agent.rounds, 3)
   assert.equal(result.turn.agent.calls, 2)
+  assert.equal(result.turn.agent.git.before.available, false)
+  assert.equal(result.turn.agent.git.after.available, false)
   assert.deepEqual(
     result.tools.map((t) => [t.callId, t.state]),
     [
@@ -302,6 +304,7 @@ try {
   result = await database.execute('chat.read', scope(session))
   assert.equal(result.tools.length, 2)
   assert.equal(result.turn.agent.mode, 'read-only')
+  assert.ok(result.turn.agent.git?.before)
   for (const name of await readdir(join(root, 'data/blobs')))
     assert.equal(
       (await readFile(join(root, 'data/blobs', name))).includes(Buffer.from(secret)),

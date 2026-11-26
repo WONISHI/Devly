@@ -33,6 +33,8 @@ app.on('second-instance', () => {
 })
 let database: DatabaseClient | undefined
 let localData: LocalDataService | undefined
+let quitRequested = false
+let shutdownStarted = false
 
 async function version(command: string): Promise<string | null> {
   try {
@@ -128,8 +130,24 @@ function createWindow(): void {
   contents.on('destroyed', clearDocument)
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   mainWindow.webContents.on('will-navigate', (event) => event.preventDefault())
+  mainWindow.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(mainWindow!, {
+      type: 'warning',
+      title: '文件尚未保存',
+      message: '仍有未保存的文件内容',
+      detail:
+        '继续编辑可以保留缓冲区；放弃后离开会丢弃本地未保存内容，磁盘文件不会被删除；已发起的保存会完成后再退出，不会回滚已开始的写入。',
+      buttons: ['继续编辑', '放弃未保存内容并离开'],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true,
+    })
+    if (choice === 1) event.preventDefault()
+    else quitRequested = false
+  })
   mainWindow.on('closed', () => {
     mainWindow = null
+    if (quitRequested) void finishQuit()
   })
   if (process.env.ELECTRON_RENDERER_URL) void mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
   else void mainWindow.loadFile(join(here, '../renderer/index.html'))
@@ -192,7 +210,7 @@ app
     }
     createWindow()
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      if (!quitRequested && BrowserWindow.getAllWindows().length === 0) createWindow()
     })
   })
   .catch((error: unknown) => {
@@ -205,14 +223,24 @@ app.on('window-all-closed', () => {
 })
 
 let quitReady = false
+async function finishQuit() {
+  if (shutdownStarted) return
+  shutdownStarted = true
+  try {
+    await localData?.close()
+    await database?.close()
+  } catch {
+    log.error('Local storage shutdown failed')
+  } finally {
+    quitReady = true
+    app.quit()
+  }
+}
 app.on('before-quit', (event) => {
   if (quitReady || !database) return
   event.preventDefault()
-  void Promise.resolve(localData?.close())
-    .then(() => database!.close())
-    .catch(() => log.error('Local storage shutdown failed'))
-    .finally(() => {
-      quitReady = true
-      app.quit()
-    })
+  if (quitRequested || shutdownStarted) return
+  quitRequested = true
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.close()
+  else void finishQuit()
 })

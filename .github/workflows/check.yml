@@ -49,8 +49,19 @@ jobs:
         run: pnpm verify:provider-icons
       - name: Check chat streaming, history, isolation and cancellation with a local fixture
         run: pnpm verify:chat-ui
+      - name: Check macOS host execution boundaries and scoped approvals
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:execution-host
+          pnpm verify:execution
+          pnpm verify:execution-ui
       - name: Check startup and Provider entry without Codex
         run: pnpm verify:no-codex
+      - name: Check macOS project editor, conflicts and local workers
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:editor
+          DEVLY_EDITOR_VITE_DEV=1 pnpm verify:editor-ui
       - name: Check project persistence and system credential backend
         run: pnpm verify:persistence
       - name: Build unsigned application directory
@@ -58,6 +69,16 @@ jobs:
       - name: Check packaged macOS desktop
         if: runner.os == 'macOS'
         run: pnpm verify:desktop
+        env:
+          DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
+      - name: Check packaged macOS approval and isolated execution
+        if: runner.os == 'macOS'
+        run: pnpm verify:execution-ui
+        env:
+          DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
+      - name: Check packaged macOS editor and local workers
+        if: runner.os == 'macOS'
+        run: pnpm verify:editor-ui
         env:
           DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
       - name: Check packaged Windows desktop

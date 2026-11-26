@@ -15,7 +15,7 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 | -------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | 桌面与界面     | Electron、React、TypeScript                                             | 已建立 main/preload/renderer/shared；现有界面为基础暗色工作台                                 |
 | 构建与包管理   | electron-vite、Vite、pnpm、Volta                                        | 已配置，依赖版本以锁文件为准                                                                  |
-| AI 组件        | 用户指定的原 AI Elements                                                | 原 Conversation、Message、Tool、Commit、Code Block 已引入；业务尚未连接                       |
+| AI 组件        | 用户指定的原 AI Elements                                                | 原 PromptInput、Conversation、Message、Tool、ModelSelector 已连接聊天；Confirmation、Plan、Task 连接阶段 6 审批/计划；Commit 仍用于预览                       |
 | 通用 UI        | 与原 AI Elements 同版本配套 shadcn/ui、Radix                            | 已按源码引入，不能自动替换为迁移后方案                                                        |
 | 样式与图标     | Tailwind CSS、Lucide React                                              | 已接入；应用品牌用用户确认的图片，Dock 当前为 v5                                              |
 | 状态管理       | Zustand                                                                 | 目前只有项目与页签内存状态，真实任务投影待实现                                                |
@@ -23,7 +23,7 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 | 面板与长列表   | react-resizable-panels、TanStack Virtual                                | 已安装，未形成完整布局或性能验收                                                              |
 | 运行时校验     | Zod + 共享契约                                                          | 已覆盖版本化 IPC、数据操作、Provider 配置/诊断；Agent 工具注册契约待后续                       |
 | Markdown       | react-markdown、remark-gfm、rehype-sanitize；原 Message 配套 Streamdown | 已安装；选定一条正文渲染路径并复核原始 HTML/链接/资源处理                                     |
-| 代码与 Diff    | Monaco + React 封装                                                     | 已安装，Worker、本地资源、文件模型和业务待实现                                                |
+| 代码与 Diff    | Monaco 0.52.2 + @monaco-editor/react 4.7.0                               | 本地内联 Worker、项目文件模型、有版本保存与 HEAD→磁盘 Diff；语言服务限已打开模型，见 editor-and-diff.md |
 | 交互终端       | xterm.js + addon-fit + node-pty                                         | 已安装，PTY 技术验证通过；交互界面与服务待实现                                                |
 | 数据           | better-sqlite3 + SQLite Worker + SQL 迁移                               | 只验证了原生查询；数据库文件、Worker、表和 Repository 待实现                                  |
 | 凭据           | Electron 主进程及系统保护存储                                           | 待实现；保护能力不可用时明确失败，不明文兜底                                                  |
@@ -31,9 +31,9 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 | API 适配       | ProviderAdapter + Main 原生 fetch；Chat Completions 兼容协议           | 非流式/SSE/工具归一化、诊断和能力表已实现，本地检查通过，真实端点待验收；未增加 Provider SDK |
 | 其他协议       | Responses、Anthropic Messages 独立适配器                                | 待实现；每种协议单独验证流式与工具调用                                                        |
 | HTTP 与 SDK    | 首个适配器优先评估 openai SDK，保留统一接口                             | 尚未声明 openai 或 Anthropic SDK 为直接依赖；实现任务时按需安装并锁版本，禁止在 Renderer 调用 |
-| Git            | Node child_process 调 Git CLI                                           | 目前仅检测版本，真实 status/diff/log/提交待实现                                               |
+| Git            | Node child_process 调 Git CLI                                           | 已接入 macOS 只读 root/HEAD/status 前后基线；diff/log/提交后续实现                                               |
 | 命令与文件工具 | Node 文件 API、子进程、权限策略、OS 执行隔离                            | 待实现；工作目录与 worktree 不能代替沙箱                                                      |
-| MCP/Skills     | 本地 MCP 客户端、Skills 资源与规则加载                                  | 待实现，由 Devly 接入，不依赖 Codex 提供执行循环                                              |
+| MCP/Skills     | 本地 MCP 客户端、Skills 资源与规则加载                                  | 已接入本地模型/工具循环与 macOS 审批执行，不依赖 Codex；更多平台后续验证                                              |
 | 日志           | electron-log + 结构化工具日志                                           | 主进程日志已接入，业务日志与脱敏待完善                                                        |
 | 分发           | electron-builder                                                        | 本机 macOS 未签名 .app 已生成；DMG、签名、Windows 仍待验证                                    |
 | 检查           | TypeScript、ESLint、Prettier、Vitest、Playwright                        | 已配置；目前仅 1 项契约测试及基础桌面 smoke                                                   |
@@ -92,6 +92,8 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 
 B03 已将工作台迁移为 Provider/Devly Agent 概念，并提供明确待接入状态的设置入口。正常启动不探测 Codex，无需 ChatGPT 登录；原握手脚本独立保留，不代表第三方 API 或 Agent 已实现。见 [产品入口与验证](./provider-entry.md)。
 
-阶段 3 已把该入口接入供应商 CRUD、受保护凭据操作、Main 原生 fetch Chat Completions 适配与连接/能力检查，不增加 SDK 依赖；原握手脚本仍不参与主路线。当前本地验证通过，真实供应商验收待完成，见 [Provider API](./provider-api.md)。
+阶段 3 已把该入口接入供应商 CRUD、受保护凭据操作、Main 原生 fetch Chat Completions 适配与连接/能力检查，不增加 SDK 依赖；原握手脚本仍不参与主路线。本地实现与阶段 3–5 指定真实端点验收已通过；范围不扩大到其他供应商，见 [Provider API](./provider-api.md)。
 
 阶段 2 使用现有 better-sqlite3 和 Node worker_threads，不增加数据库或凭据依赖；Electron 39 的 safeStorage 由 Main 使用，密文落盘且 DB 只存 UUID 引用，缺少安全后端时拒绝保存。详见 [本地数据架构](./local-data.md)。
+
+阶段 6 的原 Confirmation/Plan/Task/Shimmer 与 Alert/Card 沿用同一固定提交。新增 motion 12.42.0（MIT，React 18/19 peer），原组件校验扩展至 32 个文件；命令/补丁采用 macOS Seatbelt 子进程，非工作目录伪隔离。具体能力限制见 [执行与审批](./execution-foundation.md)。

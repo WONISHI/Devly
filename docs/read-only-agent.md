@@ -88,3 +88,7 @@ verify:agent 使用 Electron ABI、真实适配器和 SQLite Worker，HTTP 为�
 真实端点范围、日期、模型、实际轮数和结果追加到 LOG-043。Windows、原生隔离、写入/命令、审批和正式发行分别留在后续阶段。
 
 输出 Token 控制依赖端点遵守请求参数；选择不发送 token 参数时无法强制限制单次远端生成，仍执行本地累计额度、输出与时间检查，不声称远端账单硬封顶。
+
+## 与阶段 6 的区别
+
+本文件描述的只读模式仍只注册三个只读工具。阶段 6 的项目 Agent 另加 update_plan/apply_patch/run_command，仅在用户选择该模式、开启逐次询问并通过实际 OS 预检后注册；普通聊天与只读模式不因此获得写权限。read_file 新增完整文件 contentHash，为后续有版本检查的替换提供依据。详见 [执行与审批](./execution-foundation.md)。

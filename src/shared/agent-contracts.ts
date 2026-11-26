@@ -16,7 +16,26 @@ export const agentToolSchema = z
     id: z.uuid(),
     callId: z.string().max(200),
     name: z.string().max(200),
-    state: z.enum(['proposed', 'running', 'completed', 'failed', 'cancelled']),
+    state: z.enum([
+      'proposed',
+      'waiting_approval',
+      'queued',
+      'running',
+      'completed',
+      'failed',
+      'denied',
+      'cancelled',
+    ]),
+    approval: z
+      .object({
+        id: z.uuid(),
+        digest: z.string().regex(/^[a-f0-9]{64}$/),
+        expiresAt: z.number().int(),
+        state: z.enum(['pending', 'approved', 'denied', 'expired', 'cancelled']),
+      })
+      .strict()
+      .nullable()
+      .default(null),
     input: z.string().max(262144),
     output: z.string().max(16384),
     error: z.string().max(200).nullable(),
@@ -26,6 +45,28 @@ export const agentToolSchema = z
   })
   .strict()
 export type AgentTool = z.infer<typeof agentToolSchema>
+export const planRequestSchema = z
+  .object({
+    steps: z
+      .array(
+        z
+          .object({
+            id: z.string().min(1).max(80),
+            title: z.string().min(1).max(200),
+            state: z.enum(['pending', 'running', 'completed']),
+            callIds: z.array(z.string().min(1).max(200)).max(40).default([]),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(12),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      new Set(value.steps.map((step) => step.id)).size === value.steps.length &&
+      value.steps.filter((step) => step.state === 'running').length <= 1,
+  )
 export const contextSourceSchema = z
   .object({
     kind: z.enum(['policy', 'history', 'instruction', 'selected', 'summary', 'tool']),
@@ -33,9 +74,32 @@ export const contextSourceSchema = z
     chars: z.number().int().nonnegative(),
   })
   .strict()
+export const gitBaselineSchema = z
+  .object({
+    root: z.string().max(8192).nullable(),
+    head: z.string().max(64).nullable(),
+    entries: z.array(z.string().max(8192)).max(10000),
+    fingerprint: z.string().max(64),
+    available: z.boolean(),
+  })
+  .strict()
 export const agentInfoSchema = z
   .object({
-    mode: z.enum(['chat', 'read-only']).default('chat'),
+    mode: z.enum(['chat', 'read-only', 'project-write']).default('chat'),
+    plan: planRequestSchema.shape.steps.optional(),
+    context: z
+      .object({
+        estimatedTokens: z.number().int().nonnegative(),
+        windowTokens: z.number().int().positive().nullable(),
+        characters: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
+    git: z
+      .object({ before: gitBaselineSchema, after: gitBaselineSchema.nullable() })
+      .strict()
+      .nullable()
+      .default(null),
     sources: z.array(contextSourceSchema).max(100).default([]),
     summaries: z.array(z.string().max(2000)).max(20).default([]),
     rounds: z.number().int().nonnegative().default(0),

@@ -36,7 +36,9 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
   const [choice, setChoice] = useState<Choice | null>(null)
   const [changing, setChanging] = useState(false)
   const preferences = session ? state.chatPreferences[session.id] : undefined
-  const [mode, setMode] = useState<'chat' | 'read-only'>(preferences?.mode ?? 'chat')
+  const [mode, setMode] = useState<'chat' | 'read-only' | 'project-write'>(
+    preferences?.mode ?? 'chat',
+  )
   const [selectedPaths, setSelectedPaths] = useState(preferences?.selectedPaths.join(', ') ?? '')
   const baseSettings = state.project ? state.projectSettings : state.settings
   const settings = session
@@ -95,9 +97,15 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
                 state.providers.find((p) => p.id === settings.defaultProviderId)?.compatibility
                   .tools === 'disabled',
             },
+            {
+              value: 'project-write',
+              label: '项目 Agent（逐次审批）',
+              disabled:
+                !state.project || state.project.managed || baseSettings.projectPermission !== 'ask',
+            },
           ]}
         />
-        {mode === 'read-only' && (
+        {mode !== 'chat' && (
           <div className="agent-selected-files">
             <Label htmlFor="agent-selected-paths">选中文件（可选）</Label>
             <Input
@@ -109,10 +117,15 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
           </div>
         )}
       </fieldset>
-      {mode === 'read-only' && (
+      {mode !== 'chat' && (
         <p className="agent-scope-notice">
-          将向当前模型发送项目约定、选中文件及工具读取的内容；只允许目录、文件与文本搜索，不执行写入或命令。
+          {mode === 'project-write'
+            ? '将向当前模型发送项目上下文；每次修改或命令均需审批。macOS 限定在项目范围，目录外访问与网络不开放。'
+            : '将向当前模型发送项目约定、选中文件及工具读取的内容；只允许目录、文件与文本搜索，不执行写入或命令。'}
         </p>
+      )}
+      {mode === 'project-write' && baseSettings.projectPermission !== 'ask' && (
+        <p role="status">请在设置 → 权限与限额，将项目权限设置为逐次询问后使用。</p>
       )}
       <PromptInput
         className="task-composer"
@@ -126,7 +139,7 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
             model: settings.defaultModel,
             mode,
             selectedPaths:
-              mode === 'read-only'
+              mode !== 'chat'
                 ? selectedPaths
                     .split(',')
                     .map((p) => p.trim())
@@ -195,7 +208,7 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
                   : blocked ||
                     !configured ||
                     !draft.trim() ||
-                    (mode === 'read-only' && (!state.project || state.project.managed))
+                    (mode !== 'chat' && (!state.project || state.project.managed))
               }
             />
           </div>
@@ -205,14 +218,16 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
         {session?.archived
           ? '此会话已归档，恢复后可继续'
           : chat.stopping
-            ? '正在停止…'
+            ? '正在停止，等待网络、审批队列与进程清理确认…'
             : chat.busy
-              ? '正在生成，可停止或切换会话'
+              ? chat.snapshot.turn?.phase === 'waiting_approval'
+                ? '等待操作审批，可在记录中允许或拒绝'
+                : '正在生成，可停止或切换会话'
               : !state.project || state.project.managed
                 ? '可直接聊天；选择本地项目后可使用只读 Agent'
                 : !configured
                   ? '请选择已配置的供应商和模型'
-                  : `Enter 发送 · Shift+Enter 换行 · 当前为${mode === 'read-only' ? '只读 Agent' : '普通聊天'}`}
+                  : `Enter 发送 · Shift+Enter 换行 · 当前为${mode === 'project-write' ? '项目 Agent（逐次审批）' : mode === 'read-only' ? '只读 Agent' : '普通聊天'}`}
       </p>
       {(inputError || chat.error) && (
         <div role="alert" className="chat-error">
@@ -274,6 +289,8 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
         ) : chat.messages.length > 0 ? (
           <ChatHistory
             projectId={state.project!.id}
+            activeTurnId={chat.snapshot.turn?.id}
+            stopping={chat.stopping || chat.snapshot.turn?.phase === 'stopping'}
             messages={chat.messages}
             busy={chat.busy}
             hasOlder={chat.hasOlder}
@@ -285,7 +302,7 @@ export function ChatWorkspace({ openProject }: { openProject(): Promise<void> })
                 model: settings.defaultModel,
                 mode,
                 selectedPaths:
-                  mode === 'read-only'
+                  mode !== 'chat'
                     ? selectedPaths
                         .split(',')
                         .map((p) => p.trim())

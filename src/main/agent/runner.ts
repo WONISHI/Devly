@@ -1,14 +1,16 @@
+import { captureGitBaseline } from './git-baseline'
 import { randomUUID } from 'node:crypto'
 import type { AgentInfo, AgentTool, AgentLimits } from '../../shared/agent-contracts'
 import type { ChatTurn } from '../../shared/chat-contracts'
-import type { Message, Usage, Completion } from '../../shared/provider-contracts'
+import type { Message, Usage, Completion, Tool } from '../../shared/provider-contracts'
 import type { ChatCompletionsAdapter } from '../providers/chat-completions'
 import type { DatabaseClient } from '../data/client'
 import { ProviderError } from '../providers/errors'
 import { ReadOnlyToolbox, readOnlyTools, redactToolText, ToolFailure } from './tools'
 import { compactToolContext } from './context'
+import { validatePlan } from './plan'
 
-export async function runReadOnlyAgent(options: {
+export async function runAgent(options: {
   database: Pick<DatabaseClient, 'execute'>
   adapter: ChatCompletionsAdapter
   toolbox: ReadOnlyToolbox
@@ -19,6 +21,14 @@ export async function runReadOnlyAgent(options: {
   maxTokens: number
   secret: string
   signal: AbortSignal
+  tools?: Tool[]
+  contextWindow?: number | null
+  executeTool?: (
+    name: string,
+    input: string,
+    record: AgentTool,
+    save: (tool: AgentTool) => Promise<unknown>,
+  ) => Promise<Record<string, unknown>>
   onText(delta: string): Promise<void>
   onUsage(usage: Usage): void
 }): Promise<Completion> {
@@ -41,12 +51,23 @@ export async function runReadOnlyAgent(options: {
       if (summary) info.summaries.push(summary)
       if (info.summaries.length > 20) throw new ToolFailure('CONTEXT_BUDGET')
       info.rounds = round + 1
+      const characters = JSON.stringify({ messages, tools: options.tools ?? readOnlyTools }).length
+      info.context = {
+        characters,
+        estimatedTokens: Math.ceil(characters / 3),
+        windowTokens: options.contextWindow ?? null,
+      }
+      if (
+        info.context.windowTokens !== null &&
+        info.context.estimatedTokens + Math.min(remainingTokens, 2048) > info.context.windowTokens
+      )
+        throw new ToolFailure('CONTEXT_BUDGET')
       await saveInfo()
       const parts = new Map<number, AgentTool>()
       let result: Completion | null = null
       const reserved = Math.min(remainingTokens, 2048)
       for await (const event of adapter.stream(
-        { model: turn.model, messages, maxTokens: reserved, tools: readOnlyTools },
+        { model: turn.model, messages, maxTokens: reserved, tools: options.tools ?? readOnlyTools },
         signal,
       )) {
         toolbox.check()
@@ -61,6 +82,7 @@ export async function runReadOnlyAgent(options: {
             callId: '',
             name: '',
             state: 'proposed' as const,
+            approval: null,
             input: '',
             output: '',
             error: null,
@@ -75,13 +97,16 @@ export async function runReadOnlyAgent(options: {
           record.callId += event.id ?? ''
           record.name += event.name ?? ''
           record.input += event.arguments ?? ''
-          if (record.input.length > 8192 || records.size > limits.maxCalls)
+          if (
+            record.input.length > (options.executeTool ? 262144 : 8192) ||
+            records.size > limits.maxCalls
+          )
             throw new ToolFailure('CALL_BUDGET')
           await saveTool({
             ...record,
-            callId: redactToolText(record.callId, secret),
-            name: redactToolText(record.name, secret),
-            input: redactToolText(record.input, secret),
+            callId: '',
+            name: '',
+            input: '', // Do not publish incomplete secret-bearing argument fragments.
           })
         }
         if (event.type === 'finish') result = event.result
@@ -124,7 +149,17 @@ export async function runReadOnlyAgent(options: {
         await saveTool({ ...record, input: redactToolText(record.input, secret) })
         let output: Record<string, unknown>
         try {
-          const data = await toolbox.execute(call.name, call.arguments)
+          let data: Record<string, unknown>
+          if (
+            call.name === 'update_plan' &&
+            options.tools?.some((tool) => tool.name === 'update_plan')
+          ) {
+            info.plan = validatePlan(call.arguments, records.values(), secret)
+            data = { steps: info.plan, source: 'model-plan-with-tool-references' }
+          } else
+            data = options.executeTool
+              ? await options.executeTool(call.name, call.arguments, record, saveTool)
+              : await toolbox.execute(call.name, call.arguments)
           if (call.name === 'read_file' && typeof data.path === 'string') {
             const guidance = await toolbox.scopedGuidance(data.path)
             data.scopedInstructions = guidance
@@ -150,17 +185,21 @@ export async function runReadOnlyAgent(options: {
               chars: JSON.stringify(data).length,
             })
           }
-          output = { ok: true, data }
+          output = { ok: !data.failed, data }
           record.truncated = !!data.truncated
-          record.state = 'completed'
+          record.state = data.failed ? 'failed' : 'completed'
+          if (data.failed) record.error = 'EXECUTION_FAILED'
         } catch (error) {
           if (signal.aborted) throw error
+          if (error instanceof ToolFailure && error.code === 'EXECUTION_STATE_UNKNOWN') throw error
           const code = error instanceof ToolFailure ? error.code : 'FILE_UNAVAILABLE'
           output = {
             ok: false,
-            error: { code, message: '只读工具未完成，请检查参数、允许路径与文件类型' },
+            error: { code, message: '工具未执行成功，请检查参数、审批、允许路径与文件类型' },
           }
-          record.state = 'failed'
+          record.state = ['APPROVAL_DENIED', 'APPROVAL_EXPIRED', 'PERMISSION_DENIED'].includes(code)
+            ? 'denied'
+            : 'failed'
           record.error = code
         }
         let safe = redactToolText(JSON.stringify(output), secret)
@@ -204,10 +243,26 @@ export async function runReadOnlyAgent(options: {
           : 'LOG_UNAVAILABLE'
     throw error
   } finally {
+    if (info.git) {
+      info.git.after = await captureGitBaseline(toolbox.root).catch(() => null)
+      await saveInfo().catch(() => {})
+    }
     for (const record of records.values())
       if (!finalized.has(record.id)) {
-        record.state = signal.aborted ? 'cancelled' : 'failed'
-        record.error = signal.aborted ? 'CANCELLED' : failureCode
+        record.state =
+          failureCode === 'EXECUTION_STATE_UNKNOWN'
+            ? 'failed'
+            : signal.aborted
+              ? 'cancelled'
+              : 'failed'
+        record.error =
+          failureCode === 'EXECUTION_STATE_UNKNOWN'
+            ? failureCode
+            : signal.aborted
+              ? 'CANCELLED'
+              : failureCode
+        if (record.approval?.state === 'pending')
+          record.approval.state = signal.aborted ? 'cancelled' : 'expired'
         await saveTool({
           ...record,
           callId: redactToolText(record.callId, secret),

@@ -36,7 +36,7 @@ Electron 官方只支持最近三个稳定主版本；registry 此次 latest 为
 | ESLint 9.39.5 / typescript-eslint 8.73.0 / hooks 7 | 当前 lint 通过；迁移 ESLint 10 必须同时检查插件 peer 范围与 flat config，避免只升核心。 |
 | Vite 7.3.8 / electron-vite 4.0.1 / Vitest 3.2.7 / TS 5.9.3 | 当前类型、构建和契约测试通过；新主版本作为工具链组合验证，不单凭最新标签升级。Vitest/tinypool 的公告是发行/可信构建阻断项。 |
 | React / React DOM 19.3.1 / 原 AI Elements 固定提交 / Radix / Streamdown 2.8.0 | 当前实际渲染 Conversation、Message、Tool、Commit、Code Block 通过；未代表未引入组件已兼容。AI SDK 6 → 7、Shiki 3 → 4、resizable-panels 3 → 4 要分别检查公开接口和上游组件依赖。 |
-| Monaco 0.52.2 / React wrapper 4.7.0；xterm 5.5.0 / fit 0.10.0 | 仅已安装，尚未接编辑器和交互终端。版本候选需要 worker/CSP、模型生命周期、PTY 编码、resize/退出实测，不能声称现有业务兼容已通过。 |
+| Monaco 0.52.2 / React wrapper 4.7.0；xterm 5.5.0 / fit 0.10.0 | 阶段 7 已接本地 Monaco/Worker、模型生命周期、保存与 Diff，当前检查与边界见 editor-and-diff.md。MIT 通知随包保留，版本候选仍需重新验证；xterm 交互终端尚未接入，PTY 编码/resize/退出留阶段 8。 |
 | lucide-react 0.468.0 | 当前图标渲染可用；升级至新主线前核对图标导出与布局，不影响已确认品牌图标。 |
 
 直接依赖的版本差异快照（升级前）：
@@ -214,3 +214,9 @@ LOG-035 补充：静态收集 @lobehub/icons-static-svg 1.104.0 的 357 个品�
 ## 阶段 5 新增运行时依赖（2026-11-22）
 
 新增精确直接依赖 ignore 7.0.16，用于 Git 风格 .gitignore 匹配；离线复用现有缓存，没有升级 Electron 等基线版本。核对本机 package.json 与 LICENSE-MIT，来源为 kaelzhang/node-ignore，MIT 原文随应用放入 licenses/ignore.LICENSE。pnpm audit:dependencies 当前报告为 61 个直接依赖、922 个 name@version；来源/许可证盘点不等于新的远程安全审计或维护期限承诺，前述发行阻断仍保留。类型、构建、根/嵌套忽略与否定规则测试作为此次兼容性证据；原 AI Elements 文件未修改。
+
+## 阶段 6 原组件增补（2026-11-26）
+
+固定 AI Elements 提交新增 Confirmation/Plan/Task/Shimmer，配套 Alert/Card；仅执行原有别名适配，verify:vendor 校验 32 个来源/许可文件。为原 Shimmer 安装 motion 12.42.0，锁定 framer-motion 12.43.0、motion-dom 12.43.0、motion-utils 12.39.0，均为 MIT；安装包 peer 接受 React 18/19。四份实际许可证保存在 resources/vendor 并通过 electron-builder 带入 licenses。类型、生产构建和桌面集成作为本次兼容性证据，不宣称已验证 motion 最新主版本或清除了发行阻断。
+
+本次 pnpm audit:dependencies 为 62 个直接依赖、926 个已安装 name@version；khroma 的 UNKNOWN 记录延续旧快照，没有新增未知许可项。该命令是本机许可证盘点，不是新的远程漏洞审计；旧维护、安全公告、平台和签名限制继续保留。

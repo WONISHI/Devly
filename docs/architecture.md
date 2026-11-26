@@ -1,6 +1,6 @@
 # Devly 当前架构：第三方 API 与本地 Agent
 
-本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前已实现本地数据、会话/消息持久化、设置、Chat Completions 诊断与普通聊天生命周期；阶段 3–5 指定真实端点与只读 Agent 已验收，图中的写入、命令与审批等工具服务仍待后续实现。实际状态以 [工作总表](./work-plan.md) 为准，已落地的 Provider 数据流见 [Provider API](./provider-api.md)。
+本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前已实现本地数据、会话/消息持久化、设置、Chat Completions、普通聊天与只读 Agent；阶段 6 接入 macOS 隔离写入、命令与逐次审批，阶段 7 接入文件树、本地 Monaco/Worker、版本保存与实际 Diff，并完成指定真实模型的编程样例。交互终端、跨重启继续仍为后续目标。实际状态以 [工作总表](./work-plan.md) 为准，已落地的 Provider 数据流见 [Provider API](./provider-api.md)。
 
 旧的 Codex App Server 优先方案保存在 [历史架构](./archive/codex-app-server-architecture.md)，不再作为主路线。它的初始化握手验证可保留，但不等于自研 Agent 已经实现。
 
@@ -21,7 +21,7 @@ flowchart TB
       PROJECT["项目 / 会话列表 / 文件树"]
       CHAT["Conversation / Message / Prompt Input"]
       ACTION["Tool / Plan / Confirmation / 状态"]
-      CODE["Monaco 编辑 / Diff / Commit"]
+      CODE["本地 Monaco / Worker / 版本保存 / 实际 Diff；Commit 待阶段 8"]
       TERM["xterm 交互终端 / 执行日志 / 测试结果"]
       SETTINGS["供应商 / 协议 / Base URL / 模型 / 权限设置"]
       STATE["Zustand：UI 状态与任务事件投影"]
@@ -337,9 +337,20 @@ stateDiagram-v2
 - [阶段计划](./development-plan.md)：可用节点和交付范围。
 - [工作总表](./work-plan.md)：逐项任务、依赖与验收。
 - [工作日志](./work-log.md)：已完成事项和证据。
+- [编辑器与实际 Diff](./editor-and-diff.md)：文件服务、监听归属、本地资源、缓冲区与保存/差异责任图。
 
-阶段 4 实际架构、数据库 v4、回合状态、模型切换授权与局部消息 ScrollArea 见 [普通聊天说明](./chat.md)。这是已落地的普通聊天；图中工具/审批/执行器仍是后续目标。
+阶段 4 实际架构、数据库 v4、回合状态、模型切换授权与局部消息 ScrollArea 见 [普通聊天说明](./chat.md)。这是普通聊天的实际数据流；阶段 6 的工具/审批/执行数据流另见下文和执行说明。
 
 ## 已实现的用量与额度路径
 
 设置的独立用量分类通过严格 IPC 在数据库 Worker 聚合 turns.usage，v7 provider_usage_budgets 保存本地预算与计数起点；账户余额查询由 Main 按实际配置域名选择已实现的适配器并读取 Vault，不根据模型品牌跨站发送 Key。当前仅 DeepSeek 官方金额余额可手动查询，其他平台明确显示未接入；详情与数据流见 [用量与额度](./usage-and-budget.md)。
+
+## 阶段 6 执行与审批数据流
+
+普通聊天仍不提供工具；只读模式保留三个只读工具。项目 Agent 只有在 macOS、本地项目、ask 策略和实际系统预检通过时，增加 update_plan/apply_patch/run_command。详细责任图、审批/取消/隔离边界见 [执行与审批](./execution-foundation.md)，任务与最终验证见 LOG-047 和工作计划。
+
+Main 接收固定作用域请求，准备 Provider/上下文/Git 基线，运行模型与工具循环。完整参数校验后先保存工具和审批元数据到 SQLite Worker v8，由原 Confirmation 提交对应 ID/digest 的单次决定。拒绝作为工具结果回传；允许后进入全局单修改队列，固定补丁助手和前台命令分别在 deny-default Seatbelt 内运行。只读 Git 基线也不能通过配置/过滤器写文件或联网。系统约束不可用则失败，不降为普通主机 shell。
+
+运行时计划要求已完成项关联成功调用；原 Plan/Task 只投影这些计划和真实记录。日志先脱敏再落盘/返回；上下文估算与供应商实际 Token 分开显示，未知费用不估价。停止贯穿网络、队列、审批、受管进程组与收尾持久化；确认失败显示状态未知。异常重启使旧审批失效，不自动续跑；脱组后台进程、外置 worktree 元数据、个人工具链与 Windows 的剩余边界明确列出。
+
+阶段 7 增加 EditorService，复用 ReadOnlyToolbox 的范围、忽略、大小/编码和内容保护；手工保存与 Agent 补丁共用串行队列/隔离助手，模型操作仍逐次审批。监听 lease 绑定窗口 owner/watch UUID；Renderer 仅存项目 UUID+路径的有界缓冲区，正常离开询问，崩溃恢复尚未实现。Git 只读状态/HEAD 内容进入 Monaco Diff，未保存比较与实际磁盘 Diff 分开显示。五类 Worker 由本地打包资源提供，不访问 CDN；详见编辑器说明与 LOG-050/LOG-051。

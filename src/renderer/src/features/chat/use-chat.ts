@@ -108,7 +108,7 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
     binding: {
       providerId: string | null
       model: string
-      mode?: 'chat' | 'read-only'
+      mode?: 'chat' | 'read-only' | 'project-write'
       selectedPaths?: string[]
     },
   ): Promise<void> {

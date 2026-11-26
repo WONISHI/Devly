@@ -76,7 +76,17 @@ export class ChatRepository {
     if (operation === 'internal.chat.recover') {
       this.db
         .prepare(
-          "UPDATE tool_calls SET state='failed',payload=json_set(payload,'$.state','failed','$.error','INTERRUPTED') WHERE state IN ('proposed','running') AND payload != '{}'",
+          "UPDATE tool_calls SET state='failed',payload=json_set(payload,'$.state','failed','$.error','INTERRUPTED') WHERE state IN ('proposed','waiting_approval','queued','running') AND payload != '{}'",
+        )
+        .run()
+      this.db
+        .prepare(
+          "UPDATE approvals SET state='denied',payload=json_set(payload,'$.state','expired') WHERE state='pending'",
+        )
+        .run()
+      this.db
+        .prepare(
+          "UPDATE tool_calls SET payload=json_set(payload,'$.approval.state','expired') WHERE json_extract(payload,'$.approval.state')='pending'",
         )
         .run()
       return this.run(
@@ -84,13 +94,44 @@ export class ChatRepository {
         Date.now(),
         JSON.stringify({
           code: 'INTERRUPTED',
-          message: '上次生成已中断；保留已保存内容，请手动重新发送',
+          message: '上次运行已中断；已有内容或修改可能保留，请核对后另发任务；不会自动续跑。',
           status: null,
           retryAfterSeconds: null,
         }),
       ).changes
     }
     const session = this.requireSession(args.projectId, args.sessionId)
+    if (operation === 'internal.chat.approval') {
+      const tool = this.one(
+        `SELECT t.id FROM tool_calls t JOIN turns r ON r.id=t.turn_id WHERE t.id=? AND t.turn_id=? AND t.session_id=? AND r.status='running'`,
+        String(args.toolId),
+        String(args.turnId),
+        args.sessionId,
+      )
+      if (!tool) throw new ContractError(failure('FORBIDDEN'))
+      const approval = agentToolSchema.shape.approval.parse(args.approval)
+      if (!approval) throw new ContractError(failure('INVALID_REQUEST'))
+      const old = this.one('SELECT tool_call_id,payload FROM approvals WHERE id=?', approval.id)
+      if (
+        old &&
+        (old.tool_call_id !== args.toolId ||
+          JSON.parse(String(old.payload)).digest !== approval.digest)
+      )
+        throw new ContractError(failure('FORBIDDEN'))
+      this.run(
+        'INSERT INTO approvals(id,tool_call_id,session_id,state,payload) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET state=excluded.state,payload=excluded.payload',
+        approval.id,
+        String(args.toolId),
+        args.sessionId,
+        approval.state === 'approved'
+          ? 'approved'
+          : approval.state === 'pending'
+            ? 'pending'
+            : 'denied',
+        JSON.stringify(approval),
+      )
+      return { updated: true }
+    }
     if (operation === 'internal.chat.tool' || operation === 'internal.chat.agent') {
       const turn = this.one(
         'SELECT * FROM turns WHERE id=? AND session_id=?',

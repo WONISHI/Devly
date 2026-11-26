@@ -13,6 +13,7 @@ export async function assembleContext(
 ) {
   const info: AgentInfo = {
     mode: 'read-only',
+    git: null,
     sources: [{ kind: 'policy', path: 'Devly read-only policy', chars: policy.length }],
     summaries: [],
     rounds: 0,

@@ -16,6 +16,10 @@ if (process.argv.includes('--refresh')) {
       'code-block',
       'model-selector',
       'prompt-input',
+      'confirmation',
+      'plan',
+      'task',
+      'shimmer',
     ].map((name) => ({
       upstream: `packages/elements/src/${name}.tsx`,
       local: `src/renderer/src/components/ai-elements/${name}.tsx`,
@@ -40,6 +44,8 @@ if (process.argv.includes('--refresh')) {
       'hover-card',
       'input-group',
       'spinner',
+      'alert',
+      'card',
     ].map((name) => ({
       upstream: `packages/shadcn-ui/components/ui/${name}.tsx`,
       local: `src/renderer/src/components/ui/${name}.tsx`,

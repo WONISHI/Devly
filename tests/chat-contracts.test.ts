@@ -60,3 +60,25 @@ it('retains ordinary streaming text and handles repeated keys, partial echoes an
   const keyless = new SecretRedactor('')
   expect(keyless.push('all text') + keyless.finish()).toBe('all text')
 })
+
+it('approval responses are scoped and cannot carry an executable replacement or a secret', () => {
+  const response = {
+    projectId: scope.projectId,
+    sessionId: scope.sessionId,
+    turnId: scope.turnId,
+    callId: 'call',
+    approvalId: randomUUID(),
+    digest: 'a'.repeat(64),
+    allowed: true,
+  }
+  expect(operationArgs['chat.approve'].safeParse(response).success).toBe(true)
+  expect(
+    operationArgs['chat.approve'].safeParse({ ...response, command: 'different command' }).success,
+  ).toBe(false)
+  expect(operationArgs['chat.approve'].safeParse({ ...response, apiKey: 'secret' }).success).toBe(
+    false,
+  )
+  expect(operationArgs['chat.approve'].safeParse({ ...response, digest: 'bad' }).success).toBe(
+    false,
+  )
+})

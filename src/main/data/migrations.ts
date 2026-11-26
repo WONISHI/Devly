@@ -70,6 +70,11 @@ export const migrations = [
     sql: `CREATE TABLE provider_usage_budgets(provider_id TEXT PRIMARY KEY REFERENCES providers(id) ON DELETE CASCADE, budget_tokens INTEGER, since INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL);
     CREATE INDEX turns_provider_usage ON turns(provider_id,started_at);`,
   },
+  {
+    version: 8,
+    sql: `ALTER TABLE approvals ADD COLUMN payload TEXT NOT NULL DEFAULT '{}';
+  CREATE INDEX approvals_session ON approvals(session_id,state);`,
+  },
 ] as const
 export async function applyMigrations(db: Database.Database, backups: string): Promise<void> {
   let version = db.pragma('user_version', { simple: true }) as number

@@ -53,6 +53,34 @@
       "localSha256": "6b032a8efeb41e9dcf7383518367da6b21c3c63e906543fc8c90e1a1d59b4f6d"
     },
     {
+      "upstream": "packages/elements/src/confirmation.tsx",
+      "local": "src/renderer/src/components/ai-elements/confirmation.tsx",
+      "formatted": false,
+      "upstreamSha256": "7cc0befed99499ed9010643e7a90ec619180a3f6e79cba5668cfc84126b96a10",
+      "localSha256": "5b2c54401df060b40851e69c361e5605290f91b9cf3c3e6bd0c2beed9883072f"
+    },
+    {
+      "upstream": "packages/elements/src/plan.tsx",
+      "local": "src/renderer/src/components/ai-elements/plan.tsx",
+      "formatted": false,
+      "upstreamSha256": "bfa20e90199fa40e5f714be131798406dc07b23051f8c48c590e91c65ade99d8",
+      "localSha256": "0185cc2068f8efa65959504375d48e1206186a99a767456bad63340d9eb43262"
+    },
+    {
+      "upstream": "packages/elements/src/task.tsx",
+      "local": "src/renderer/src/components/ai-elements/task.tsx",
+      "formatted": false,
+      "upstreamSha256": "cc9fb7138ded75f17c37c28a2b23425c98f4d06bead436531ad6e65ae553507e",
+      "localSha256": "1b566d9cda580442691acd5725a55c4c8e77edad3fe0181a51d3b222ae92a74c"
+    },
+    {
+      "upstream": "packages/elements/src/shimmer.tsx",
+      "local": "src/renderer/src/components/ai-elements/shimmer.tsx",
+      "formatted": false,
+      "upstreamSha256": "89d2284ee165aa57fec960e17c6c71078d22ad3fb3798ca683d7e3d850919a46",
+      "localSha256": "24bcb9b1dd45d616bd50dc6500e9f414ccabf440efb249e8d92522344b9057d6"
+    },
+    {
       "upstream": "packages/shadcn-ui/components/ui/avatar.tsx",
       "local": "src/renderer/src/components/ui/avatar.tsx",
       "formatted": true,
@@ -177,6 +205,20 @@
       "formatted": true,
       "upstreamSha256": "acf4f2aeb7fc29bd8aa22a6501b85dd4462d196e831dc5424be93ffdb49e21b4",
       "localSha256": "006b673fb9c6922aae885173748176c0daec31d8b396a04335143808a5ec89c4"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/alert.tsx",
+      "local": "src/renderer/src/components/ui/alert.tsx",
+      "formatted": true,
+      "upstreamSha256": "3d1ebed4f4685ee7689db9f05c48389df00ec54b28061b7cea2795cf5189199f",
+      "localSha256": "2bccdec12a109abc84e20efc99bb0a2dc3e5a40ce91be8cbfb40c9db6b5a4e36"
+    },
+    {
+      "upstream": "packages/shadcn-ui/components/ui/card.tsx",
+      "local": "src/renderer/src/components/ui/card.tsx",
+      "formatted": true,
+      "upstreamSha256": "1c0537a8fa6adb76a9a275b8c569a744b92fa70fd1edbdca05d3b7234923be1a",
+      "localSha256": "c478c54b76566c6ea11de4f1b1de160a0b386dd0c10c508602f3f9c0fda5ae8f"
     },
     {
       "upstream": "LICENSE",

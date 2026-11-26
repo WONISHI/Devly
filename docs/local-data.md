@@ -85,4 +85,8 @@ Renderer 不能传任意磁盘路径，blobs.import 通过 Main 原生文件对�
 
 ## 阶段 5 数据扩展
 
-SQLite 当前 v7：v7 新增 provider_usage_budgets 和供应商回合用量聚合索引，保存每供应商预算/计数起点，已有 turns.usage 保持真实上报与缺失值，详见 [用量与额度](./usage-and-budget.md)；v5 新增回合 agent_info、tool_calls 的结构化 payload/顺序和近期会话索引；v6 新增 projects.managed，保存内部通用聊天归属，原项目/会话 ID 不变。工具日志使用既有 UUID blob 配额/索引/读取/保留策略，只存脱敏输出。sessions.recent 跨未移除项目分页，select/rename/archive 仍按会话项目配对验证。sessions.general 建立不显示为项目的私有聊天归属；Main 禁止其文件工具。projects.create 只接受原生对话框选定的新目录，拒绝覆盖。详见 LOG-042/LOG-043。
+SQLite 当前 v8：v8 为 approvals 增加 payload 与会话状态索引，持久化参数摘要、有效期和审批状态；异常重启将待审批标为失效、活动工具标为中断，不自动执行或续跑。v7 新增 provider_usage_budgets 和供应商回合用量聚合索引，保存每供应商预算/计数起点，已有 turns.usage 保持真实上报与缺失值，详见 [用量与额度](./usage-and-budget.md)；v5 新增回合 agent_info、tool_calls 的结构化 payload/顺序和近期会话索引；v6 新增 projects.managed，保存内部通用聊天归属，原项目/会话 ID 不变。工具日志使用既有 UUID blob 配额/索引/读取/保留策略，只存脱敏输出。sessions.recent 跨未移除项目分页，select/rename/archive 仍按会话项目配对验证。sessions.general 建立不显示为项目的私有聊天归属；Main 禁止其文件工具。projects.create 只接受原生对话框选定的新目录，拒绝覆盖。详见 LOG-042/LOG-043。
+
+## 阶段 7 文件缓冲区
+
+数据库仍为 v8，不为编辑器新增迁移。EditorService 依据已登记项目读取/监听磁盘，模型和未保存内容在 Renderer 有界内存中按项目/路径隔离；正常切换保留，离开有提示，异常退出不保证草稿恢复。保存与 Agent 复用全局串行队列和版本补丁助手；先终结聊天、等待已发起保存，再关闭 Worker。实际文件内容、SHA-256 与恢复路径来自磁盘，保护规则识别出的敏感内容不进入 Diff；完整说明见 [编辑器与 Diff](./editor-and-diff.md)。

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { createHash } from 'node:crypto'
 import ignore from 'ignore'
 import { constants } from 'node:fs'
 import { lstat, open, realpath, readdir, stat } from 'node:fs/promises'
@@ -127,7 +128,17 @@ export class ReadOnlyToolbox {
       throw new ToolFailure('PATH_DENIED')
     const normalized = posix.normalize(path).replace(/^\.\//, '')
     if (normalized.split('/').length > 16) throw new ToolFailure('PATH_DEPTH_LIMIT')
-    if (normalized.split('/').some((p) => ignoredNames.has(p.toLowerCase()) || secretName.test(p)))
+    if (
+      normalized
+        .split('/')
+        .some(
+          (p) =>
+            p.toLowerCase().startsWith('.devly-before-') ||
+            p.toLowerCase().startsWith('.devly-patch-') ||
+            ignoredNames.has(p.toLowerCase()) ||
+            secretName.test(p),
+        )
+    )
       throw new ToolFailure('PATH_DENIED')
     return normalized
   }
@@ -192,7 +203,7 @@ export class ReadOnlyToolbox {
       const bytes = buffer.subarray(0, bytesRead)
       if (bytes.includes(0)) throw new ToolFailure('BINARY_FILE')
       try {
-        return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+        return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
       } catch {
         throw new ToolFailure('INVALID_UTF8')
       }
@@ -225,6 +236,27 @@ export class ReadOnlyToolbox {
     }
     return true
   }
+  async pathAllowed(path: string) {
+    return this.allowed(path)
+  }
+  async directoryPath(path: string) {
+    const entry = await this.checked(path)
+    if (!(await stat(entry.path)).isDirectory() || !(await this.allowed(path, true)))
+      throw new ToolFailure('PATH_DENIED')
+    return entry.path
+  }
+  async document(path: string) {
+    if (!(await this.allowed(path))) throw new ToolFailure('IGNORED_PATH')
+    const text = await this.raw(path)
+    if ((this.secret && redactToolText(text, this.secret) !== text) || containsSecret.test(text))
+      throw new ToolFailure('SENSITIVE_CONTENT')
+    return {
+      path,
+      text,
+      version: createHash('sha256').update(text).digest('hex'),
+      bytes: Buffer.byteLength(text),
+    }
+  }
   async read(path: string, startLine = 1, limit = 150) {
     if (!(await this.allowed(path))) throw new ToolFailure('IGNORED_PATH')
     const raw = await this.raw(path)
@@ -237,6 +269,7 @@ export class ReadOnlyToolbox {
     text = text.slice(0, 12000)
     return {
       path,
+      contentHash: createHash('sha256').update(raw).digest('hex'),
       startLine,
       endLine: Math.min(lines.length, startLine - 1 + selected.length),
       totalLines: lines.length,

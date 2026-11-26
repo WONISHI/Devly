@@ -64,3 +64,5 @@ LOG-035 新增 pnpm verify:icons，纳入 pnpm check，离线检查 357 个 SVG�
 阶段 4 新增 verify:chat（纳入 check）与 verify:chat-ui（纳入 CI）。70 项单元/契约测试、真实 Electron/loopback HTTP 中的输入、两会话/两项目、页面刷新、停止/重发、模型历史确认、20 条历史分页、上滚/回到底部和应用重启都需实际执行；支持 DEVLY_EXECUTABLE 做包内复核。人工真实端点与系统保护凭据的结果另记 LOG-039，不把替身当作供应商已接通。
 
 阶段 4 当前检查包含 70 项单元/契约测试、verify:chat 的真实 SQLite Worker/回合生命周期集成和 verify:chat-ui 的 21 次本地 HTTP 界面请求，详见 LOG-036–LOG-039。原组件清单现为 26 份。没有让 CI 读取个人 Provider/密钥或调用外部模型；复制密文的真实尝试失败记录单列，不作为 CI 输入。
+
+阶段 7：`pnpm check` 为 127 项通过、2 项主机检查默认跳过，原组件固定清单为阶段 6 的 32 份；新增 8 项文件/监听/缓冲区检查。`verify:editor` 在 macOS 用实际 SQLite/隔离保存/Git 检查，`verify:editor-ui` 支持 Vite 开发、本地构建与 DEVLY_EXECUTABLE 包内检查；CI 新增 macOS 开发/包内入口，远端执行结果仍未验证。真实 API 的 `verify:editor-live` 只在显式指定既有配置时手工运行，不能加入 CI；范围、证据和限制见 [编辑器说明](./editor-and-diff.md) 与 LOG-050/LOG-051。

@@ -3,7 +3,8 @@ import { createHash, randomUUID } from 'node:crypto'
 export type ApprovalScope = { projectId: string; sessionId: string; turnId: string; callId: string }
 export type PendingApproval = ApprovalScope & {
   id: string
-  operation: 'apply_patch' | 'run_command'
+  operation:
+    'apply_patch' | 'run_command' | 'mcp_call' | 'spawn_agent' | 'web_request' | 'browser_action'
   digest: string
   expiresAt: number
 }

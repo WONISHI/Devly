@@ -1,6 +1,6 @@
 # Devly 当前架构：第三方 API 与本地 Agent
 
-本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前已实现本地数据、会话/消息持久化、设置、Chat Completions、普通聊天与只读 Agent；阶段 6 接入 macOS 隔离写入、命令与逐次审批，阶段 7 接入文件树、本地 Monaco/Worker、版本保存与实际 Diff，并完成指定真实模型的编程样例。交互终端、跨重启继续仍为后续目标。实际状态以 [工作总表](./work-plan.md) 为准，已落地的 Provider 数据流见 [Provider API](./provider-api.md)。
+本架构按用户最新目标设计：做一个具备 Codex 类似功能、可直接接第三方 API 的桌面 AI 编程工具。当前已实现本地数据、会话/消息持久化、设置、Chat Completions、普通聊天与只读 Agent；阶段 6 接入 macOS 隔离写入、命令与逐次审批，阶段 7 接入文件树、本地 Monaco/Worker、版本保存与实际 Diff，并完成指定真实模型的编程样例。阶段 8 已接入真实 Git、受限交互终端、实际测试/堆栈及主题和持久布局；阶段 9 已接入核对后新只读继续、独立新协议和恢复保护；阶段 10 接入有界队列、托管 worktree、项目上下文、真实 MCP/Skills 和父子 Agent。实际状态以 [工作总表](./work-plan.md) 为准，已落地的 Provider 数据流见 [Provider API](./provider-api.md)。
 
 旧的 Codex App Server 优先方案保存在 [历史架构](./archive/codex-app-server-architecture.md)，不再作为主路线。它的初始化握手验证可保留，但不等于自研 Agent 已经实现。
 
@@ -21,7 +21,7 @@ flowchart TB
       PROJECT["项目 / 会话列表 / 文件树"]
       CHAT["Conversation / Message / Prompt Input"]
       ACTION["Tool / Plan / Confirmation / 状态"]
-      CODE["本地 Monaco / Worker / 版本保存 / 实际 Diff；Commit 待阶段 8"]
+      CODE["本地 Monaco / Worker / 版本保存 / 实际 Diff / 真实 Commit"]
       TERM["xterm 交互终端 / 执行日志 / 测试结果"]
       SETTINGS["供应商 / 协议 / Base URL / 模型 / 权限设置"]
       STATE["Zustand：UI 状态与任务事件投影"]
@@ -354,3 +354,45 @@ Main 接收固定作用域请求，准备 Provider/上下文/Git 基线，运行
 运行时计划要求已完成项关联成功调用；原 Plan/Task 只投影这些计划和真实记录。日志先脱敏再落盘/返回；上下文估算与供应商实际 Token 分开显示，未知费用不估价。停止贯穿网络、队列、审批、受管进程组与收尾持久化；确认失败显示状态未知。异常重启使旧审批失效，不自动续跑；脱组后台进程、外置 worktree 元数据、个人工具链与 Windows 的剩余边界明确列出。
 
 阶段 7 增加 EditorService，复用 ReadOnlyToolbox 的范围、忽略、大小/编码和内容保护；手工保存与 Agent 补丁共用串行队列/隔离助手，模型操作仍逐次审批。监听 lease 绑定窗口 owner/watch UUID；Renderer 仅存项目 UUID+路径的有界缓冲区，正常离开询问，崩溃恢复尚未实现。Git 只读状态/HEAD 内容进入 Monaco Diff，未保存比较与实际磁盘 Diff 分开显示。五类 Worker 由本地打包资源提供，不访问 CDN；详见编辑器说明与 LOG-050/LOG-051。
+
+## 阶段 8 工作台数据流
+
+GitService 通过固定 Git 子进程提供第一父链历史、提交详情、快照 token、暂存/取消暂存、本地提交和安全分支操作；写入与 Editor/Agent 共用串行队列。原 Commit 接真实 Git 数据，用户审查后才提交。TerminalService 用独立 UUID/owner/projectId 管理受限 PTY，xterm 输入与 Agent 日志分离；关闭/退出检查普通后代进程，不自动重放输入。
+
+Agent 执行器将真实退出码、耗时、脱敏输出、严格 TAP 和实际堆栈保存到既有 tool_calls.payload，原 Terminal/Test Results/Stack Trace 投影这些记录并定位 Monaco 行。布局 v1 保存在既有 app_state 的独立项目命名空间，数据库仍 v8；不保存草稿或终端进程。详细责任图、契约、使用方式、实际系统边界和快捷键见 [Git 与终端](./git-and-terminal.md)，验收见 LOG-059。Windows 与正式发行不据此通过。
+
+## 阶段 9 协议与恢复数据流
+
+```mermaid
+flowchart LR
+  R[原 Message / Tool / RecoveryAction] --> D[desktop 严格契约 / owner]
+  D --> C[ChatRuntime / RecoveryManager]
+  C --> F[ProviderAdapter 工厂]
+  F --> CC[Chat Completions]
+  F --> O[Responses 原生 input/output]
+  F --> A[Anthropic 原生 content blocks]
+  CC & O & A --> N[共享有界传输 / 取消 / 错误]
+  C --> W[Worker：变更与事件同事务]
+  W --> S[(v8 SQLite / session sequence)]
+  C --> Check[实际文件哈希 / 审批失效 / 进程 unknown]
+  Check --> Review[绑定 owner/token/摘要的预览]
+  Review --> Fresh[用户确认后新只读回合；不重放副作用]
+```
+
+备份使用独立 generation 和原子指针，下次启动重检，不覆盖旧库。配置导入新 ID，诊断采用固定字段白名单；Renderer 不接触凭据。各协议原生字段只在适配器内部，未知能力不因文本成功自动启用。完整备份图、限额、长会话虚拟化及当前边界见 [稳定性说明](./stability-and-recovery.md)。
+
+## 阶段 10 实际扩展架构
+
+上方总图的队列、worktree、MCP、Skills 与记忆已由 Main 服务实际接通；浏览器/网页/附件已按阶段 11 的受限范围接入。详细运行关系、目录锁、父子委派时序、审查 token 与合并图见 [多任务与扩展](./task-extensions.md)，不把总体目标图当作全部功能实现证明。
+
+ChatRuntime 通过 RunQueue 控制 4 活动/32 活动及等待回合与重叠目录写锁；父等待子时让出许可。WorkspaceService 使用源仓库受限 Git，注册独立 project/session/turn，审核实际 diff 后提交或快进，不清理未提交与恢复副本。McpService 官方 SDK 连接服务、Worker 校验 Schema，每次沿用 ApprovalBroker；远端不属于本机 Seatbelt。Skills 的已审查哈希和用户记忆按来源进入上下文，读资源不自动执行脚本。
+
+SQLite 当前 v15：v9 project_context，v10 managed_workspaces/task_links，v11 mcp_servers/project_skills；v12 web_configs；v13 blobs.digest；v14 local_schedules/schedule_runs；v15 独立 schedule_daily_counts，运行索引保留不重置每日限额。旧版本说明保留为阶段事实；便携备份不包含项目/worktree 文件，凭据引用剥离后需重设；任务关系恢复不重放旧操作。
+
+## 阶段 11 网页与本地自动化边界
+
+完整网络/IPC/Worker 信任边界、网页审批时序、浏览器操作和本地调度图见[附件、网页与自动化](./web-and-automation.md)。Main 注册白名单先于派发；网页配置/搜索凭据独立，浏览器每回合单独 Session/认证代理。静态预览入口目录受限，无主界面 IPC；定时任务只读且显式启用，先持久领取再发请求，不重放旧执行。附件按 SHA-256/会话验证；截图为真实本地产物，不假称模型视觉推理。
+
+## 阶段 12 的预览与原生依赖边界
+
+预览版本 0.2.0-preview.1 的 DMG 经只读挂载，复制到临时中文/空格路径，以独立 userData 验证 v7→v15、Monaco 本地 Worker、保护凭据和实际 PTY。PTY 在调用时加载，缺失返回结构化重装提示；SQLite 不可用保留错误界面，不伪装空历史。非 macOS 的写入/命令/终端保持明确拒绝，不能把平台判断视为已实现 Windows 隔离。实际安装报告、完整验收矩阵与剩余外部条件见[发行验收](./release-acceptance.md)。

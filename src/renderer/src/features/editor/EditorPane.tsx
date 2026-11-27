@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import Editor, { DiffEditor, type OnMount } from '@monaco-editor/react'
 import { Button } from '@/components/ui/button'
 import { desktop } from '@/platform/desktop'
@@ -152,11 +152,27 @@ export default function EditorPane({
     target = state.active[projectId]
   const document = target ? state.documents[documentKey(projectId, target.path)] : null
   const [theme, setTheme] = useState(() =>
-    window.document.documentElement.classList.contains('dark') ? 'vs-dark' : 'light',
+    window.document.documentElement.classList.contains('dark') ? 'devly-dark' : 'devly-light',
   )
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  useEffect(() => {
+    const editor = editorRef.current
+    if (
+      target?.mode === 'file' &&
+      target.line &&
+      editor?.getModel()?.uri.toString() === modelUri(projectId, target.path)
+    ) {
+      const line = Math.min(target.line, editor.getModel()!.getLineCount())
+      editor.setPosition({ lineNumber: line, column: 1 })
+      editor.revealLineInCenter(line)
+      editor.focus()
+    }
+  }, [projectId, target?.line, target?.mode, target?.path])
   useEffect(() => {
     const observer = new MutationObserver(() =>
-      setTheme(window.document.documentElement.classList.contains('dark') ? 'vs-dark' : 'light'),
+      setTheme(
+        window.document.documentElement.classList.contains('dark') ? 'devly-dark' : 'devly-light',
+      ),
     )
     observer.observe(window.document.documentElement, {
       attributes: true,
@@ -165,6 +181,7 @@ export default function EditorPane({
     return () => observer.disconnect()
   }, [])
   const onMount: OnMount = (editor) => {
+    editorRef.current = editor
     const current = useEditorStore.getState().active[projectId]
     const buffer = current
       ? useEditorStore.getState().documents[documentKey(projectId, current.path)]
@@ -172,6 +189,12 @@ export default function EditorPane({
     // The React wrapper reuses models on mount; synchronize the authoritative buffer after reload/Diff.
     const visibleText = buffer?.text.replace(/^\uFEFF/, '')
     if (visibleText !== undefined && editor.getValue() !== visibleText) editor.setValue(visibleText)
+    if (current?.line) {
+      const line = Math.min(current.line, editor.getModel()!.getLineCount())
+      editor.setPosition({ lineNumber: line, column: 1 })
+      editor.revealLineInCenter(line)
+      editor.focus()
+    }
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       const current = useEditorStore.getState().active[projectId]
       if (current) void useEditorStore.getState().save(projectId, current.path)

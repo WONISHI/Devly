@@ -17,6 +17,26 @@ self.MonacoEnvironment = {
   },
 }
 loader.config({ monaco })
+monaco.editor.defineTheme('devly-dark', {
+  base: 'vs-dark',
+  inherit: true,
+  rules: [],
+  colors: {
+    'editor.background': '#1c1d1f',
+    'editor.foreground': '#e6e7e8',
+    'editorGutter.background': '#1c1d1f',
+  },
+})
+monaco.editor.defineTheme('devly-light', {
+  base: 'vs',
+  inherit: true,
+  rules: [],
+  colors: {
+    'editor.background': '#fafafa',
+    'editor.foreground': '#202226',
+    'editorGutter.background': '#fafafa',
+  },
+})
 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
   validate: true,
   enableSchemaRequest: false,

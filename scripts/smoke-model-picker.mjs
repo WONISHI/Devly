@@ -138,10 +138,10 @@ try {
     model: '',
   })
   await data('providers.save', {
-    name: '尚未支持协议',
+    name: 'Responses 供应商',
     protocol: 'responses',
     baseUrl,
-    model: 'unsupported',
+    model: 'responses-model',
   })
   await page.reload()
   dialog = await picker()
@@ -149,9 +149,9 @@ try {
     'aria-disabled',
     'true',
   )
-  await expect(dialog.getByRole('option', { name: /unsupported/ })).toHaveAttribute(
+  await expect(dialog.getByRole('option', { name: /responses-model/ })).toHaveAttribute(
     'aria-disabled',
-    'true',
+    'false',
   )
   await dialog.getByRole('button', { name: '管理供应商', exact: true }).click()
   await page.getByRole('button', { name: '编辑 供应商 A', exact: true }).click()
@@ -193,7 +193,7 @@ try {
           'actual AI Elements ModelSelector, search, keyboard and cancellation',
           'newly saved providers selectable without reload; duplicate model IDs remain distinct',
           'global and per-project selections survive two restarts without mixing',
-          'missing model and unsupported protocol disabled; provider edit/removal remain explicit',
+          'missing model disabled, Responses selectable; provider edit/removal remain explicit',
           'selection causes zero network requests; empty/unconfigured chat cannot send',
         ],
         requests,

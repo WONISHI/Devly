@@ -81,6 +81,27 @@
       "localSha256": "24bcb9b1dd45d616bd50dc6500e9f414ccabf440efb249e8d92522344b9057d6"
     },
     {
+      "upstream": "packages/elements/src/terminal.tsx",
+      "local": "src/renderer/src/components/ai-elements/terminal.tsx",
+      "formatted": false,
+      "upstreamSha256": "04b9b534925054cfe67fdc3bc212eb7261b4912e6e970c4844a195907d3a9a93",
+      "localSha256": "79cd3a90c39452bbd8e98915fa4f26cb62dccb66379f703460b7de3ccb09a5be"
+    },
+    {
+      "upstream": "packages/elements/src/test-results.tsx",
+      "local": "src/renderer/src/components/ai-elements/test-results.tsx",
+      "formatted": false,
+      "upstreamSha256": "71fb2b77cfa34e6d7d3b1cc06a765622f755bcec193d3d539f4bead0e937f346",
+      "localSha256": "1739ce52f8920326ff3ac36ecfd0e4d6c906d5a111455a6643280cd255dc1fac"
+    },
+    {
+      "upstream": "packages/elements/src/stack-trace.tsx",
+      "local": "src/renderer/src/components/ai-elements/stack-trace.tsx",
+      "formatted": false,
+      "upstreamSha256": "a2d31824b2b09df91fc6fc5921f2a7610abe2c839655d51770d9c3072db7e546",
+      "localSha256": "64eb3491863f576a6fba991ff490202f548b79a41a81e07aa3d91cc8d5741a6c"
+    },
+    {
       "upstream": "packages/shadcn-ui/components/ui/avatar.tsx",
       "local": "src/renderer/src/components/ui/avatar.tsx",
       "formatted": true,

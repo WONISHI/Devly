@@ -75,6 +75,37 @@ export const migrations = [
     sql: `ALTER TABLE approvals ADD COLUMN payload TEXT NOT NULL DEFAULT '{}';
   CREATE INDEX approvals_session ON approvals(session_id,state);`,
   },
+  {
+    version: 9,
+    sql: `CREATE TABLE project_context(id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, body TEXT NOT NULL, updated_at INTEGER NOT NULL);
+    CREATE INDEX context_project ON project_context(project_id,updated_at,id);`,
+  },
+  {
+    version: 10,
+    sql: `CREATE TABLE managed_workspaces(id TEXT PRIMARY KEY,project_id TEXT NOT NULL REFERENCES projects(id),workspace_project_id TEXT REFERENCES projects(id),body TEXT NOT NULL);
+  CREATE TABLE task_links(turn_id TEXT PRIMARY KEY REFERENCES turns(id),parent_turn_id TEXT REFERENCES turns(id),root_turn_id TEXT NOT NULL,workspace_id TEXT REFERENCES managed_workspaces(id),context_project_id TEXT NOT NULL REFERENCES projects(id),body TEXT NOT NULL);`,
+  },
+  {
+    version: 11,
+    sql: `CREATE TABLE mcp_servers(id TEXT PRIMARY KEY,project_id TEXT NOT NULL REFERENCES projects(id),body TEXT NOT NULL,credential_ref TEXT,revision INTEGER NOT NULL DEFAULT 1);
+ CREATE TABLE project_skills(project_id TEXT PRIMARY KEY REFERENCES projects(id),body TEXT NOT NULL);`,
+  },
+  {
+    version: 12,
+    sql: `CREATE TABLE web_configs(project_id TEXT PRIMARY KEY REFERENCES projects(id),body TEXT NOT NULL,credential_ref TEXT,revision INTEGER NOT NULL DEFAULT 1);`,
+  },
+  { version: 13, sql: 'ALTER TABLE blobs ADD COLUMN digest TEXT;' },
+  {
+    version: 14,
+    sql: `CREATE TABLE local_schedules(id TEXT PRIMARY KEY,project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,body TEXT NOT NULL);
+  CREATE TABLE schedule_runs(id TEXT PRIMARY KEY,schedule_id TEXT NOT NULL REFERENCES local_schedules(id) ON DELETE CASCADE,project_id TEXT NOT NULL REFERENCES projects(id),due_at INTEGER NOT NULL,started_at INTEGER NOT NULL,ended_at INTEGER,state TEXT NOT NULL,session_id TEXT,turn_id TEXT,reason TEXT);
+  CREATE INDEX schedule_history ON schedule_runs(schedule_id,started_at DESC);`,
+  },
+  {
+    version: 15,
+    sql: `CREATE TABLE schedule_daily_counts(schedule_id TEXT NOT NULL REFERENCES local_schedules(id) ON DELETE CASCADE,day INTEGER NOT NULL,count INTEGER NOT NULL CHECK(count>=0),PRIMARY KEY(schedule_id,day));
+  INSERT INTO schedule_daily_counts(schedule_id,day,count) SELECT schedule_id,CAST(started_at/86400000 AS INTEGER)*86400000,count(*) FROM schedule_runs WHERE state<>'skipped' GROUP BY schedule_id,CAST(started_at/86400000 AS INTEGER);`,
+  },
 ] as const
 export async function applyMigrations(db: Database.Database, backups: string): Promise<void> {
   let version = db.pragma('user_version', { simple: true }) as number

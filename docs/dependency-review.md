@@ -16,12 +16,12 @@ outdated/audit 原始输出保存在本机 .cache，结论和完整公告列表�
 
 唯一版本调整为 **@testing-library/jest-dom 6.10.0 → 精确固定 6.9.1**，同步 package.json 和 pnpm-lock.yaml。npm 元数据将 6.10.0 标记为错误 minor 发布，包含 Node >=22 和必需 DOM peer 的破坏性变化，并建议 6.x 使用 6.9.1。虽然当前 Node 满足其条件，也不继续采用上游已撤回的版本。
 
-| 时点 | 检查与实际结果 |
-| --- | --- |
-| 调整前 | 类型/Lint、22 项测试、生产构建、开发产物桌面 smoke、Electron SQLite/PTY 通过；jest-dom 为 6.10.0，Electron 为 39.8.10 |
-| 调整方式 | pnpm add -D @testing-library/jest-dom@6.9.1 --save-exact --store-dir .pnpm-store；安装退出 0 |
-| 调整后 | 最终命令与结果见 LOG-011；检查入口覆盖类型/Lint/格式/关键测试/文档/原组件/bundle，另运行 native、桌面和未签名目录验证 |
-| 未执行的升级 | Electron、ESLint、Vitest、Vite、AI SDK 等跨主版本升级尚未实施，不能声称升级后的组合兼容 |
+| 时点         | 检查与实际结果                                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------------------------------- |
+| 调整前       | 类型/Lint、22 项测试、生产构建、开发产物桌面 smoke、Electron SQLite/PTY 通过；jest-dom 为 6.10.0，Electron 为 39.8.10 |
+| 调整方式     | pnpm add -D @testing-library/jest-dom@6.9.1 --save-exact --store-dir .pnpm-store；安装退出 0                          |
+| 调整后       | 最终命令与结果见 LOG-011；检查入口覆盖类型/Lint/格式/关键测试/文档/原组件/bundle，另运行 native、桌面和未签名目录验证 |
+| 未执行的升级 | Electron、ESLint、Vitest、Vite、AI SDK 等跨主版本升级尚未实施，不能声称升级后的组合兼容                               |
 
 安装还提示 electron-winstaller 的脚本未获 pnpm allowlist 许可。本次不盲目开放全部构建脚本；Windows 目录/NSIS 的实际需求须在 Windows 验证，必要时审阅该脚本后精确加入 allowlist。
 
@@ -29,70 +29,70 @@ outdated/audit 原始输出保存在本机 .cache，结论和完整公告列表�
 
 Electron 官方只支持最近三个稳定主版本；registry 此次 latest 为 45.4.1，39 主线不在此范围。ESLint 官方已将 9.0.0–9.39.5 列为 EOL（2026-08-06）。来源：[Electron 支持政策](https://www.electronjs.org/docs/latest/tutorial/electron-timelines)、[ESLint 版本支持](https://eslint.org/version-support/)。
 
-| 组合 | 当前判断与后续验证 |
-| --- | --- |
-| Electron 39.8.10 / 内置 Node 22.22.1 / SQLite 12.11.1 / node-pty 1.1.0 | 本机当前 ABI 加载、SQL 查询、PTY 输出/退出通过；旧 Electron 已失维护。必须升级至当时仍受支持的 Electron 补丁版，重新 install-app-deps，再做双平台原生、沙箱 preload、目录与包内 smoke。不能用开发机 Node ABI 代替 Electron ABI。 |
-| Node 24.7.0 / pnpm 10.34.9 | 工具链固定有利于复现；不代表已处于最新安全补丁。正式发行前复核工具链补丁、engines 与 CI runner 支持。 |
-| ESLint 9.39.5 / typescript-eslint 8.73.0 / hooks 7 | 当前 lint 通过；迁移 ESLint 10 必须同时检查插件 peer 范围与 flat config，避免只升核心。 |
-| Vite 7.3.8 / electron-vite 4.0.1 / Vitest 3.2.7 / TS 5.9.3 | 当前类型、构建和契约测试通过；新主版本作为工具链组合验证，不单凭最新标签升级。Vitest/tinypool 的公告是发行/可信构建阻断项。 |
-| React / React DOM 19.3.1 / 原 AI Elements 固定提交 / Radix / Streamdown 2.8.0 | 当前实际渲染 Conversation、Message、Tool、Commit、Code Block 通过；未代表未引入组件已兼容。AI SDK 6 → 7、Shiki 3 → 4、resizable-panels 3 → 4 要分别检查公开接口和上游组件依赖。 |
-| Monaco 0.52.2 / React wrapper 4.7.0；xterm 5.5.0 / fit 0.10.0 | 阶段 7 已接本地 Monaco/Worker、模型生命周期、保存与 Diff，当前检查与边界见 editor-and-diff.md。MIT 通知随包保留，版本候选仍需重新验证；xterm 交互终端尚未接入，PTY 编码/resize/退出留阶段 8。 |
-| lucide-react 0.468.0 | 当前图标渲染可用；升级至新主线前核对图标导出与布局，不影响已确认品牌图标。 |
+| 组合                                                                          | 当前判断与后续验证                                                                                                                                                                                                                    |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Electron 39.8.10 / 内置 Node 22.22.1 / SQLite 12.11.1 / node-pty 1.1.0        | 本机当前 ABI 加载、SQL 查询、PTY 输出/退出通过；旧 Electron 已失维护。必须升级至当时仍受支持的 Electron 补丁版，重新 install-app-deps，再做双平台原生、沙箱 preload、目录与包内 smoke。不能用开发机 Node ABI 代替 Electron ABI。      |
+| Node 24.7.0 / pnpm 10.34.9                                                    | 工具链固定有利于复现；不代表已处于最新安全补丁。正式发行前复核工具链补丁、engines 与 CI runner 支持。                                                                                                                                 |
+| ESLint 9.39.5 / typescript-eslint 8.73.0 / hooks 7                            | 当前 lint 通过；迁移 ESLint 10 必须同时检查插件 peer 范围与 flat config，避免只升核心。                                                                                                                                               |
+| Vite 7.3.8 / electron-vite 4.0.1 / Vitest 3.2.7 / TS 5.9.3                    | 当前类型、构建和契约测试通过；新主版本作为工具链组合验证，不单凭最新标签升级。Vitest/tinypool 的公告是发行/可信构建阻断项。                                                                                                           |
+| React / React DOM 19.3.1 / 原 AI Elements 固定提交 / Radix / Streamdown 2.8.0 | 当前实际渲染 Conversation、Message、Tool、Commit、Code Block 通过；未代表未引入组件已兼容。AI SDK 6 → 7、Shiki 3 → 4、resizable-panels 3 → 4 要分别检查公开接口和上游组件依赖。                                                       |
+| Monaco 0.52.2 / React wrapper 4.7.0；xterm 5.5.0 / fit 0.10.0                 | 阶段 7 已接本地 Monaco/Worker、模型生命周期、保存与 Diff，当前检查与边界见 editor-and-diff.md。MIT 通知随包保留，版本候选仍需重新验证；阶段 8 已接入 xterm 与受限 PTY，输入/resize/Ctrl+C/退出/包内验证见 LOG-059，其他平台仍待 X05。 |
+| lucide-react 0.468.0                                                          | 当前图标渲染可用；升级至新主线前核对图标导出与布局，不影响已确认品牌图标。                                                                                                                                                            |
 
 直接依赖的版本差异快照（升级前）：
 
-| 包 | 当时安装 | registry latest | 本次决策 |
-| --- | --- | --- | --- |
-| @eslint/js | 9.39.5 | 10.0.1 | 保留锁定版本；候选版本需单独兼容验证 |
-| @testing-library/jest-dom | 6.10.0 | 8.0.0 | 已固定至 6.9.1，未跨主版本 |
-| @types/better-sqlite3 | 7.6.13 | 9.6.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| @types/node | 24.19.2 | 26.6.6 | 保留锁定版本；候选版本需单独兼容验证 |
-| @vitejs/plugin-react | 5.2.0 | 6.3.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| @xterm/xterm | 5.5.0 | 6.0.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| ai | 6.0.333 | 7.0.179 | 保留锁定版本；候选版本需单独兼容验证 |
-| better-sqlite3 | 12.11.1 | 13.2.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| electron | 39.8.10 | 45.4.1 | 旧主线已失维护，发行前必须升级验证 |
-| electron-vite | 4.0.1 | 6.0.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| eslint | 9.39.5 | 10.15.0 | 旧主线已失维护，发行前必须升级验证 |
-| globals | 16.5.0 | 17.14.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| jsdom | 27.4.0 | 31.0.1 | 保留锁定版本；候选版本需单独兼容验证 |
-| react-resizable-panels | 3.0.6 | 4.24.1 | 保留锁定版本；候选版本需单独兼容验证 |
-| shiki | 3.23.0 | 4.6.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| typescript | 5.9.3 | 7.0.2 | 保留锁定版本；候选版本需单独兼容验证 |
-| vite | 7.3.8 | 8.3.8 | 保留锁定版本；候选版本需单独兼容验证 |
-| vitest | 3.2.7 | 5.1.1 | 保留锁定版本；候选版本需单独兼容验证 |
-| @xterm/addon-fit | 0.10.0 | 0.11.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| eslint-plugin-react-refresh | 0.4.26 | 0.5.8 | 保留锁定版本；候选版本需单独兼容验证 |
-| lucide-react | 0.468.0 | 1.77.0 | 保留锁定版本；候选版本需单独兼容验证 |
-| monaco-editor | 0.52.2 | 0.57.0 | 保留锁定版本；候选版本需单独兼容验证 |
+| 包                          | 当时安装 | registry latest | 本次决策                             |
+| --------------------------- | -------- | --------------- | ------------------------------------ |
+| @eslint/js                  | 9.39.5   | 10.0.1          | 保留锁定版本；候选版本需单独兼容验证 |
+| @testing-library/jest-dom   | 6.10.0   | 8.0.0           | 已固定至 6.9.1，未跨主版本           |
+| @types/better-sqlite3       | 7.6.13   | 9.6.0           | 保留锁定版本；候选版本需单独兼容验证 |
+| @types/node                 | 24.19.2  | 26.6.6          | 保留锁定版本；候选版本需单独兼容验证 |
+| @vitejs/plugin-react        | 5.2.0    | 6.3.0           | 保留锁定版本；候选版本需单独兼容验证 |
+| @xterm/xterm                | 5.5.0    | 6.0.0           | 保留锁定版本；候选版本需单独兼容验证 |
+| ai                          | 6.0.333  | 7.0.179         | 保留锁定版本；候选版本需单独兼容验证 |
+| better-sqlite3              | 12.11.1  | 13.2.0          | 保留锁定版本；候选版本需单独兼容验证 |
+| electron                    | 39.8.10  | 45.4.1          | 旧主线已失维护，发行前必须升级验证   |
+| electron-vite               | 4.0.1    | 6.0.0           | 保留锁定版本；候选版本需单独兼容验证 |
+| eslint                      | 9.39.5   | 10.15.0         | 旧主线已失维护，发行前必须升级验证   |
+| globals                     | 16.5.0   | 17.14.0         | 保留锁定版本；候选版本需单独兼容验证 |
+| jsdom                       | 27.4.0   | 31.0.1          | 保留锁定版本；候选版本需单独兼容验证 |
+| react-resizable-panels      | 3.0.6    | 4.24.1          | 保留锁定版本；候选版本需单独兼容验证 |
+| shiki                       | 3.23.0   | 4.6.0           | 保留锁定版本；候选版本需单独兼容验证 |
+| typescript                  | 5.9.3    | 7.0.2           | 保留锁定版本；候选版本需单独兼容验证 |
+| vite                        | 7.3.8    | 8.3.8           | 保留锁定版本；候选版本需单独兼容验证 |
+| vitest                      | 3.2.7    | 5.1.1           | 保留锁定版本；候选版本需单独兼容验证 |
+| @xterm/addon-fit            | 0.10.0   | 0.11.0          | 保留锁定版本；候选版本需单独兼容验证 |
+| eslint-plugin-react-refresh | 0.4.26   | 0.5.8           | 保留锁定版本；候选版本需单独兼容验证 |
+| lucide-react                | 0.468.0  | 1.77.0          | 保留锁定版本；候选版本需单独兼容验证 |
+| monaco-editor               | 0.52.2   | 0.57.0          | 保留锁定版本；候选版本需单独兼容验证 |
 
 ## 4. 安全公告与发行阻断
 
 以下为此次 registry 审计返回的包/公告/修复范围。修复范围是审计数据，不代表已安装修复版本；Electron 官方支持范围还需独立满足。当前 deny popup、禁用 webview/Node、仅加载本地页面降低部分攻击面，但不能代替升级。Vitest 使用 run 模式，不开放测试 UI/server，也不能用这一点宣称公告已修复。
 
-| 包 | 严重度 | 公告 | 审计给出的修复范围 |
-| --- | --- | --- | --- |
-| extract-zip | high | [GHSA-jmr9-qjv8-65gv](https://github.com/advisories/GHSA-jmr9-qjv8-65gv) | 公告未给可用修复范围 |
-| vitest | moderate | [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9) | >=4.1.11 |
-| @vitest/mocker | moderate | [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9) | >=4.1.11 |
-| extract-zip | high | [GHSA-7pqw-9j4j-h8q3](https://github.com/advisories/GHSA-7pqw-9j4j-h8q3) | 公告未给可用修复范围 |
-| electron | high | [GHSA-hq2x-r82h-9wj4](https://github.com/advisories/GHSA-hq2x-r82h-9wj4) | >=41.10.4 |
-| electron | high | [GHSA-gr2m-v5gq-v685](https://github.com/advisories/GHSA-gr2m-v5gq-v685) | >=41.10.6 |
-| electron | high | [GHSA-j84w-jfhq-vhvj](https://github.com/advisories/GHSA-j84w-jfhq-vhvj) | >=41.10.6 |
-| katex | low | [GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7) | >=0.18.2 |
-| tinypool | critical | [GHSA-5gmw-xhrv-c9v3](https://github.com/advisories/GHSA-5gmw-xhrv-c9v3) | >=2.1.1 |
-| tinypool | critical | [GHSA-85c8-ppgw-ccpr](https://github.com/advisories/GHSA-85c8-ppgw-ccpr) | >=2.1.2 |
-| electron | high | [GHSA-9qh4-3jw8-366w](https://github.com/advisories/GHSA-9qh4-3jw8-366w) | >=41.10.6 |
-| electron | moderate | [GHSA-fw47-9c62-h3vw](https://github.com/advisories/GHSA-fw47-9c62-h3vw) | >=42.11.3 |
-| @vitest/mocker | moderate | [GHSA-qxg6-89mg-rqv8](https://github.com/advisories/GHSA-qxg6-89mg-rqv8) | >=4.1.12 |
-| electron | moderate | [GHSA-2p8c-gr87-2676](https://github.com/advisories/GHSA-2p8c-gr87-2676) | >=42.11.3 |
-| electron | moderate | [GHSA-x562-297c-g43g](https://github.com/advisories/GHSA-x562-297c-g43g) | >=42.11.9 |
-| electron | low | [GHSA-98mx-cjp9-gchm](https://github.com/advisories/GHSA-98mx-cjp9-gchm) | >=42.11.1 |
-| electron | low | [GHSA-3qxv-5xgr-q7w9](https://github.com/advisories/GHSA-3qxv-5xgr-q7w9) | >=42.11.6 |
-| electron | low | [GHSA-h3v5-h239-pg29](https://github.com/advisories/GHSA-h3v5-h239-pg29) | >=42.11.6 |
-| electron | moderate | [GHSA-997q-gvvc-jwmx](https://github.com/advisories/GHSA-997q-gvvc-jwmx) | >=42.11.3 |
-| electron | high | [GHSA-jr5w-w6x2-84p9](https://github.com/advisories/GHSA-jr5w-w6x2-84p9) | >=42.11.16 |
-| minimatch | moderate | [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) | >=11.0.1 |
+| 包             | 严重度   | 公告                                                                     | 审计给出的修复范围   |
+| -------------- | -------- | ------------------------------------------------------------------------ | -------------------- |
+| extract-zip    | high     | [GHSA-jmr9-qjv8-65gv](https://github.com/advisories/GHSA-jmr9-qjv8-65gv) | 公告未给可用修复范围 |
+| vitest         | moderate | [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9) | >=4.1.11             |
+| @vitest/mocker | moderate | [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9) | >=4.1.11             |
+| extract-zip    | high     | [GHSA-7pqw-9j4j-h8q3](https://github.com/advisories/GHSA-7pqw-9j4j-h8q3) | 公告未给可用修复范围 |
+| electron       | high     | [GHSA-hq2x-r82h-9wj4](https://github.com/advisories/GHSA-hq2x-r82h-9wj4) | >=41.10.4            |
+| electron       | high     | [GHSA-gr2m-v5gq-v685](https://github.com/advisories/GHSA-gr2m-v5gq-v685) | >=41.10.6            |
+| electron       | high     | [GHSA-j84w-jfhq-vhvj](https://github.com/advisories/GHSA-j84w-jfhq-vhvj) | >=41.10.6            |
+| katex          | low      | [GHSA-238p-pmpm-9mq7](https://github.com/advisories/GHSA-238p-pmpm-9mq7) | >=0.18.2             |
+| tinypool       | critical | [GHSA-5gmw-xhrv-c9v3](https://github.com/advisories/GHSA-5gmw-xhrv-c9v3) | >=2.1.1              |
+| tinypool       | critical | [GHSA-85c8-ppgw-ccpr](https://github.com/advisories/GHSA-85c8-ppgw-ccpr) | >=2.1.2              |
+| electron       | high     | [GHSA-9qh4-3jw8-366w](https://github.com/advisories/GHSA-9qh4-3jw8-366w) | >=41.10.6            |
+| electron       | moderate | [GHSA-fw47-9c62-h3vw](https://github.com/advisories/GHSA-fw47-9c62-h3vw) | >=42.11.3            |
+| @vitest/mocker | moderate | [GHSA-qxg6-89mg-rqv8](https://github.com/advisories/GHSA-qxg6-89mg-rqv8) | >=4.1.12             |
+| electron       | moderate | [GHSA-2p8c-gr87-2676](https://github.com/advisories/GHSA-2p8c-gr87-2676) | >=42.11.3            |
+| electron       | moderate | [GHSA-x562-297c-g43g](https://github.com/advisories/GHSA-x562-297c-g43g) | >=42.11.9            |
+| electron       | low      | [GHSA-98mx-cjp9-gchm](https://github.com/advisories/GHSA-98mx-cjp9-gchm) | >=42.11.1            |
+| electron       | low      | [GHSA-3qxv-5xgr-q7w9](https://github.com/advisories/GHSA-3qxv-5xgr-q7w9) | >=42.11.6            |
+| electron       | low      | [GHSA-h3v5-h239-pg29](https://github.com/advisories/GHSA-h3v5-h239-pg29) | >=42.11.6            |
+| electron       | moderate | [GHSA-997q-gvvc-jwmx](https://github.com/advisories/GHSA-997q-gvvc-jwmx) | >=42.11.3            |
+| electron       | high     | [GHSA-jr5w-w6x2-84p9](https://github.com/advisories/GHSA-jr5w-w6x2-84p9) | >=42.11.16           |
+| minimatch      | moderate | [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) | >=11.0.1             |
 
 extract-zip 公告未提供修复版本，涉及 Electron 安装链；需跟踪上游替换/修复，安装来源限制不能算完成修复。minimatch 来自 builder 依赖链；KaTeX 来自数学组件。不得直接用 overrides 跨 major 强制替换而跳过兼容验证。
 
@@ -102,93 +102,93 @@ extract-zip 公告未提供修复版本，涉及 Electron 安装链；需跟踪�
 
 58 个直接依赖的声明许可证见下表；这是包元数据清单，未擅自为 Devly 自身选择开源许可证。最终发行需决定自身授权方式，并收集实际进入 bundle、原生模块与 Electron/Chromium 的第三方通知。打包工具保留 node_modules 内 LICENSE，不代表 renderer 被打包后的通知已经完整生成。
 
-| 包 | 当前安装 | 用途 | 声明许可证 |
-| --- | --- | --- | --- |
-| @eslint/js | 9.39.5 | 开发依赖 | MIT |
-| @monaco-editor/react | 4.7.0 | 运行依赖 | MIT |
-| @playwright/test | 1.65.1 | 开发依赖 | Apache-2.0 |
-| @radix-ui/react-avatar | 1.3.1 | 运行依赖 | MIT |
-| @radix-ui/react-collapsible | 1.2.1 | 运行依赖 | MIT |
-| @radix-ui/react-slot | 1.5.0 | 运行依赖 | MIT |
-| @streamdown/cjk | 1.0.5 | 运行依赖 | Apache-2.0 |
-| @streamdown/code | 2.0.1 | 运行依赖 | Apache-2.0 |
-| @streamdown/math | 1.0.4 | 运行依赖 | Apache-2.0 |
-| @streamdown/mermaid | 1.0.4 | 运行依赖 | Apache-2.0 |
-| @tailwindcss/vite | 4.3.5 | 开发依赖 | MIT |
-| @tanstack/react-virtual | 3.14.26 | 运行依赖 | MIT |
-| @testing-library/dom | 10.4.2 | 开发依赖 | MIT |
-| @testing-library/jest-dom | 6.9.1 | 开发依赖 | MIT |
-| @testing-library/react | 16.3.3 | 开发依赖 | MIT |
-| @types/better-sqlite3 | 7.6.13 | 开发依赖 | MIT |
-| @types/node | 24.19.2 | 开发依赖 | MIT |
-| @types/react | 19.3.0 | 开发依赖 | MIT |
-| @types/react-dom | 19.3.0 | 开发依赖 | MIT |
-| @vitejs/plugin-react | 5.2.0 | 开发依赖 | MIT |
-| @xterm/addon-fit | 0.10.0 | 运行依赖 | MIT |
-| @xterm/xterm | 5.5.0 | 运行依赖 | MIT |
-| ai | 6.0.333 | 运行依赖 | Apache-2.0 |
-| better-sqlite3 | 12.11.1 | 运行依赖 | MIT |
-| class-variance-authority | 0.7.1 | 运行依赖 | Apache-2.0 |
-| clsx | 2.1.1 | 运行依赖 | MIT |
-| electron | 39.8.10 | 开发依赖 | MIT |
-| electron-builder | 26.18.0 | 开发依赖 | MIT |
-| electron-log | 5.4.4 | 运行依赖 | MIT |
-| electron-vite | 4.0.1 | 开发依赖 | MIT |
-| eslint | 9.39.5 | 开发依赖 | MIT |
-| eslint-plugin-react-hooks | 7.1.1 | 开发依赖 | MIT |
-| eslint-plugin-react-refresh | 0.4.26 | 开发依赖 | MIT |
-| globals | 16.5.0 | 开发依赖 | MIT |
-| jsdom | 27.4.0 | 开发依赖 | MIT |
-| lucide-react | 0.468.0 | 运行依赖 | ISC |
-| monaco-editor | 0.52.2 | 运行依赖 | MIT |
-| node-pty | 1.1.0 | 运行依赖 | MIT |
-| prettier | 3.10.1 | 开发依赖 | MIT |
-| radix-ui | 1.8.1 | 运行依赖 | MIT |
-| react | 19.3.1 | 运行依赖 | MIT |
-| react-dom | 19.3.1 | 运行依赖 | MIT |
-| react-markdown | 10.1.0 | 运行依赖 | MIT |
-| react-resizable-panels | 3.0.6 | 运行依赖 | MIT |
-| rehype-sanitize | 6.0.0 | 运行依赖 | MIT |
-| remark-gfm | 4.0.1 | 运行依赖 | MIT |
-| shiki | 3.23.0 | 运行依赖 | MIT |
-| sonner | 2.0.8 | 运行依赖 | MIT |
-| streamdown | 2.8.0 | 运行依赖 | Apache-2.0 |
-| tailwind-merge | 3.7.1 | 运行依赖 | MIT |
-| tailwindcss | 4.3.5 | 开发依赖 | MIT |
-| typescript | 5.9.3 | 开发依赖 | Apache-2.0 |
-| typescript-eslint | 8.73.0 | 开发依赖 | MIT |
-| use-stick-to-bottom | 1.1.6 | 运行依赖 | MIT |
-| vite | 7.3.8 | 开发依赖 | MIT |
-| vitest | 3.2.7 | 开发依赖 | MIT |
-| zod | 4.6.7 | 运行依赖 | MIT |
-| zustand | 5.1.0 | 运行依赖 | MIT |
+| 包                          | 当前安装 | 用途     | 声明许可证 |
+| --------------------------- | -------- | -------- | ---------- |
+| @eslint/js                  | 9.39.5   | 开发依赖 | MIT        |
+| @monaco-editor/react        | 4.7.0    | 运行依赖 | MIT        |
+| @playwright/test            | 1.65.1   | 开发依赖 | Apache-2.0 |
+| @radix-ui/react-avatar      | 1.3.1    | 运行依赖 | MIT        |
+| @radix-ui/react-collapsible | 1.2.1    | 运行依赖 | MIT        |
+| @radix-ui/react-slot        | 1.5.0    | 运行依赖 | MIT        |
+| @streamdown/cjk             | 1.0.5    | 运行依赖 | Apache-2.0 |
+| @streamdown/code            | 2.0.1    | 运行依赖 | Apache-2.0 |
+| @streamdown/math            | 1.0.4    | 运行依赖 | Apache-2.0 |
+| @streamdown/mermaid         | 1.0.4    | 运行依赖 | Apache-2.0 |
+| @tailwindcss/vite           | 4.3.5    | 开发依赖 | MIT        |
+| @tanstack/react-virtual     | 3.14.26  | 运行依赖 | MIT        |
+| @testing-library/dom        | 10.4.2   | 开发依赖 | MIT        |
+| @testing-library/jest-dom   | 6.9.1    | 开发依赖 | MIT        |
+| @testing-library/react      | 16.3.3   | 开发依赖 | MIT        |
+| @types/better-sqlite3       | 7.6.13   | 开发依赖 | MIT        |
+| @types/node                 | 24.19.2  | 开发依赖 | MIT        |
+| @types/react                | 19.3.0   | 开发依赖 | MIT        |
+| @types/react-dom            | 19.3.0   | 开发依赖 | MIT        |
+| @vitejs/plugin-react        | 5.2.0    | 开发依赖 | MIT        |
+| @xterm/addon-fit            | 0.10.0   | 运行依赖 | MIT        |
+| @xterm/xterm                | 5.5.0    | 运行依赖 | MIT        |
+| ai                          | 6.0.333  | 运行依赖 | Apache-2.0 |
+| better-sqlite3              | 12.11.1  | 运行依赖 | MIT        |
+| class-variance-authority    | 0.7.1    | 运行依赖 | Apache-2.0 |
+| clsx                        | 2.1.1    | 运行依赖 | MIT        |
+| electron                    | 39.8.10  | 开发依赖 | MIT        |
+| electron-builder            | 26.18.0  | 开发依赖 | MIT        |
+| electron-log                | 5.4.4    | 运行依赖 | MIT        |
+| electron-vite               | 4.0.1    | 开发依赖 | MIT        |
+| eslint                      | 9.39.5   | 开发依赖 | MIT        |
+| eslint-plugin-react-hooks   | 7.1.1    | 开发依赖 | MIT        |
+| eslint-plugin-react-refresh | 0.4.26   | 开发依赖 | MIT        |
+| globals                     | 16.5.0   | 开发依赖 | MIT        |
+| jsdom                       | 27.4.0   | 开发依赖 | MIT        |
+| lucide-react                | 0.468.0  | 运行依赖 | ISC        |
+| monaco-editor               | 0.52.2   | 运行依赖 | MIT        |
+| node-pty                    | 1.1.0    | 运行依赖 | MIT        |
+| prettier                    | 3.10.1   | 开发依赖 | MIT        |
+| radix-ui                    | 1.8.1    | 运行依赖 | MIT        |
+| react                       | 19.3.1   | 运行依赖 | MIT        |
+| react-dom                   | 19.3.1   | 运行依赖 | MIT        |
+| react-markdown              | 10.1.0   | 运行依赖 | MIT        |
+| react-resizable-panels      | 3.0.6    | 运行依赖 | MIT        |
+| rehype-sanitize             | 6.0.0    | 运行依赖 | MIT        |
+| remark-gfm                  | 4.0.1    | 运行依赖 | MIT        |
+| shiki                       | 3.23.0   | 运行依赖 | MIT        |
+| sonner                      | 2.0.8    | 运行依赖 | MIT        |
+| streamdown                  | 2.8.0    | 运行依赖 | Apache-2.0 |
+| tailwind-merge              | 3.7.1    | 运行依赖 | MIT        |
+| tailwindcss                 | 4.3.5    | 开发依赖 | MIT        |
+| typescript                  | 5.9.3    | 开发依赖 | Apache-2.0 |
+| typescript-eslint           | 8.73.0   | 开发依赖 | MIT        |
+| use-stick-to-bottom         | 1.1.6    | 运行依赖 | MIT        |
+| vite                        | 7.3.8    | 开发依赖 | MIT        |
+| vitest                      | 3.2.7    | 开发依赖 | MIT        |
+| zod                         | 4.6.7    | 运行依赖 | MIT        |
+| zustand                     | 5.1.0    | 运行依赖 | MIT        |
 
 本机全部安装包的许可证表达式统计：
 
-| 元数据表达式 | 包数量 |
-| --- | --- |
-| MIT | 736 |
-| Apache-2.0 | 44 |
-| MIT-0 | 2 |
-| BSD-2-Clause | 14 |
-| ISC | 78 |
-| BlueOak-1.0.0 | 12 |
-| Python-2.0 | 1 |
-| BSD-3-Clause | 19 |
-| CC-BY-4.0 | 1 |
-| (MPL-2.0 OR Apache-2.0) | 1 |
-| (MIT OR WTFPL) | 1 |
-| (AFL-2.1 OR BSD-3-Clause) | 1 |
-| UNKNOWN | 1 |
-| MPL-2.0 | 2 |
-| CC0-1.0 | 1 |
-| (BSD-2-Clause OR MIT OR Apache-2.0) | 1 |
-| Unlicense | 1 |
-| WTFPL OR ISC | 1 |
-| WTFPL | 1 |
-| 0BSD | 1 |
-| (MIT OR CC0-1.0) | 1 |
-| (WTFPL OR MIT) | 1 |
+| 元数据表达式                        | 包数量 |
+| ----------------------------------- | ------ |
+| MIT                                 | 736    |
+| Apache-2.0                          | 44     |
+| MIT-0                               | 2      |
+| BSD-2-Clause                        | 14     |
+| ISC                                 | 78     |
+| BlueOak-1.0.0                       | 12     |
+| Python-2.0                          | 1      |
+| BSD-3-Clause                        | 19     |
+| CC-BY-4.0                           | 1      |
+| (MPL-2.0 OR Apache-2.0)             | 1      |
+| (MIT OR WTFPL)                      | 1      |
+| (AFL-2.1 OR BSD-3-Clause)           | 1      |
+| UNKNOWN                             | 1      |
+| MPL-2.0                             | 2      |
+| CC0-1.0                             | 1      |
+| (BSD-2-Clause OR MIT OR Apache-2.0) | 1      |
+| Unlicense                           | 1      |
+| WTFPL OR ISC                        | 1      |
+| WTFPL                               | 1      |
+| 0BSD                                | 1      |
+| (MIT OR CC0-1.0)                    | 1      |
+| (WTFPL OR MIT)                      | 1      |
 
 人工核对：khroma 2.1.0 的 package.json 没有 license 字段（清单因此保留 UNKNOWN），但安装包内 `license` 原文是 MIT，含 Fabio Spampinato / Andrew Maney 版权声明，不能直接判成“无许可”。lightningcss 的 MPL-2.0、caniuse-lite 的 CC-BY-4.0、argparse 的 Python-2.0、双许可证表达式及无独立 NOTICE 文件的包需在最终分发范围内分别处理；不将全部传递依赖笼统写成 MIT。
 
@@ -220,3 +220,37 @@ LOG-035 补充：静态收集 @lobehub/icons-static-svg 1.104.0 的 357 个品�
 固定 AI Elements 提交新增 Confirmation/Plan/Task/Shimmer，配套 Alert/Card；仅执行原有别名适配，verify:vendor 校验 32 个来源/许可文件。为原 Shimmer 安装 motion 12.42.0，锁定 framer-motion 12.43.0、motion-dom 12.43.0、motion-utils 12.39.0，均为 MIT；安装包 peer 接受 React 18/19。四份实际许可证保存在 resources/vendor 并通过 electron-builder 带入 licenses。类型、生产构建和桌面集成作为本次兼容性证据，不宣称已验证 motion 最新主版本或清除了发行阻断。
 
 本次 pnpm audit:dependencies 为 62 个直接依赖、926 个已安装 name@version；khroma 的 UNKNOWN 记录延续旧快照，没有新增未知许可项。该命令是本机许可证盘点，不是新的远程漏洞审计；旧维护、安全公告、平台和签名限制继续保留。
+
+## 阶段 8 原组件、终端与许可证补充（2026-11-26）
+
+同一固定提交 ca8be600bfd01b3131f9bf6134b51602a71f4374 新增原 Terminal/Test Results/Stack Trace，仅原有别名适配，14 AI + 20 UI + LICENSE 共 35 份离线哈希校验。新增 ansi-to-react 精确 6.2.6，直接声明已锁定的 @radix-ui/react-use-controllable-state 1.3.0（MIT），未升级既有 Electron/React/xterm。React 19 的类型/构建和实际开发、包内渲染通过，不能推广到候选新主版本。
+
+ansi-to-react npm 元数据声明 BSD-3-Clause，gitHead 为 145140971e9d83ccac32265f24b1c55dea437896；npm 包与对应源码树没有完整 LICENSE/权利人通知。resources/vendor/ansi-to-react.NOTICE 记录已查来源和缺项，BSD-3-Clause.LICENSE 保留 SPDX 标准模板并明确不充当上游版权通知。正式发行前必须补全可确认的权利人通知或替换经审核的来源；不能把包的 license 字段、模板或本机渲染成功当作许可收口。
+
+新增运行时依赖 anser 2.3.5、escape-carriage 1.3.1、linkify-it 3.0.3、uc.micro 1.0.6 均带 MIT 原文；Radix use-controllable-state、xterm 与 addon-fit 的锁定安装包通知一并带入 Resources/licenses。新增许可文件在 resources/vendor，electron-builder 显式复制；最终包内核对见 LOG-059。xterm/PTY 继续按 Electron ABI 和目标架构重建，不能复制 node_modules 跨平台。
+
+本轮 pnpm audit:dependencies 报告 **64 个直接依赖、931 个已安装 name@version**，未知条目仍为 khroma@2.1.0。本次为安装来源和许可证盘点，没有执行新的远程漏洞审计或全面升级，旧维护/安全公告与分发门槛继续保留。
+
+阶段 9 未新增 npm 包；原版 AI/UI 35 份来源哈希保持校验，虚拟化使用已有 TanStack Virtual。检查通过不解除本文件记录的维护版本、安全公告或完整上游版权通知等正式发行门槛。
+
+## 阶段 10 新增依赖（2026-11-27）
+
+精确固定生产依赖 @modelcontextprotocol/client 2.4.0、ajv 8.20.0；实际本地 MCP 服务器使用 @modelcontextprotocol/server 2.4.0（开发依赖）。核对官方 TypeScript SDK 和 npm 发布内容：使用 v2 独立 client/server 包，不沿用 v1 的包名或 MIT 判断。客户端及 core 2.4.0 为 Apache-2.0；Ajv 为 MIT。
+
+实际新增传递依赖涉及 eventsource 3.0.7（MIT）、eventsource-parser 3.1.1（MIT）、jose 6.2.18（MIT）、pkce-challenge 5.0.2（MIT）。client/core/Ajv 及上述实际许可证原文共七份复制到 resources/vendor/stage10-*，electron-builder 明确带入；原文排除自动格式化以保持版权通知。官方测试 server 不是产品业务服务器，不作为发行运行需求。
+
+安装首次因 node_modules 使用项目 .pnpm-store 与默认 store 不同而拒绝，随后显式 --store-dir .pnpm-store 完成，无全局配置修改。安装后 pnpm audit:dependencies 扫描到 67 个直接、937 个已安装 name@version；原有 UNKNOWN 项仍需处理。此命令为本机许可证清单，不是新的网络安全审计、最终发行 SBOM 或无漏洞证明。当前完整检查/实际 MCP/包内结果记录于工作日志；此前 Electron/ESLint 维护、安全公告、ansi-to-react 完整权利人通知与正式发行阻断均未因本次功能完成而消除。
+
+依据：[官方 TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)。完整协议子集、Worker 约束、外部审批与平台边界见 [多任务与扩展](./task-extensions.md)。
+
+## 阶段 11 HTML 解析依赖（2026-11-27）
+
+直接固定 parse5 8.1.1（MIT），此前已由现有依赖树安装，本轮不升级 Electron/React 或引入外部浏览器运行时。实际安装包原 MIT 通知复制到 resources/vendor/stage11-parse5.LICENSE，排除格式化并随 Resources/licenses 分发；解析在 64 MiB/2 秒 Worker 内，文本/类型/响应上限由 Main 检查。许可证库存及包内字节核对在最终日志记录；没有新的远程漏洞清零声明，既有正式发行阻断仍保留。
+
+阶段 11 本机库存：68 个直接依赖、937 个已安装 name@version；新增 parse5 为既有传递包的直接固定声明。未知项仍为 khroma@2.1.0；这不是新的网络安全审计。
+
+## 阶段 12 定向安全修复（2026-11-27）
+
+生产 npm 审计本轮先检出 linkify-it 两项 high 与 KaTeX 一项 low，定向 override 到 linkify-it 5.0.2、KaTeX 0.18.2；uc.micro 跟随实际链接解析器为 2.1.0。KaTeX 直接声明以在 Renderer 显式导入匹配的本地 CSS/字体。修复后生产审计退出 0、各级公告计数为 0；不是开发依赖、Electron/Chromium 或完整攻击面的清零证明。真实 ANSI 链接/恶意协议/重复 mailto、KaTeX 公式/不可信 URL 单测通过，实际窗口与打包渲染继续独立验收。
+
+三份新增实际 MIT 原文在 resources/vendor/stage12-*，保持字节并随包分发。Node 原生依赖未升级，运行时仍为 Electron 39.8.10。registry 当次最新 45.5.0，39 不满足最近三稳定主线的支持政策；不能正式发行。原 ansi-to-react 完整权利人通知、khroma UNKNOWN 与旧工具链问题未被此次修复消除，预览交付不等于最终版权/维护审查通过。详见 release-acceptance.md 和工作日志。

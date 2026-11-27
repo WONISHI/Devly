@@ -1,0 +1,8 @@
+ansi-to-react 6.2.6
+Declared license: BSD-3-Clause
+Metadata author: Kyle Kelley <rgbkrk@gmail.com>
+Source repository: https://github.com/nteract/ansi-to-react
+Version gitHead: 145140971e9d83ccac32265f24b1c55dea437896
+Upstream declaration: https://github.com/nteract/ansi-to-react/blob/145140971e9d83ccac32265f24b1c55dea437896/README.md#license
+
+The published package and this source commit omit a standalone LICENSE/copyright notice. This file records the supplied declaration and author metadata without inventing an upstream copyright line. BSD-3-Clause.LICENSE contains the referenced standard terms from SPDX; its template fields are not an assertion of missing copyright information. Authoritative notice completeness remains a formal-release review item.

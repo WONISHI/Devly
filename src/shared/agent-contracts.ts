@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { commandRecordSchema } from './execution-records'
 
 export const agentLimitsSchema = z
   .object({
@@ -36,9 +37,22 @@ export const agentToolSchema = z
       .strict()
       .nullable()
       .default(null),
+    origin: z
+      .object({
+        kind: z.literal('mcp'),
+        serverId: z.uuid(),
+        serverName: z.string().max(100),
+        url: z.string().max(2048),
+        toolName: z.string().max(200),
+        schemaHash: z.string().length(64),
+      })
+      .strict()
+      .nullable()
+      .optional(),
     input: z.string().max(262144),
     output: z.string().max(16384),
     error: z.string().max(200).nullable(),
+    execution: commandRecordSchema.nullable().default(null),
     truncated: z.boolean(),
     blobId: z.uuid().nullable(),
     position: z.number().int().nonnegative(),
@@ -69,7 +83,16 @@ export const planRequestSchema = z
   )
 export const contextSourceSchema = z
   .object({
-    kind: z.enum(['policy', 'history', 'instruction', 'selected', 'summary', 'tool']),
+    kind: z.enum([
+      'policy',
+      'history',
+      'instruction',
+      'selected',
+      'summary',
+      'tool',
+      'memory',
+      'skill',
+    ]),
     path: z.string().max(1000),
     chars: z.number().int().nonnegative(),
   })
@@ -83,9 +106,48 @@ export const gitBaselineSchema = z
     available: z.boolean(),
   })
   .strict()
+export const taskFamilySchema = z
+  .object({
+    rootTurnId: z.uuid(),
+    parentTurnId: z.uuid().nullable(),
+    workspaceId: z.uuid().nullable(),
+    contextProjectId: z.uuid(),
+    depth: z.number().int().min(0).max(1),
+    permissionCeiling: z.enum(['read-only', 'project-write']),
+    allocation: z
+      .object({
+        tokens: z.number().int(),
+        calls: z.number().int(),
+        outputChars: z.number().int(),
+        durationMs: z.number().int(),
+      })
+      .strict(),
+    remaining: z
+      .object({
+        tokens: z.number().int(),
+        calls: z.number().int(),
+        outputChars: z.number().int(),
+        durationMs: z.number().int(),
+      })
+      .strict(),
+    children: z
+      .array(
+        z
+          .object({
+            turnId: z.uuid(),
+            projectId: z.uuid(),
+            sessionId: z.uuid(),
+            workspaceId: z.uuid(),
+          })
+          .strict(),
+      )
+      .max(2),
+  })
+  .strict()
 export const agentInfoSchema = z
   .object({
     mode: z.enum(['chat', 'read-only', 'project-write']).default('chat'),
+    family: taskFamilySchema.optional(),
     plan: planRequestSchema.shape.steps.optional(),
     context: z
       .object({

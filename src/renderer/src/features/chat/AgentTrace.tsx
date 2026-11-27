@@ -1,3 +1,4 @@
+import { BrowserCapture } from './BrowserCapture'
 import { useState } from 'react'
 import { Tool, ToolHeader, ToolContent, ToolInput, ToolOutput } from '@/components/ai-elements/tool'
 import { Button } from '@/components/ui/button'
@@ -18,9 +19,11 @@ import {
   PlanTrigger,
 } from '@/components/ai-elements/plan'
 import { Task, TaskTrigger, TaskContent, TaskItem } from '@/components/ai-elements/task'
+import { useWorkspace } from '@/store'
 import { desktop } from '@/platform/desktop'
 import type { AgentTool, AgentInfo } from '@shared/agent-contracts'
 import { useEditorStore } from '@/features/editor/store'
+import { CommandResult } from './CommandResult'
 function jsonPreview(text: string): unknown {
   try {
     return JSON.parse(text)
@@ -66,6 +69,16 @@ export function AgentTrace({
     [error, setError] = useState<string | null>(null)
   const [responding, setResponding] = useState<string | null>(null)
   const [answered, setAnswered] = useState<Set<string>>(() => new Set())
+  async function openRelated(turnId: string) {
+    if (!info.family) return
+    try {
+      await desktop.data('tasks.open', { projectId: info.family.contextProjectId, turnId })
+      await useWorkspace.getState().refresh()
+      useWorkspace.getState().setTab('workspace')
+    } catch {
+      setError('关联任务无法打开，请从任务与隔离列表检查历史')
+    }
+  }
   async function respond(tool: AgentTool, allowed: boolean) {
     if (!scope || !tool.approval || responding) return
     setResponding(tool.approval.id)
@@ -215,6 +228,34 @@ export function AgentTrace({
           </PlanContent>
         </Plan>
       )}
+      {info.family && (
+        <div className="agent-family">
+          <p>
+            {info.family.parentTurnId ? '隔离子任务' : '父任务'} · 分配输出 Token{' '}
+            {info.family.allocation.tokens} / 工具 {info.family.allocation.calls}；最近记录剩余{' '}
+            {info.family.remaining.tokens} / {info.family.remaining.calls}
+          </p>
+          {info.family.parentTurnId && (
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => void openRelated(info.family!.parentTurnId!)}
+            >
+              打开父任务
+            </Button>
+          )}
+          {info.family.children.map((child, index) => (
+            <Button
+              key={child.turnId}
+              variant="link"
+              size="sm"
+              onClick={() => void openRelated(child.turnId)}
+            >
+              打开子任务 {index + 1}
+            </Button>
+          ))}
+        </div>
+      )}
       {tools.map((tool) => (
         <Tool
           key={tool.id + (tool.approval?.id ?? '')}
@@ -230,6 +271,12 @@ export function AgentTrace({
             state={status[tool.state]}
           />
           <ToolContent>
+            {tool.origin?.kind === 'mcp' && (
+              <p className="mcp-tool-origin">
+                MCP · {tool.origin.serverName} · {tool.origin.toolName} · {tool.origin.url} · schema{' '}
+                {tool.origin.schemaHash.slice(0, 12)}
+              </p>
+            )}
             <p className="agent-call-id">
               调用 ID：{tool.callId || '接收中'}
               {tool.truncated ? ' · 结果已截断' : ''}
@@ -278,7 +325,13 @@ export function AgentTrace({
               >
                 <ConfirmationTitle>
                   {tool.approval.state === 'pending'
-                    ? `允许本次 ${tool.name}？仅限当前项目、上方完整参数。`
+                    ? tool.origin?.kind === 'mcp'
+                      ? `允许调用 ${tool.origin.serverName} 的 ${tool.origin.toolName}？仅限上方参数；外部服务不受本机项目文件范围限制。`
+                      : tool.name === 'browser_action'
+                        ? '允许本次浏览器操作？仅限上方页面、选择器与完整输入。点击和填入可能产生网站副作用；取消不能撤回已提交的数据。'
+                        : ['web_search', 'fetch_url'].includes(tool.name)
+                          ? `允许本次网页请求？上方搜索词或 URL 会发送到网络服务，返回正文交给当前模型；不发送模型 Key，不复用网站登录。网页内容不授予本地权限。`
+                          : `允许本次 ${tool.name}？仅限当前项目、上方完整参数。`
                     : `审批结果：${({ approved: '允许', denied: '拒绝', expired: '已过期', cancelled: '已取消', pending: '待处理' } as const)[tool.approval.state]}`}
                   {tool.name === 'run_command' &&
                     ' 命令可修改项目文件；无网络权限，不授权后台常驻程序。'}
@@ -302,10 +355,18 @@ export function AgentTrace({
                 </ConfirmationActions>
               </Confirmation>
             )}
-            <ToolOutput
-              output={tool.output ? jsonPreview(tool.output) : undefined}
-              errorText={tool.error || undefined}
-            />
+            {tool.name === 'browser_action' && scope && (
+              <BrowserCapture tool={tool} scope={scope} />
+            )}
+            {tool.name === 'run_command' && (
+              <CommandResult tool={tool} projectId={scope?.projectId} />
+            )}
+            {tool.name !== 'run_command' && (
+              <ToolOutput
+                output={tool.output ? jsonPreview(tool.output) : undefined}
+                errorText={tool.error || undefined}
+              />
+            )}
             {tool.blobId && (
               <Button
                 type="button"

@@ -12,6 +12,7 @@ import { ChatWorkspace } from '@/features/chat'
 import { useCreateProject } from '@/features/workspace/hooks/use-create-project'
 import { ProjectWorkbench } from '@/features/editor/ProjectWorkbench'
 import { useEditorStore, isDirty } from '@/features/editor/store'
+import { DesktopWorkbench } from '@/features/desktop/DesktopWorkbench'
 
 export function App() {
   const state = useWorkspace()
@@ -58,6 +59,7 @@ export function App() {
   }
   return (
     <AppShell
+      projectId={project && !project.managed ? project.id : null}
       scrollKey={tab}
       chatLayout={tab === 'workspace'}
       isMac={environmentState.isMac}
@@ -75,18 +77,33 @@ export function App() {
       {state.loadError && (
         <div className="storage-error" role="alert">
           {state.loadError}
-          <Button variant="link" size="sm" onClick={() => run(state.refresh)}>
-            重试
+          <Button
+            variant="link"
+            size="sm"
+            disabled={state.loading}
+            onClick={() => run(state.reopenStorage)}
+          >
+            重新连接存储
+          </Button>
+        </div>
+      )}
+      {state.storageRecoveryError && (
+        <div className="storage-error" role="alert">
+          恢复检查未通过，当前保留可读的旧存储；请核对历史后处理备份。
+          <Button variant="link" size="sm" onClick={() => state.setSettingsGroup('data')}>
+            打开数据与恢复
           </Button>
         </div>
       )}
       {tab === 'workspace' ? (
-        <ProjectWorkbench projectId={project && !project.managed ? project.id : null}>
-          <ChatWorkspace
-            key={`${project?.id || 'none'}:${state.activeSession?.id || 'new'}`}
-            openProject={openProject}
-          />
-        </ProjectWorkbench>
+        <DesktopWorkbench projectId={project && !project.managed ? project.id : null}>
+          <ProjectWorkbench projectId={project && !project.managed ? project.id : null}>
+            <ChatWorkspace
+              key={`${project?.id || 'none'}:${state.activeSession?.id || 'new'}`}
+              openProject={openProject}
+            />
+          </ProjectWorkbench>
+        </DesktopWorkbench>
       ) : tab === 'providers' ? (
         <ProviderSettingsPage
           onClose={() => setTab('workspace')}

@@ -108,6 +108,7 @@ export type ProviderStreamEvent =
   | { type: 'usage'; usage: Usage }
   | { type: 'finish'; result: Completion }
 export interface ProviderAdapter {
+  dispose(): void
   readonly capabilities: {
     text: z.infer<typeof capabilityState>
     streaming: z.infer<typeof capabilityState>

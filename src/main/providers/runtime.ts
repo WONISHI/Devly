@@ -10,7 +10,7 @@ import {
 } from '../../shared/provider-contracts'
 import type { DatabaseClient } from '../data/client'
 import type { CredentialVault } from '../data/vault'
-import { ChatCompletionsAdapter } from './chat-completions'
+import { createAdapter } from './factory'
 import { ProviderError, providerError } from './errors'
 
 type Config = Provider & { revision: number; credentialRef: string | null }
@@ -127,7 +127,7 @@ export class ProviderRuntime {
     const { snapshot, controller } = run,
       signal = controller.signal
     const timer = setTimeout(() => controller.abort(new ProviderError('TIMEOUT')), input.timeoutMs)
-    let adapter: ChatCompletionsAdapter | undefined,
+    let adapter: ProviderAdapter | undefined,
       secret = '',
       config: Config | undefined
     // Diagnostic previews may contain an untrusted server echo; never return a Key echo.
@@ -150,7 +150,6 @@ export class ProviderRuntime {
       run.revision = config.revision
       if (!run.active()) throw new ProviderError('CANCELLED')
       if (signal.aborted) throw providerError(null, signal)
-      if (config.protocol !== 'chat-completions') throw new ProviderError('UNSUPPORTED')
       if (
         input.kind === 'structuredOutput' &&
         config.compatibility.structuredOutput === 'unsupported'
@@ -164,13 +163,17 @@ export class ProviderRuntime {
           throw new ProviderError('CREDENTIAL')
         }
       }
-      adapter = new ChatCompletionsAdapter(
-        config.baseUrl,
-        secret,
+      adapter = createAdapter(
         {
-          ...config.compatibility,
-          ...(input.kind === 'structuredOutput' ? { structuredOutput: 'supported' as const } : {}),
+          ...config,
+          compatibility: {
+            ...config.compatibility,
+            ...(input.kind === 'structuredOutput'
+              ? { structuredOutput: 'supported' as const }
+              : {}),
+          },
         },
+        secret,
         this.fetcher,
       )
       const kinds: ProbeKind[] =

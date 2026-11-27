@@ -1,3 +1,4 @@
+import { bodyText, sse } from './transport'
 import { z } from 'zod'
 import type {
   Compatibility,
@@ -116,50 +117,6 @@ function validateCalls(calls: ToolCall[], reason: Completion['finish']): ToolCal
       throw new ProviderError('INVALID_RESPONSE')
   }
   return calls
-}
-async function* bodyText(response: Response, signal: AbortSignal): AsyncGenerator<string> {
-  if (!response.body) throw new ProviderError('INVALID_RESPONSE')
-  const reader = response.body.getReader(),
-    decoder = new TextDecoder('utf-8', { fatal: true })
-  let size = 0
-  try {
-    while (true) {
-      const part = await reader.read()
-      if (signal.aborted) throw providerError(null, signal)
-      if (part.done) break
-      size += part.value.byteLength
-      if (size > 2 * 1024 * 1024) throw new ProviderError('LIMIT')
-      yield decoder.decode(part.value, { stream: true })
-    }
-    yield decoder.decode()
-  } catch (error) {
-    if (error instanceof ProviderError || signal.aborted) throw providerError(error, signal)
-    throw new ProviderError('DISCONNECTED')
-  } finally {
-    await reader.cancel().catch(() => {})
-    reader.releaseLock()
-  }
-}
-async function* sse(response: Response, signal: AbortSignal): AsyncGenerator<string> {
-  let buffer = '',
-    lines: string[] = []
-  for await (const chunk of bodyText(response, signal)) {
-    buffer += chunk
-    let match: RegExpExecArray | null
-    while ((match = /\r\n|\r(?!$)|\n/.exec(buffer))) {
-      const line = buffer.slice(0, match.index)
-      buffer = buffer.slice(match.index + match[0].length)
-      if (line === '') {
-        if (lines.length) yield lines.join('\n')
-        lines = []
-      } else if (line.startsWith('data:')) lines.push(line.slice(5).replace(/^ /, ''))
-      if (lines.reduce((sum, line) => sum + line.length, 0) > 262144)
-        throw new ProviderError('LIMIT')
-    }
-    if (buffer.length > 262144) throw new ProviderError('LIMIT')
-  }
-  // A partial SSE frame is never treated as a complete tool call.
-  if (buffer.trim() || lines.length) throw new ProviderError('DISCONNECTED')
 }
 
 export class ChatCompletionsAdapter implements ProviderAdapter {

@@ -11,4 +11,5 @@ const result = spawnSync(require('electron'), ['scripts/execution.integration.mj
   timeout: 90000,
 })
 if (result.error) console.error(result.error.message)
+if (result.signal) console.error(`Execution fixture terminated by ${result.signal}`)
 process.exit(result.status ?? 1)

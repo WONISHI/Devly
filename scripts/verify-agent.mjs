@@ -7,4 +7,5 @@ const result = spawnSync(require('electron'), ['scripts/agent.integration.mjs'],
   timeout: 90000,
 })
 if (result.error) console.error(result.error.message)
+if (result.signal) console.error(`Agent fixture terminated by ${result.signal}`)
 process.exit(result.status ?? 1)

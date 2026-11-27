@@ -606,6 +606,389 @@
 - 验证依据：沿用 LOG-048/LOG-050–LOG-052 的实际检查和真实 A09 证据；本次代码未再变更，不重复调用计费 API。提交前复核 git diff --check、文档连续编号与格式；提交结果/哈希以 Git 输出和最终回复为准。
 - 状态与下一步：阶段 6、7 保持已验收，当前唯一下一项仍为 8.1/G06；本次只做本地 commit，未请求远端推送。
 
+## LOG-054｜阶段 8：真实 Git 工作区与本机关键验收
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：8.1/G06、8.2/G07、8.3/G08、8.4/G09。
+- 实际变更：严格 git.* 契约与 GitService，按第一父提交分页真实历史、实际作者/hash/文件状态和增删行数；原 Commit 组件投影这些数据。暂存/取消暂存只操作所选路径，提交展示完整暂存范围、说明和本次作者；HEAD/状态/index 内容摘要令牌变化则拒绝。分支创建/切换/非强制删除、脏工作区和未合并冲突保护；不提供推送、自动 stash、强制删除或丢弃修改。
+- 边界：仅本地用户操作；与编辑/Agent 共用串行队列，操作前再核对项目。Git 写操作需打开完整仓库根目录；禁用 hooks、签名、自动维护和已配置外部过滤器，受限环境与系统约束，输出/时间/数量有界；未覆盖 worktree 外置元数据和子模块完整操作，其他平台待 T12。检查令牌不是任意外部 Git 进程参与的原子事务，失败后明确刷新，不自动重试副作用。
+- 文件：shared/workbench-contracts、editor/project 和 editor/git、git/service、data/service；GitPanel、编辑区 Git 入口/页头、样式；git-workspace.test、git-workspace-host.test、git-workspace.integration、verify-git-workspace、smoke-workbench。
+- 验证：类型/Lint 与生产构建通过；2 项 Git 契约/记录解析测试通过。显式主机检查 15 项通过，包含中文/空格目录中的 Git 和阶段 6 敏感路径/网络/命令/取消边界回归。verify-git-workspace 的 3 组实际 Electron/SQLite/Git 检查通过：空/非仓库、中文路径、根提交数据、初始 index 取消暂存、旧令牌拒绝、目录越界、保护路径已暂存拒绝、分支失败/脏工作区保留和真实 unmerged index 拒绝提交。smoke-workbench 实际点击原 Commit、暂存/提交审查、创建分支/脏目录拒绝通过；output/git-history-real.png 已查看，实际作者、hash、中文路径与 +1 显示正常。开发/本机结果不代替最终包内检查或远端 CI。
+- 失败与修正：首次原生中文路径快照失败；精确 stderr 表明 iconv_open(UTF-8,UTF-8-MAC) 失败，系统 /usr/share/i18n 的字符映射 .db 被全局敏感扩展名规则误拒。只对这个系统只读目录设置例外，未允许任意临时写入、网络或项目数据库；中文 Git 与原执行边界回归通过。试加动态库映射未解决问题，已撤回。stderr 仅 Main 内部有界持有，不把任意 Git stderr 当产品返回或写日志；临时 fixture 调试输出已撤除。
+- 状态变化：G06/G07/G08/G09 → 完成（当前 macOS，最终阶段包内复核仍需进行）；下一步 8.5/X01。当前阶段未完成，尚未展开阶段 9。原版新增 Terminal/Test Results/Stack Trace 从既有固定提交读取，依赖安装初次因 store 不一致退出；改用项目既有 store，结果随后记录。
+
+## LOG-055｜阶段 8：真实 PTY 服务与进程归属
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：8.5/X01。
+- 实际变更：Main TerminalService 与严格 terminal.* 契约，原生 node-pty + 项目内受限 zsh -f，环境不继承 Provider/个人 Shell 配置；每项目最多 4 个、每 owner 最多 8 个终端，project/owner/UUID 配对校验，resize 与输入边界、256 Ki 字符有界环形输出和截断游标。关闭收集普通后代 PID/进程组、TERM/KILL、实际进程检查；不能确认则 unknown，窗口释放和应用退出收尾。已退出会话不再按旧 PID 发信号，避免误杀复用 PID。
+- 验证：verify-terminal 在真实 Electron/SQLite/PTY 中 5 组检查通过：canonical cwd 与不继承私密环境、stty 实际 30×100、双项目/owner 读写拒绝、Ctrl+C 中断真实 sleep 后继续输入、敏感 .env 内容拒绝、300000 字符输出被截断、关闭清理普通后台 sleep、owner 清理另一项目终端。无真实 API 请求，临时项目已删除。
+- 发现与修正：首次 Shell 能输入但 tty pgrp 与 stty TIOCGETD 被拒；只在 PTY profile 增加 pseudo-tty 和 /dev/tty、ttys 数字节点、ptmx 的 file-ioctl/读写，未对 Agent 命令扩大 tty/网络/目录权限。修复后 resize 与 Ctrl+C 通过。
+- 文件：terminal/service、data/service、workbench-contracts、command-executor、terminal.integration/verify-terminal；后续 xterm 组件与可收起底部面板正在接入，尚未把原生成功算作桌面 X02 完成。
+- 原组件准备：Terminal/Test Results/Stack Trace 从固定 ca8be600 官方提交下载，只有既有别名适配；verify-vendor 扩至 35 份通过。新增 ansi-to-react 6.2.6、直接复用已锁定的 Radix use-controllable-state 1.3.0；首次 pnpm store 路径不一致，随后显式使用项目 .pnpm-store 安装成功。许可证/完整依赖盘点与最终构建随后收口。
+- 边界：当前 macOS；受限交互 Shell 不开放网络/个人工具链或目录外写入，主动输入才执行，和 Agent 命令日志分离。普通前后台子进程已验证，脱组/双重 fork/退出后的脱离任务不承诺全部可追踪；失败时不显示已停止。没有持久化终端进程或自动重放输入。
+- 状态变化：X01 → 完成；下一步 8.6/X02 实际 xterm 输入/切换/尺寸和关闭 UI 验收，本阶段仍进行中。
+
+## LOG-056｜阶段 8：xterm 交互终端桌面检查
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：8.6/X02。
+- 实际变更：延迟加载 xterm/FitAddon、本地 CSS、可收起底部终端和多标签；Shell 输入与 Agent 日志分离。Main 只接受所属项目/窗口的输入，Renderer 串行发送且不自动重发；resize 跟随容器，输出用游标拉取到 xterm，截断时提示，关闭等待实际进程检查结果。隐藏/切换保留 Main 进程；窗口销毁关闭所属终端，不恢复重放旧输入。
+- 文件：features/terminal/{TerminalPanel,store}、features/desktop/DesktopWorkbench、App/AppHeader、styles；smoke-workbench 扩展实际 xterm 键盘输入与独立 PTY 读取对照。
+- 验证：生产构建通过；smoke-workbench 退出 0，实际 xterm 输入固定文本、Ctrl+C 中断真实 sleep 后继续输入、窗口缩至 1100×800 后实际列数改变、第二终端输出不进入第一终端、关闭后 Main 列表只剩一项均通过。Git 界面流程同时回归通过，未发生远程 Renderer 请求或页面错误。原生双项目/错 owner/错项目拒绝已有 LOG-055 证据，最终阶段还会补跨项目桌面与包内复核。
+- 未覆盖与限制：当前 macOS 开发构建，包内/最小窗口/主题/持久布局待阶段后续步骤；进程边界沿用 LOG-055。接下来 Agent 只读日志将用原 Terminal，不能把用户交互 Shell 标签当作模型工具执行结果。
+- 状态变化：X02 → 完成（上述范围，最终阶段复核继续）；下一项 8.7/X03，关联随后 X04 的真实执行记录/测试/堆栈。阶段 8 仍进行中。
+
+## LOG-057｜阶段 8：原执行日志、结构化测试与实际堆栈
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：8.7/X03、8.8/X04。
+- 实际变更：Main 从实际命令退出码/输出构建有界 execution 记录，随 tool_calls.payload 持久化，旧记录默认空，不新增数据库版本。原 Terminal 展示只读 Agent 输出/流和真实退出码/耗时，和 xterm 用户输入分离；移除命令的重复 JSON 输出。严格 TAP v13 完整性/顺序/退出码对照，完整报告接原 Test Results，普通 exit 0 仍标测试未验证，半包/中断/报告冲突不伪装通过。实际 JS 风格堆栈或 Python traceback 转为原 Stack Trace 展示，原始输出保留；项目内路径与行号可定位 Monaco，目录外不打开。
+- 文件：shared/execution-records、agent-contracts、main/agent/validation/execution-tools/runner、features/chat/CommandResult/AgentTrace、editor store/EditorPane、样式；validation-records.test、smoke-results；原组件/依赖/来源清单见 LOG-055。
+- 验证：类型/构建通过；3 项解析/一致性/实际 traceback 形状与截断检查通过。smoke-results 在真实 Electron/SQLite 中使用本地协议替身调度，三个命令都经实际原 Confirmation；执行 /usr/bin/python3 中真实 unittest 的成功与失败，退出码依次 0、1、0，TAP 成功/失败各一条，第三个普通 printf 明确未验证。原 Terminal/Test Results/Stack Trace 可见，Python AssertionError 的实际 src/check.py:5 跳转 Monaco 并定位行，页面重读后 execution 记录保留；无页面错误。output/agent-test-results.png 已查看，失败用例保持失败，不把本地协议替身称真实供应商。
+- 发现与处理：新增 execution 字段后 Runner 初始工具记录缺默认值，类型检查捕获并补 null。原 Stack Trace 的组合 Error 容器不自带文字，补入其原 ErrorType/Message；长绝对路径导致消息 Radix table 包装撑宽，业务样式改为有界 block/可换行，最终复核再查最小窗口和包内表现。只复用原组件，没有改上游逻辑或过滤页面错误。
+- 边界：当前解析 TAP v13，不宣称覆盖 Jest/JUnit/所有测试框架；未知格式保留真实进程结果和原始日志。报告由项目命令生成，执行成功不是测试设计正确的证明；只有完整、一致结果展示测试统计。命令/日志/报告预览有上限；超限明确截断。真实第三方 API 的既有阶段 7 证据不因本地 fixture 自动扩大。
+- 状态变化：X03/X04 → 完成（本机开发范围，阶段末包内复核待进行）；下一步 8.9/U07 三种主题与持久化，再到 8.10/U08 布局/快捷键。阶段 8 仍进行中，阶段 9 未展开。
+
+## LOG-058｜阶段 8：主题同步、可调整布局与重启恢复
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：8.9/U07，8.10/U08 代码及开发检查。
+- 实际变更：沿用 L04 主题持久化，Monaco 使用继承原语言色彩的 Devly 深/浅调色，xterm 从应用 CSS 变量取背景/前景/光标并监听主题。侧栏鼠标/键盘调整、编辑宽度/文件区/终端高度分隔条；layout.* 严格参数把版本 1 的有界尺寸与展开状态按项目保存到既有 app_state 命名空间，不新增数据库迁移（仍 v8），不保存终端输入、Key 或进程。前端合并早于读盘返回的用户改动、串行去抖写入、拖动结束刷盘及失败提示；终端高度/侧栏在小窗有自适应约束。
+- 快捷键：工作台 Cmd/Ctrl+J 切换终端，Cmd/Ctrl+L 聚焦任务输入，Cmd/Ctrl+Shift+E 打开文件区、Shift+G 打开 Git；侧栏分隔条可用左右/Home/End。编辑器原 Cmd/Ctrl+S 保留，Ctrl+C 仍发送至真正的 PTY。未改确认的 v5 品牌图标。
+- 文件：desktop/{layout-store,use-layout,DesktopWorkbench}、app/AppShell/AppHeader、App、editor store/ProjectWorkbench/Monaco/EditorPane、terminal store/TerminalPanel、data/store/workbench-contracts、样式及 smoke-workbench、desktop-layout.test。原组件来源与新依赖许可随阶段最终归档补齐。
+- 验证：类型/Lint/构建通过；布局早期修改/迟到读取合并与非法尺寸/秘密字段拒绝两项检查通过。完整 smoke-workbench 退出 0，真实设置页保存浅/深/系统主题，读取 Monaco/xterm 颜色与应用一致；模拟系统变化后颜色切换但保存值仍 system。鼠标和键盘调整侧栏、编辑/目录/终端尺寸，Cmd/Ctrl+L 与 J 输入焦点/切换通过；960×680 下任务输入、新建终端、保存均完整在视口中，根窗口没有横/纵向溢出。实际关闭并重新启动 Electron 后，浅色、侧栏、展开面板恢复，终端进程列表为空且没有重放命令。已查看 output/workbench-light.png、workbench-minimum.png，调色和底部输入可见。
+- 失败与处理：首次截图发生一次超时；下一轮脚本用“设置”查找实际 aria-label 为“打开设置”的按钮，修正测试选择器后完整流程通过。补充分支删除原生用例前，fixture 仍保留前项故意保留的脏文件，服务正确拒绝创建测试分支；已让该生成 fixture 在确认保留结果后恢复，再复核删除和分页，尚未以本条声称这些补充检查已通过。
+- 边界：当前 macOS 开发构建，完整原生补充、跨项目桌面与最终包内检查继续；页面重读/窗口离开前仍需等待正常写入完成，存储失败明确显示未保存。仅保存布局而非文件草稿/终端续跑，不把 R02 提前标完成。工作区终端仍受限，个人工具链/网络/脱组程序边界沿用 LOG-055。
+- 状态变化：U07 → 完成；U08 → 待验证（开发界面通过，阶段末复核未收口）。当前唯一下一步仍阶段 8/U08；阶段 9 未开发。
+
+## LOG-059｜阶段 8 总验收：Git、交互终端与桌面体验归档
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：8.1–8.10，G06/G07/G08/G09/X01/X02/X03/X04/U07/U08，当前 macOS ARM64。
+- 最终变更：补充真正的已合并/未合并分支删除与 32 条历史分页、布局 Worker 重启/非法写入检查；桌面增加跨两项目终端切换、实际 Shell PID 的退出后消失断言、Agent 结果最小窗口检查。提交审查的长路径列表使用现有 ScrollArea；暂存/分支成功不清掉正在填写的提交说明，仅实际提交成功清空，包内实际交互检查覆盖此行为。原上游组件保持来源校验，未修改品牌图标。
+- 涉及文件：阶段 8 的 shared/workbench-contracts/execution-records、Main Git/PTY/执行记录和 data 服务、Renderer git/terminal/desktop/CommandResult/editor/shell 与样式；新增集成/桌面/单测脚本；package/锁文件/构建许可/CI；新增 docs/git-and-terminal.md，同步 README、架构、选型、数据/组件/模块/检查/依赖与阶段文档。数据库仍 v8；布局为 app_state 的 v1 命名空间，执行元数据沿用 tool_calls.payload。
+- 统一检查：pnpm check 最终退出 0，包含类型、Lint、格式、134 项测试通过/3 项主机测试默认跳过、28 份 Markdown/106 个唯一任务 ID/当时 58 条日志、35 份固定原组件来源、图标、生产构建、SQLite/聊天/只读 Agent 集成。最初最终检查因 README 表格格式退出 1，格式化后全量重跑通过；没有绕过检查。最后两处 Git 交互修正后另行 pnpm typecheck、pnpm lint、pnpm build:bundle 与针对文件格式检查均退出 0。
+- 原生验收：显式 DEVLY_VERIFY_HOST_EXECUTION=1 的 Git/既有执行基础检查 15 项通过；verify-git-workspace 6 组实际 Electron/SQLite/Git 检查全部通过，含空/非仓库、中文/空格路径、根提交/取消暂存、旧 index 令牌、保护路径、脏修改、真实未合并 index、非强制分支删除与第一父链分页、布局持久化。LOG-058 提到的脏 fixture 恢复后完整复跑已通过，没有放宽产品拒绝条件。verify-terminal 最终复跑 5 组通过，含最小环境、真实尺寸/Ctrl+C、owner/项目拒绝、敏感内容与输出上限、普通后台子进程和 owner 清理。
+- 开发与包内界面：smoke-workbench 开发完整流程及 DEVLY_EXECUTABLE 包内最终流程退出 0；实际 Commit 作者/hash/文件、暂存/审查/提交/草稿保留、分支失败保留、真实 xterm 键盘/resize/Ctrl+C/切换/关闭、两个项目 UI 隔离通过。实际关闭应用后两个项目 Shell PID 均不存在；重新启动后布局/主题/面板恢复、终端列表为空，未重放命令。浅/深/系统设置与模拟系统变更同步 Monaco/xterm；侧栏键盘/拖动、编辑/目录/终端分隔条、输入快捷键、960×680 的输入/保存/终端入口可见，根窗口无溢出；无页面错误或远端 Renderer 请求。
+- 实际结果与阶段回归：smoke-results 开发/包内退出 0，本地协议替身仅调度实际 Python unittest，真实退出码为 0/1/0，TAP 成功/失败与普通命令未验证分别显示；原只读 Terminal/Test Results/Stack Trace、真实 AssertionError 文件第 5 行定位、记录重读保留通过。最终已查看 output/agent-test-results.png 和 agent-results-minimum.png，长路径不撑宽、错误标题与主要输入可见。包内 smoke-editor、smoke-execution 均退出 0，既有本地 Worker/语义诊断/保存冲突/Diff、审批/停止/历史均回归通过。工作台浅色/最小窗口/重启、Git 和终端截图已查看；不把本地协议替身称为新供应商实测，阶段 7 的真实 API 证据仍限 LOG-051 的模型。
+- 构建与依赖：最终 electron-builder --dir 退出 0，SQLite/node-pty 重建后生成未签名 release/mac-arm64/Devly.app；最终包内 PTY/工作台通过。9 份新增来源/许可证/说明文件在 Resources/licenses 与 resources/vendor 逐字节一致。盘点 64 个直接依赖、931 个已安装 name@version；ansi-to-react 6.2.6 声明 BSD-3-Clause 但上游包/固定源码缺完整版权通知，已保存来源说明与明确标注的 SPDX 模板，正式发行仍需补全；不伪造权利人通知。没有新的远程漏洞审计，旧维护/安全/khroma 未知许可等阻断继续保留。
+- 未覆盖与剩余边界：Windows/T12/X05、远端 CI、安装升级、签名/公证与正式发行未验收。交互 Shell 仅受限系统工具，无网络/个人工具链；普通后代清理有证据，双重 fork/脱组任务不保证。Git 不推送、不自动丢弃修改、不承诺外部并发 index 原子事务，不支持复杂 worktree/submodule。结构化测试仅 TAP；普通 exit 0 不代表测试通过。保存布局不等于文件草稿或跨重启任务恢复，异常未提交的前端布局可能丢失。范围与恢复条件在新增说明中记录。
+- 阶段结论：10/10 项在上述当前 macOS 范围完成，三条阶段验收逐项通过；U08 待验证 → 完成，阶段 8 → 完成。工作计划的总览/当前能力/阶段状态/当前执行位置与唯一下一步已同步。下一项 **阶段 9 / 9.1 / L08**，待开始；没有提前展开多协议、恢复或其他阶段开发。本轮没有请求提交/推送，工作区保留改动。最终 pnpm check:docs 退出 0（28 份 Markdown、106 个任务 ID、59 条连续日志），git diff --check 退出 0。
+
+## LOG-060｜阶段 8/U08 跟进：统一工作台拖拽分隔条
+
+- 日期：2026-11-26；阶段 / 步骤 / ID：8.10/U08，用户追加样式优化，阶段 9 尚未展开。
+- 实际变更：将编辑/聊天区的 5px 粗竖条和目录/终端的 4px 粗横条统一为 1px 中性细线；侧栏同用这一视觉规则。伪元素向两侧扩展 4px，形成 9px 透明命中区域；悬停、键盘焦点与实际拖动状态展示 3×28px（横向为 28×3px）短圆角手柄，使用主题中性色和 140ms 过渡，减少动态效果设置下取消过渡。拖动逻辑与布局持久化接口保持既有实现。
+- 涉及文件：src/renderer/src/styles.css、docs/work-plan.md、docs/git-and-terminal.md、本文。没有引入新组件、依赖或修改原 AI Elements；此前阶段 8 工作区改动保留。
+- 验证：pnpm build:bundle、针对 styles.css 的 Prettier 检查均退出 0。临时 .cache/divider-preview.mjs 复用既有 smoke-workbench 实际窗口流程，额外截取浅/深主题默认、悬停、按住拖动与横向手柄，流程退出 0；实际鼠标/键盘调整、主题跟随、最小窗口、双项目 PTY、退出与重启布局均沿现有桌面断言通过。已查看深色拖动/浅色横向截图；最终补充截图在 140ms 过渡结束后再次核对，浅色横向与深色悬停手柄显示正常。不为这次 CSS 修改新增实现镜像单测，也不重复调用真实 API。
+- 未覆盖与边界：本次是 macOS 本地构建/实际窗口验证，未重新生成安装包或执行 Windows/远端 CI；不将此前包内验收说成本次新样式的包内证据。品牌和业务操作保持既有范围。
+- 状态与下一步：U08 样式跟进完成，阶段 8 保持完成；当前唯一下一项仍阶段 9/9.1/L08，待开始。pnpm check:docs（28 份 Markdown、106 个任务 ID、60 条连续日志）与 git diff --check 均退出 0。
+
+## LOG-061｜阶段 9/9.1/L08：迁移、备份与恢复入口
+
+- 日期：2026-11-26；任务 ID：L08。用户确认本轮新协议只做代码/本地协议验证，真实端点留待联调，不使用个人 Key。
+- 变更：独立“数据与恢复”设置组、严格 storage.* 契约与原生目录选择；Worker 一致性备份包括 SQLite/已索引日志附件与 SHA-256 清单，复制库清空凭据引用/诊断后 VACUUM，不带 Vault。检查后绑定 owner/预览 UUID/摘要/有效期，恢复复制到新 generation，下次启动仅原子替换指针，原 DB/日志保留，恢复失败继续使用原 generation；有运行任务拒绝安排恢复。密钥需重设，旧审批不重放。
+- 文件：shared/stability-contracts/data-contracts、data/backup/store/service、Main 原生入口、DataSettingsPanel/设置组、chat/runtime 活动检查；stability.integration/verify-stability。
+- 验证：pnpm build（含类型）退出 0；node scripts/verify-stability.mjs 退出 0，4 组实际 Electron/SQLite/Worker 检查：备份无凭据/原引用保留；错 owner 拒绝/当前库不动/重启切换/旧库保留；候选缺失或摘要损坏拒绝且旧库可读；真实 v7→v8 升级及实际 DDL 失败回滚/备份可读。没有将新 UI 的代码完成当作已渲染验收，最终桌面流程在本阶段末核对。
+- 限制：备份含私人历史/项目内容需用户妥善保存，不是秘密共享格式；限数据库 256MiB、总量 512MiB、10000 个 blob/单个 8MiB，超限失败保留当前数据。仅备份格式 v1/DB v8 起支持恢复；旧 generation 不自动清理；没有操作项目源文件。Windows/正式升级与包内最终复核仍独立记录。
+- 状态：L08 完成，下一项 9.2/P08。阶段 9 进行中；R04 故障注入、R06 导入导出和最终恢复 UI 验收在对应步骤继续。
+
+## LOG-062｜阶段 9/9.2/P08：Responses 独立适配
+
+- 日期：2026-11-26；任务 ID：P08。新增 responses.ts、native-common.ts、transport.ts 与 factory.ts；只共享传输，不套 Chat 格式。Responses 原生 input/output、call_id/function_call_output、max_output_tokens、text.format、store:false、加密推理延续缓存、原生增量工具索引归一与独立结束校验。未知服务端工具明确拒绝。工厂接 ProviderRuntime/ChatRuntime/Agent，UI 可选三协议；配置变更仍需用户操作/历史确认。
+- 验证：类型/生产构建通过；native-protocols 中 Responses 9 项通过，覆盖非流式、字节拆包、多个工具、私有延续项、取消、无终止/坏 JSON/重复 ID/未知工具、401/403/429/503 和不自动重试。verify-protocols 的 Responses 实际回环 HTTP→真实搜索→真实读取→最终回答通过，工具 ID 对齐且原生 reasoning 项保留。最初监听被工具沙箱拒绝，按权限流程在主机重跑；fixture 读取接口多传字段、read_file 误用 content 而非 text 已修正，不放宽产品 Schema。
+- 涉及：providers 新文件、shared ProviderAdapter.dispose、两运行时/runner、会话绑定和模型选择、ProviderManager/ChatWorkspace、native-protocols/model-options 测试及 protocols.integration/verify-protocols。
+- 边界：代码/本地协议验收完成，真实 Responses 端点与模型待用户后续在应用内配置联调；默认能力未知，视觉/结构化等单独检查，服务端托管工具、跨重启隐藏推理不支持。下一项 P09。
+
+## LOG-063｜阶段 9/9.3/P09：Anthropic Messages 原生适配
+
+- 日期：2026-11-26；任务 ID：P09。新增 anthropic-messages.ts，原生 system/content blocks、tool_use/tool_result、x-api-key/version、必需 max_tokens、thinking signature 延续、缓存 Token 计数、原生 message_start/block delta/stop/message_delta/message_stop。半包不执行、非完整结束失败；工具索引独立归一，不把 text block 序号当工具索引。结构化输出明确 unsupported，不静默删参。
+- 验证：类型/构建通过；Anthropic 独立 9 项（与 Responses 共 18 项）通过，原 Chat Completions 31 项及模型选项 4 项回归通过。verify-protocols 中 Messages 原生流→真实搜索/读取→签名内容块及对应 tool_result→最终回答通过；两协议共 6 次本地 HTTP 请求。全为本地协议替身，没有真实 Anthropic 调用或个人 Key。
+- 文件/剩余范围：同 LOG-062 的工厂与业务接线、独立适配器/测试；模型列表只尝试当前页，可手填。真实 Anthropic 端点/模型待联调，其他内容块/服务端工具和全部模型能力不在兼容声明内。P09 本地完成；下一项 P10。
+
+## LOG-064｜阶段 9/9.4/P10：协议矩阵与差异边界
+
+- 日期：2026-11-26；任务 ID：P10。新增 docs/provider-matrix.md，逐项记录协议、端点类型、模型、日期、文本/工具/取消/错误证据与真实待验证状态；列出路由、认证、Token 参数、结构化输出、视觉/上下文、模型列表、隐藏推理延续和服务端工具差异。
+- 当前证据：53 项协议/模型测试通过（31 既有 + 18 新原生 + 4 模型选项）；两种新协议实际回环/真实工具集成通过。既有火山方舟 DeepSeek 的真实证据限此前 LOG-041/043/051。没有沿用 Chat 的一次响应宣称兼容新协议，用户已确认真实新协议另行联调。
+- 文件：provider-matrix.md、工作计划及本日志；Provider 现有诊断报告绑定配置 revision/模型/时间，修改端点/协议/密钥等使旧报告失效，不把 UI 可选择等同真实验收通过。最终 UI/包内检查在阶段末继续。
+- 状态：P10 矩阵完成，新协议真实端点仍待验证；下一项 9.5/R01。阶段 9 进行中。
+
+## LOG-065｜阶段 9/9.5/R01：持久事件、归属与迟到保护
+
+- 日期：2026-11-26；任务 ID：R01。ChatRepository 将消息/回合、工具、Agent 和审批状态的变更与 session 单调 sequence 事件在同一 SQLite 事务提交；事件只保存内容摘要哈希，不保存参数明文。DatabaseClient 为内部变更分配事件 UUID，重复 ID/相同摘要不重复写入，变更内容或归属的重放拒绝。开始请求按 turnId 和请求摘要核对，已接受请求不再新建网络生成。终态工具/回合拒绝迟到覆盖；Renderer 忽略倒退 sequence，运行结束仅删除同一 Map 实例。
+- 文件：data/client、chat/repository/runtime、shared/chat-contracts、use-chat；stability/protocols 集成脚本。
+- 验证：类型/生产构建通过；verify-stability 退出 0，新增真实 Worker 检查覆盖请求摘要、重复事件幂等、变更重放拒绝、sequence 不倒退、已完成工具与回合的迟到覆盖拒绝；既有迁移/备份 4 组回归通过。Provider 流本身的重复 Responses sequence、参数/ID 与终止完整性另由协议检查约束，不能用持久事件幂等掩盖损坏流。
+- 边界：不声称网络 exactly-once；丢失响应后只复用已知 turnId/读取记录，不自动重试命令。SQLite 事务与原有序列约束使用 v8 既有表，无新增迁移版本。异常重启核对和 UI 恢复入口在 R02 继续，下一项 9.6/R02。
+
+## LOG-066｜阶段 9/9.6/R02：核对恢复状态与显式只读继续
+
+- 日期：2026-11-26；任务 ID：R02。RecoveryManager 按项目/会话/旧 turn 读取真实记录、事件序号、审批、Provider 修订与已记录文件的当前哈希；缺失/变更/未知分别展示。旧命令进程不凭历史假装仍连接或已清理，记录为 unknown。恢复预览绑定 owner/token/两分钟有效期和检查摘要；确认前重检，文件或绑定变化则拒绝；复用 token 拒绝。
+- 实现：启动恢复状态在同一 SQLite 事务使旧审批失效、活动工具/回合中断并记录事件；旧 running command 标 EXECUTION_STATE_UNKNOWN。新增 chat.recovery.* 严格契约、原 Dialog/ScrollArea 核对 UI，历史“核对恢复状态”入口。确认后创建新 turn/新预算，只读项目核对或普通聊天，不重放任何旧工具/审批，不重新连接旧 HTTP；后续写入仍须另发新任务逐次审批。
+- 文件：shared/stability-contracts、chat/recovery/repository/runtime、data/service、RecoveryAction/ChatHistory/ChatWorkspace、样式；recovery.integration/verify-recovery。
+- 验证：类型/构建通过；verify-recovery 退出 0，3 组实际 Worker 重开检查：审批失效/旧命令 unknown/实际外部编辑识别/确认前零请求；错 owner、检查后文件变化、重复 token 拒绝，确认仅 1 次本地请求且新回合只有三个只读工具、磁盘内容不变；Provider revision 改变阻断旧上下文自动转发。该 UI 最终实际窗口/重启流程仍在阶段末验收；不将本地 fetch 替身写成真实 API。
+- 边界：这是经核对的新回合继续，不是透明恢复旧供应商连接、隐藏推理或旧子进程；未知进程不作安全退出保证。没有完整文件哈希的旧日志明确 unknown；权限/密钥/绑定问题须用户处理。R02 的本地核心检查通过后启用核对入口，最终全流程继续核对；下一项 9.7/R03。
+
+## LOG-067｜阶段 9/9.7/R03：三协议真实网络生命周期故障检查
+
+- 日期：2026-11-26；任务 ID：R03。保持各适配器独立的结束/参数校验、取消链和标准错误分类，重试仅显式新请求；401/403/429/503、断流、超时、用户取消和正常关闭分别检查。不自动切换协议/供应商、续接半段 JSON 或重放工具。
+- 文件：providers 传输/适配器与 ChatRuntime 的既有生命周期接线；新增 lifecycle.integration/verify-lifecycle。本轮 429 retry-after 保留实际头部秒数用于提示，不后台自动等待后重试。
+- 验证：verify-lifecycle 在主机回环 HTTP 中退出 0，三协议 × 8 场景共 24 项通过。每项独立使用真实原生 fetch、Worker、Agent 循环和半包 read_file 参数；只有一次 HTTP 请求，没有工具完成或文件变化；错误状态与预期一致，429 retry-after=1，保存结果不包含生成 fixture Key。取消/超时/关闭均等网络流退出后持久化，未提前声称完成。native-protocols 的无终止/重复 ID/坏 JSON 检查继续保留。
+- 边界：本地故障服务不代表真实供应商/网络设施全部兼容。恢复是 R02 的显式新回合，只读续查不重放副作用；未加入自动退避重试。下一项 9.8/R04。
+
+## LOG-068｜阶段 9/9.8/R04：真实存储失败与保留数据
+
+- 日期：2026-11-26；任务 ID：R04。新增显式 storage.reopen：仅连接失效时关闭旧实例后重开 Worker，不因普通刷新自动重放请求。Main 初始化可重试，失败保留原库；UI 提供重新连接。恢复指针有界读取/校验，候选缺失或坏指针明确恢复警告，使用仍保留的原始库而非创建空替代库；bootstrap 把警告带到全局入口。备份与日志失败只清理自身临时文件，不删除原数据。
+- 文件：data/backup/client/service/store、Main 初始化、stability/data 契约、store/App、设置 hook/Panel；storage-faults.integration/verify-storage-faults。
+- 验证：类型/构建通过；verify-storage-faults 退出 0，5 组真实故障：SQLite trigger 使事件插入失败，消息更新事务回滚且修复后显式更新成功；ENOTDIR 备份失败保留原会话；真实 blob 写失败不留索引、修复后可写；实际 Worker terminate 后拒绝请求、不重放、WAL 内容重开保留并标记旧回合中断；损坏 generation 指针保留原库且返回 recoveryError。没有把模拟 ENOTDIR 说成真实磁盘耗尽，也未承诺断电所有场景。
+- 修正与后续：Lint 发现 DataSettingsPanel 直接导入平台网关违反展示层约定，已迁移到 use-data-settings hook，阶段末重跑统一检查。故障恢复的全局窗口入口会在 R07/U09 桌面流程实际操作。
+- 状态：R04 本地实现与故障检查完成，Windows/正式升级与物理磁盘故障仍在平台/发行边界；下一项 9.9/R05。
+
+## LOG-069｜阶段 9/9.9/R05：长会话虚拟化与本机测量
+
+- 日期：2026-11-26；任务 ID：R05。保持每页 20 条读取，超过 60 条已加载消息时使用现有 TanStack Virtual，动态高度/overscan 4、稳定消息 ID 和旧消息锚点；复用原 Message/Streamdown/Tool。MessageRow memo 与稳定动作回调减少文本流时旧消息重绘；持久 sequence 未变化时跳过重复投影。上滚停止自动跟随，分页保留原可见消息；大日志仍按 64KiB 分段读取，不预取整个文件。
+- 文件：ChatHistory/use-chat、局部样式、performance-seed/smoke-performance；没有新增 npm 依赖或替换原 AI 组件。TanStack API 导致 React Compiler 按官方 lint 规则跳过该 hook 的自动 memo（警告，不是错误）；本项目没有靠强行 memo 虚拟器函数隐藏告警。
+- 验证：类型/构建通过；实际 Electron 临时 SQLite 样例 2000 条约 16MiB 历史 + 1MiB 日志，初次仅 20 条读取，分页到 80 条时 DOM 实际 9 条；启动到可用历史 1539ms，三次分页 115/98/137ms，输入 fill/回读 46ms，三次 64KiB 日志读取 5/3/4ms。smoke-performance 退出 0，无页面错误；输出 output/performance-stage9.json 和截图，已查看。数据均为本机生成样例，不代表任意设备或任意 Markdown 的硬性 SLA；页面输入继续可用。
+- 边界：前端分页累计数据随用户加载增长，虚拟化限制 DOM 而不声称所有历史常驻内存为固定常数。没有加载全部长日志；超长单条消息仍受已存在文本/工具上限约束。既有上滚/回到底部与最终包内回归在 R07 继续。下一项 9.10/R06。
+
+## LOG-070｜阶段 9/9.10/R06：配置审查导入与无秘密诊断
+
+- 日期：2026-11-26；任务 ID：R06。新增严格 devly-config-v1 白名单，只导出供应商元数据/兼容声明与应用偏好，不含 Key/引用/hasCredential/诊断报告/历史。导入原生文件有大小/非符号链接限制，先校验并按 owner/预览 UUID/五分钟/文件哈希绑定，UI 显示协议/主机/模型、权限/限额并明确审查；确认后事务创建全新 Provider UUID、重映射默认值，保留旧会话绑定/已有 Key，替换应用默认偏好并明确清除偏好草稿。未知秘密字段和疑似凭据串拒绝。
+- 诊断：固定版本/计数/状态/协议统计白名单，不导出日志正文、路径、供应商名称、URL、模型或凭据引用。原 SettingsEditor 的作用域偏好 JSON 导出保留；新的完整配置导入只接受 data 组导出的 devly-config-v1 格式，不假装兼容任意 JSON。没有解密 Key 来生成配置或诊断。
+- 文件：shared/data-contracts、data/configuration/store/service、Main 文件选择、DataSettingsPanel/use-data-settings、store/settingsEpoch 与设置页；configuration.integration/verify-configuration。更新旧模型选择脚本中“Responses 尚未实现”的过时预期，保持不发 API 的选择检查。
+- 验证：类型/构建通过；verify-configuration 退出 0，3 组真实 Worker/SQLite/文件检查：导出不含引用且 Vault.read 不被调用、诊断无敏感元数据；错 owner/预览后文件变化/带 apiKey 的非法字段拒绝并保留原值；实际 settings INSERT 故障回滚新供应商，显式重新导入后新 UUID/默认映射正确、旧绑定/凭据保留、重复预览拒绝。UI 最终操作与配置/诊断文件再次核对在 R07。
+- 限制：完整配置限 50 个供应商、1MiB 文件；它是配置白名单，不是对任意用户元数据中所有可能秘密的万能识别器，用户不要把凭据填进名称/模型/地址路径。备份包含私人历史需单独保护；诊断刻意不含正文，原始工具日志仍在受控本地历史中查看。下一项 9.11/R07。
+
+## LOG-071｜阶段 9/9.11/R07：关键流程回归与恢复演练
+
+- 日期：2026-11-26；任务 ID：R07，关联 R04/G01。统一 pnpm check 首轮退出 0，152 项通过/3 项默认跳过、35 份上游文件、文档、构建与原生协议/恢复/故障检查通过。随后新增恢复边界验证，最终整套检查与包内复核另见阶段收尾记录。
+- 本机实际行为：verify:execution 6 组、verify:git-workspace 6 组、verify:terminal 5 组、verify:chat-ui 8 类、verify:editor-ui 开发窗口均退出 0；覆盖审批前不执行、外部编辑冲突、真实 stdout/退出码、取消子进程、崩溃旧授权失效、真实 Git 提交/分支失败保护、PTY Ctrl+C/项目归属，以及分页/上滚/重启续聊。均使用临时真实文件/仓库和本地模型夹具，不调用个人 API。
+- 演练：verify:stability-ui 退出 0，实际启动存储失败→修复→显式重连，旧回合核对→新只读继续，配置测试/两种原生聊天，配置/诊断导出与审查导入，快照→审查→重启恢复。确认前零请求、重载不重复发送、原文件保留、旧审批不复用。
+- 修正：原有文件监听单测偶发错过 fs.watch；EditorService 加入已安全 stat 文件的 mtime/ctime/size 轮询兜底，保持 inode/路径校验，不放宽测试时间。backup.ts 新增配置/Agent payload 语义校验和 trigger/view/virtual table 拒绝，避免“正确哈希的坏库”切换为活动库；blob 对照改 Map。verify:stability 实际重算坏快照哈希后仍拒绝无效 settings/trigger，6 组通过且旧库保留。
+- 文件：editor/service、data/backup、stability/recovery 集成、smoke-stability 与 check/CI；文档新增 stability-and-recovery、矩阵及相关入口。新增孤立回合夹具先漏绑定、后误以 begin 为 pending，按实际 running 状态修正；恢复脚本 4 组通过，没有放宽业务契约。
+- 边界与状态：R07 当前 macOS 本地回归完成，最终包内检查在本阶段收尾继续；新协议真实服务、Windows、远端 CI 和实际断电/磁盘耗尽未验证。下一项 9.12/U09。
+
+## LOG-072｜阶段 9/9.12/U09：错误入口与待恢复交互
+
+- 日期：2026-11-26；任务 ID：U09，关联 R02/R04。未配置模型提供供应商设置入口；历史认证/403/429/断网等错误可直接检查连接，429 显示供应商实际建议等待秒数；存储和限额错误分别链接数据恢复/权限。未加载原始用户消息时禁用重发，项目写任务继续保留不自动重发规则。
+- 待恢复保护：bootstrap/store 同步 pendingRestore；安排备份恢复后禁用新消息，Main 同样拒绝 chat.start/恢复继续；可打开数据组取消待恢复操作。失效项目显示重新选择目录入口；归档会话保留恢复入口。数据设置间距、导入预览协议/主题/权限中文标签统一，未改原组件源码/品牌。
+- 运行连接核对：chat.read 若记录活动但没有对应运行连接，仅原子收尾该会话并返回中断；不改另一会话、不发 HTTP、不复用授权。恢复预览增加工具能力失败检查。超时文案改为核对网络/供应商后手动重试，避免提示不存在的超时配置项。
+- 文件：shared/data-contracts、data/store/service、chat/runtime/repository/recovery、Renderer store、ChatHistory/ChatWorkspace、DataSettingsPanel/use-data-settings/SettingsGroup/styles、providers/errors 与 recovery/smoke-stability 脚本。
+- 验证：typecheck 退出 0；verify:recovery 4 组通过，包括孤立连接的会话归属；verify:stability-ui 开发窗口退出 0，真实回环 401/403/429/断网各仅一次请求，错误路由可操作、恢复按钮在 960×680 内可见、未配置入口可用、目录移走后可重新选择、待恢复输入禁用；无 pageerror。截图 output/recovery-review-stage9.png、data-settings-stage9.png；fixture Key 不进入 Renderer。
+- 状态：U09 本地实现/窗口检查完成；阶段 9 等待最终统一与包内复核，新协议真实端点按用户确认另行联调，不能宣称所有供应商或平台通过。下一步仅本阶段最终检查，不展开阶段 10。
+
+## LOG-073｜阶段 9/R01、R07、U09：快速响应下的聊天投影保护
+
+- 日期：2026-11-26；最终包内演练首次在连续错误发送中出现输入等待超时，保持失败记录，未据开发窗口成功直接判包内通过。增强夹具又发现 failed 选择器同时包含用户与助手消息，导致期望 1 实际 2；已限定 .is-assistant，等待新增对应消息与输入恢复，不延长超时。
+- 代码审查另发现确认/轮询的真实竞态：最终或流式轮询可能早于 chat.start 确认；旧确认原先会清空文本/回退 running，sequence 相同的后续轮询又跳过。新增 projection.ts：同一已观察回合保留当前内容与状态，较旧消息分页重新投影最新快照，不用重复网络请求补救。
+- 文件：features/chat/projection.ts、use-chat.ts、tests/chat-projection.test.ts、smoke-stability.mjs；文档同步计数。2 项针对性测试退出 0，覆盖流式/完成/失败/取消先于发送确认，以及旧页不覆盖较新文本/终态。常规总数增至 154 通过/3 默认跳过。
+- 状态：修正已实现；完整 check 和开发/新包内 UI 重跑中，结果在下一条最终记录补齐。首次包内失败仅证明测试流程未通过，不把尚未复现定位的所有症状归因同一竞态。真实新协议与 Windows 范围不变。
+
+## LOG-074｜阶段 9：本地实现归档与真实联调待办
+
+- 日期：2026-11-26；任务 ID：L08/P08/P09/P10/R01/R02/R03/R04/R05/R06/R07/U09。本轮按用户“先完成代码和本地协议验证；真实端点另行联调”范围完成收尾；新协议真实端点/模型验收不勾选。
+- 最终统一检查：pnpm check 退出 0，154 项通过、3 项主机检查默认跳过（17 个测试文件通过/2 个跳过）；类型、Lint、格式、来源 35 文件、图标、生产构建与数据/聊天/Agent/六类阶段 9 原生集成全部通过。Lint 保留 TanStack useVirtualizer 的 React Compiler incompatible-library 1 条警告（跳过自动 memo），Zod Rollup 注释/大块构建提示保留，不宣称零警告。首次 README 表格格式失败已修正；LOG-073 的修正后再次全套通过。
+- 原生事实：stability 6 组（含哈希正确但配置/trigger 非法的快照拒绝）、两新协议回环工具闭环、recovery 4 组、lifecycle 三协议 24 场景、storage-faults 5 组、configuration 3 组通过。此前阶段的审批执行 6 组、Git 6 组、PTY 5 组、聊天分页/上滚/重启、编辑器与工作台开发 UI 回归退出 0。SQL trigger/ENOTDIR/Worker terminate 为实际可复现故障，不冒充磁盘耗尽或断电实测。
+- 最终桌面：pnpm verify:stability-ui 及同脚本 DEVLY_EXECUTABLE 指向新 Devly.app 均退出 0，覆盖真实配置表单、原选择器、两新协议聊天、认证/403/429/断网、未配置 API、失效目录、最小窗口、核对后新只读继续、配置审查导入/无 Key 导出、备份下次启动恢复。每个错误仅一次网络请求；等待新增助手失败消息后输入恢复可编辑；重启/重载不重放旧工具或网络。初次包内流程失败见 LOG-073，最终重跑通过，没有删除失败证据。
+- 打包：pnpm exec electron-builder --dir --config.electronDist=node_modules/electron/dist --config.mac.identity=null 退出 0，生成 release/mac-arm64/Devly.app；未签名、未公证、无 DMG。包内 verify:execution-ui 和 verify:editor-ui 均退出 0：实际 Confirmation 审批/拒绝、Plan/Task、停止与旧审批失效，保存冲突/Diff、本地 Monaco/Worker（blob:，无 pageerror）通过。未运行新的收费真实模型样例。
+- 性能：临时库 2002 条消息/16760890 字节历史、1MiB 日志。开发样例首次 1280ms，三页 119/99/139ms，输入 44ms；包内 1484ms、110/95/126ms、输入 41ms，加载 80 条仅挂载 9 条，64KiB 日志区间读取 8/5/6ms。两次 verify:performance-ui 均退出 0；output/performance-stage9-development.json 与 performance-stage9-packaged.json 保留样例，不承诺其他设备或无限历史同等性能。
+- 文档/文件：新增 docs/stability-and-recovery.md、provider-matrix.md；同步 README、架构、选型、数据、聊天/只读/执行/编辑器、组件、质量/依赖、阶段说明与唯一计划。工作区先前阶段 8 未提交修改全部保留，本次没有 commit/push。截图 recovery-review-stage9/data-settings-stage9/performance-stage9 与执行/编辑器证据均由实际窗口生成，恢复弹窗和数据设置已查看。
+- 未覆盖：Responses/Anthropic 真实端点文本/流/工具/取消另行联调；全部供应商、个人工具链、Windows、远端 CI、实际磁盘耗尽/任意断电、签名/升级与已记录依赖/版权发行门槛仍未通过。文件草稿崩溃恢复不在 R02 的实现声明内。
+- 最后文档复核：pnpm check:docs 退出 0（30 份 Markdown、106 个唯一任务 ID、74 条连续日志）；pnpm format:check 与 git diff --check 均退出 0。
+- 状态与下一步：阶段 9 代码与当前 macOS 本地验收归档；阶段总体“待验证（新协议真实联调）”。P08/P09 标明本地完成、真实待验证；唯一下一步 9.2/P08 的真实端点验收，随后 P09/P10 补齐矩阵。不自动展开阶段 10，不要求在聊天中发送 Key。
+
+## LOG-075｜阶段 10/10.1/A08：项目指令与用户记忆
+
+- 日期：2026-11-26；用户新指令明确要求阶段 10，按该指令开始本阶段；阶段 9 的 Responses/Anthropic 真实待联调没有改为通过，也不以此自动宣称新协议兼容。
+- A08 实际变更：SQLite v9 project_context 与严格参数/归属；用户管理 instruction/memory，目录 scope、启停、编辑/移除、50 条/单条 8192 字符限制。独立“项目上下文”设置组复用 shadcn；Agent 上下文按选中文件/读取文件范围注入、标记来源及优先级，沿用 A05 预算；不提供模型写记忆工具，不将普通工具输出变成高优先级指令。
+- 文件：shared/extension-contracts、extensions/context/repository、data/migrations/store/backup、agent/context/runner、chat/runtime、Renderer extensions/ProjectContextPanel 与 hook、设置分组及样式。v8 备份仍可检查，新格式使用实际 migration version。
+- 验证：pnpm typecheck / build:bundle 退出 0；node scripts/verify-extensions.mjs 退出 0，实际临时项目、SQLite Worker、Agent 上下文、两项目隔离、来源 ID、重开持久化与移除通过。模型返回为本地 fixture，不伪装第三方真实调用；GUI 与完整阶段回归在 I07 收口。
+- 状态：A08 本地基础完成；进入 10.2/I01。已有阶段 8/9 未提交内容保留，无 commit/push。技能资源和子任务继承在后续对应步骤实现，不据当前记忆 CRUD 提前标完成。
+
+## LOG-076｜阶段 10/10.2/I01：整回合队列与目录锁
+
+- 日期：2026-11-26；任务 ID：I01。Main RunQueue 最多 4 个并发/32 个活动及等待回合，按 canonical 根目录对重叠目录写任务串行；只读与隔离目录可在限额内并发。回合先持久化 queued 再获取许可，UI 可以取消排队项；计时、Abort、实际收尾和旧审批规则继续生效。
+- 文件：extensions/queue、chat/runtime/repository、shared/chat-contracts、tasks.list/start 契约与设置任务入口；短操作 serializeMutation 原锁保留，worktree 不是沙箱。
+- 验证：typecheck 退出 0；run-queue 2 项通过，实际 Promise 许可验证重叠目录串行/隔离目录并行、队列项取消不释放运行项及重复 release 幂等。实际 Runtime/GUI 队列与关闭回归在 I07 补齐，不以基础单测声称全阶段完成。
+- 状态：I01 基础完成，进入 I02；新任务沿用用户明确选中的 Provider/模型，没有自动跨供应商转发。
+
+## LOG-077｜阶段 10/10.3/I02、10.4/I03：worktree 与审查合并
+
+- 日期：2026-11-26；任务 ID：I02/I03。SQLite v10 保存 managed_workspaces/task_links 基础关系；WorkspaceService 固定 Git 参数、canonical 注册检查、禁止符号链接，工作区位于源仓库 .git/devly-workspaces/UUID，分支为 devly/task-UUID；创建基于当前 HEAD，不复制主目录未提交内容。
+- 实现：审查包含实际工作区/主 HEAD、状态和内容摘要，新增文件内容也参与 token；保护路径拒绝，外部变化返回 stale；用户审查后暂存/提交，再允许干净主目录的 ff-only 合并。分叉/冲突明确拒绝，保留主内容；不自动解决复杂合并。关闭仅干净且无活动任务的工作区，始终保留任务分支，无自动 prune/reset/删除未提交内容。外部过滤器配置时拒绝自动暂存。
+- UI：独立“任务与隔离”组，使用 shadcn Select/Textarea/Dialog/ScrollArea，任务列表、创建独立会话、停止/打开，以及 worktree 审查、提交、合并、关闭；没有通过 Renderer 任意执行 Git 命令。
+- 文件：extensions/workspaces/repository、data/migrations/store/service、shared/extension-contracts、Renderer extensions/TaskPanel/use-tasks、设置与样式；backup 补充新元数据校验。
+- 验证：typecheck/build:bundle 退出 0；node scripts/verify-workspaces.mjs 在当前 macOS 主机退出 0，临时真实 Git 的两工作区/分支/项目隔离、主脏文件保留、真实 Diff、版本过期拒绝、脏删除/脏合并拒绝、实际提交/快进、冲突分叉拒绝及关闭保留分支三组通过。Git 系统约束在主机按审批运行；未扩大为 Windows 或复杂 rebase/merge 支持。
+- 状态：I02/I03 本机基础验收完成，任务父子/预算和最终集成在 I06/I07；进入 I04。
+
+## LOG-078｜阶段 10/10.5/I04：真实 MCP 服务与审批映射
+
+- 日期：2026-11-26；任务 ID：I04。安装官方 @modelcontextprotocol/client 2.4.0、AJV 8.20.0，测试服务器 @modelcontextprotocol/server 2.4.0 为开发依赖；版本已查 npm 和官方源码。首次安装因当前 node_modules 绑定项目 .pnpm-store 而拒绝，沿用该 store 重试成功，没有修改全局配置。
+- 实际实现：MCP Streamable HTTP、工具发现与连接检查、项目级显式启用、按服务 UUID/工具名哈希的别名、配置 revision/Schema 双重核对。输入与结构化输出交给有超时/内存限制的 Worker 校验；禁止跨地址重定向、限制消息大小/工具数/连接数，无自动副作用重试。SDK 的可选 sampling/elicitation/自动认证不开放；暂不实现 stdio/OAuth/所有 MCP 扩展。
+- 凭据与权限：SQLite v11 保存配置与受保护凭据引用，Key 只在 Main/Vault；备份剥离新引用并 VACUUM。每次 MCP 调用映射到原 ApprovalBroker/Confirmation，显示服务/端点/工具/Schema 来源；拒绝/过期不执行，配置变化撤销旧连接；MCP 远端不等于项目文件沙箱，未知结果明确不重放。
+- 文件：extensions/mcp/schema/schema-worker/repository、shared extension/agent 契约、data/migrations/store/service/backup、chat/runtime、AgentTrace 和独立 MCP 设置组、electron.vite Worker 入口、pnpm 锁文件。
+- 验证：typecheck/build:bundle 退出 0；node scripts/verify-mcp.mjs 在主机退出 0。官方 SDK 的实际本地 HTTP MCP 服务完成发现和成功/失败连接；两个同名工具服务别名不同；审批前无 handler 调用，拒绝回传模型，批准后写真实审计文件，重复审批不重复派发；无效参数在审批前拒绝，服务端真实异常标失败，生成测试 Key 不进入公开/持久工具记录。模型为本地协议 fixture，MCP 是实际运行服务，不冒充任何外部商业服务。
+- 限制/状态：I04 当前 macOS 本地真实服务基础通过，网络故障/包内/GUI 与集成在 I07 继续；子任务继承不在本项提前判通过。进入 I05。
+
+## LOG-079｜阶段 10/10.6/I05：真实 Skills 与关联资源
+
+- 日期：2026-11-27；任务 ID：I05。发现项目 .agents/skills、.claude/skills、.devly/skills 的实际 SKILL.md；查看后显式启用，按内容 SHA 保存选择，来源纳入 Agent 上下文。内容变化或不可读时拒绝沿用旧授权，提示重新审查或移除；不自动执行 Skill 脚本、不把工具结果提升为指令。
+- 资源：read_skill_resource 只对所选 Skill 注册，限制目录/行数/大小/编码；逐层拒绝符号链接、路径越界与秘密路径，仍以普通工具数据进入后续模型回合。最小 frontmatter 读取 name/description，不宣称支持完整 YAML 或所有第三方 Skill 方言。
+- 文件：extensions/skills、extensions/repository、shared/extension-contracts、Agent runner/context、SkillsPanel/use-skills、data/backup、scripts/skills.integration 与 verify-skills。
+- 验证：typecheck、build:bundle 退出 0；verify:skills 两组实际临时文件/SQLite/Agent 工具往返通过，包含读取关联资源后继续模型、来源、越界/符号链接拒绝、内容变化阻断且未发 HTTP、移除。模型为本地 fixture；原生关联资源是真实文件。UI 查看/启用和包内检查由 I07 补齐。
+- 状态：I05 本地完成；进入 I06。选择和资源不会自动跨项目/供应商传输；子任务只继承明确的根项目上下文。
+
+## LOG-080｜阶段 10/10.7/I06：父子 Agent、预算与取消
+
+- 日期：2026-11-27；任务 ID：I06，关联 I01/I02。用户显式开启多 Agent 后，项目写模式才暴露 spawn_agents；审批展示任务内容/模式/预算，批准后创建最多两个独立 worktree 和会话。父子使用相同 Provider/模型，子任务不再委派；内部权限上限不能由 Renderer 参数伪造，根项目当前权限同时复核。
+- 预算/生命周期：父预算先预留子份额，子任务只能消费份额，回收未用部分幂等；统一 Token/调用/输出/截止时间，Provider 未报告用量按预留保守扣除。父等待子任务时让出队列许可，避免目录锁死锁；取消贯穿子 HTTP、排队、执行与待审批。部分初始化失败保留已创建工作区，不自动清理用户内容。
+- 数据/界面：task_links 保存 root/parent/workspace/context 归属，工具与审批仍属于各自回合；原 AgentTrace 展示关系、预算与父子跳转。已关闭工作区保留项目和会话历史，仅工作目录移除；不恢复旧 HTTP/进程或重放授权。子工作区基于已提交 HEAD，父未提交内容不隐式复制。
+- 文件：extensions/budget/delegation、chat/runtime/repository/recovery、extension repository/workspaces、shared Agent/chat/extension 契约、ChatWorkspace/use-chat、AgentTrace、TaskPanel/use-tasks；tests/task-budget 与 scripts/multitask.integration。
+- 验证：TaskBudget 3 项和 RunQueue 2 项通过；verify:multitask 当前 macOS 五组通过，两个真实工作区、同 Provider/记忆/Skill/限额继承、真实单文件审批写入/主目录不变、全局输出用量对应、超预算在建工作区前拒绝、父取消 HTTP 与待审批补丁均收尾、重复旧审批无效、同目录写排队/异目录并行及跨会话日志拒绝。首次夹具把 read_file 的 limit 写成 endLine 导致严格参数拒绝，修正夹具后通过，没有放宽产品校验。
+- 状态：I06 本机基础完成；进入 I07。模型响应为本地可复现协议 fixture，不冒充真实收费 API 的多 Agent 能力；Windows、任意工具链与复杂合并范围不扩大。
+
+## LOG-081｜阶段 10/10.8/I07：集成失败修正与边界补齐
+
+- 日期：2026-11-27；任务 ID：I07，关联 A08/I01–I06。开发窗口实际走通 MCP 审批与两个子任务后，worktree 审查首次失败：补丁核心保留的 .devly-before-UUID 恢复副本被当成普通待审查文件，ReadOnlyToolbox 按保护策略拒绝。保留该失败，未放宽秘密/恢复副本读取规则。
+- 修正：审查列出恢复副本数量但不读取/暂存，代码差异正常审查/提交/快进；存在副本时拒绝关闭，要求用户手动妥善保存，不 force 删除或自动清理。新增真实文件检查，确认内容保留、关闭 recovery_present、夹具拥有者明确处理后可关闭干净工作区。源分支同 HEAD 切换也使旧 token 失效，回到创建绑定分支后才能合并。关闭只读子工作区后历史仍可读，失效目录入口明确。
+- UI 审查同时修复记录保存返回 ID 的草稿更新与严格 DTO 白名单：编辑用户记录/MCP 不把 source/updatedAt/revision 等服务字段传回输入契约，保存后即可测试 MCP；原数据 ID 保留。四组仅显示对应内容，沿用 shadcn 控件和 AppShell ScrollArea，原组件 35 文件与图标 v5 不变。
+- 回归夹具修正：旧 verify:chat 要求第 5 个任务拒绝，与 I01 的排队要求冲突；改为检查 4 个活动、第五个 queued、32 个活动及等待上限、第 33 个拒绝、关闭全部真实收尾。第一次新版夹具误等待不存在的 streaming phase，改为等实际已保存文本；没有修改产品状态来迎合测试。extensions 的跨项目复用 ID 检查使用合法输入白名单，验证归属拒绝而非靠未知字段失败。
+- MCP 增加真实派发后取消：实际 SDK handler 已启动但尚未返回时停止，回合显示 EXECUTION_STATE_UNKNOWN，旧审批失效，释放夹具后无第二次派发。输入/输出 Schema 继续使用有界 Worker；所有结果仍脱敏。v11 备份增加有凭据 MCP 配置/项目记忆的真实检查，活动引用保留而快照与恢复引用清除。
+- 主机失败记录：受限环境的 Electron 检查曾以 task_name_for_pid 错误退出，升级主机权限后运行；另有完整 Agent/执行夹具打印场景后仍返回非零，两次都未计为通过，未据无堆栈退出断言产品根因。补充 signal 诊断、顺序单独重跑及完整 check 后均退出 0。安装包许可核对脚本最初使用受 exports 禁止的 package.json 路径，随后又解析到了客户端之外的 Ajv 6；改为按实际声明的直接 Ajv 8 与客户端依赖根核对，确认原先复制的产品许可证正确，没有用错误版本替换通知。
+- 文件：extensions/workspaces、shared/extension-contracts、TaskPanel 与 hooks、workspaces/mcp/multitask/chat/stability 集成、smoke-extensions、verify-agent/verify-execution、vendor 七份许可和打包过滤。完整状态与最终验证收口见下一条；不把中间失败隐藏为首次全部通过。
+
+## LOG-082｜阶段 10：当前 macOS 本地及包内验收归档
+
+- 日期：2026-11-27；阶段 / 步骤 / 任务 ID：10.1–10.8，A08/I01/I02/I03/I04/I05/I06/I07。按用户新指令完成阶段 10，不追认阶段 9 Responses/Anthropic 真实端点通过。
+- 全套：pnpm check 退出 0，159 项通过/3 项主机检查默认跳过（19 个文件通过/2 个跳过），类型/Lint/格式/31 文档/106 唯一任务/35 原组件/357 图标/构建及全部数据、聊天、Agent、阶段 9 集成、项目记忆与 Skills 通过。Lint 仍有 TanStack useVirtualizer 的 React Compiler incompatible-library 一条警告；Zod Rollup 注释和大块构建提示保留。最后夹具改动另经格式/Lint/文档检查，不以默认跳过项声称主机已通过。
+- 阶段 10 实际原生：verify:extensions 2 组、verify:skills 2 组、verify:workspaces 3 组、verify:mcp 4 组、verify:multitask 5 组退出 0。官方 SDK 真实 HTTP 服务（含失败连接/工具异常/取消）、真实 Skill/资源、真实 Git 工作区与补丁、审批和拒绝、同目录串行/异目录并行、子预算/权限/Provider 继承、父子取消、日志归属均有实际记录。v7 与阶段 9 的 v8→v11 正常/DDL 失败迁移均通过，旧记录/版本回滚/可读备份保留；verify:stability 6 组退出 0。
+- 开发窗口：verify:extensions-ui 退出 0，原生表单、记忆修改不重复 ID、Skill 原文查看启用、MCP 发现/审批、两个隔离子任务/父子跳转、真实代码审批修改、960×680 审查可操作、用户本地提交与快进、关闭干净只读工作区/保留分支及历史、重启无重放通过；本地模型请求 8 次，实际 MCP 副作用仅 1 次，无 pageerror。
+- 打包：pnpm exec electron-builder --dir --config.electronDist=node_modules/electron/dist --config.mac.identity=null 退出 0，release/mac-arm64/Devly.app 为未签名目录、未公证、不是 DMG。七份新增实际许可与包内 Resources/licenses 逐字节/SHA-256 一致（client/core 2.4.0 Apache-2.0、Ajv 8.20.0 及已记录传递依赖 MIT）。依赖库存为 67 直接/937 已安装版本，未做新的网络安全清零声明；原发行阻断仍保留。
+- 包内：DEVLY_EXECUTABLE 指向新 .app 的 verify:extensions-ui 退出 0，完整扩展流程再次通过；还实际创建/检查/安排恢复 v11 备份，修改备份后的会话标题，重启恢复原标题、记忆/MCP/所选 Skill/两个子回合及工作区关系；请求仍仅 8 次，MCP 副作用仅 1 次，无旧网络/工具重放。包内 verify:execution-ui、verify:editor-ui、verify:stability-ui 均退出 0，原 Confirmation/Plan/Task、停止/旧审批、保存冲突/Diff、本地 blob: Monaco Worker、两新协议本地聊天/错误/恢复/配置白名单与备份均无核心回退。原生 verify:execution 7 组、verify:editor 4 组、verify:git-workspace 6 组也退出 0。
+- 文档与证据：新增 docs/task-extensions.md（三张详细架构/时序图、使用、迁移、上限及实际边界）；同步 README、文档入口、架构、选型、数据、聊天/只读/执行/编辑器、Renderer、UI、质量、依赖、阶段说明和唯一工作计划。output/extensions-parent.png 与 extensions-worktree-review.png 为实际窗口截图，已查看预算/父子入口和最小窗口审查布局；.cache/stage10-* 为本机各命令日志/库存/许可检查。没有提交或推送，保留之前阶段未提交内容。
+- 未覆盖/剩余：所有模型响应为可复现本地协议夹具，本轮没有新的收费第三方 API；阶段 9 新协议真实端点另行联调。MCP 只覆盖当前 Streamable HTTP 子集和本地实际服务，不包含 stdio/OAuth/sampling/所有外部服务；Skill 不执行任意脚本；最多两子任务/一层；合并仅快进；恢复副本存在时不可自动关闭工作区。worktree 不是沙箱，Windows/远端 CI、个人工具链、任意 MCP/Skill、签名/升级/安装包与既有依赖版权阻断继续未验证，不以本机成功抵扣。
+- 最终复核：最后夹具与文档改动后，pnpm lint 退出 0（保留原有 1 条警告），pnpm format:check 退出 0，pnpm check:docs 退出 0（31 Markdown、106 唯一任务 ID、82 条连续日志），git diff --check 退出 0。早期主机夹具非零退出的根因未据现有证据确认，最终顺序复核与包内检查通过，保留 LOG-081 的失败记录。
+- 验收：三条阶段验收逐条通过当前 macOS 范围：目录锁/归属与取消；未提交/恢复副本/分支保护及审查合并；实际 MCP、实际 Skill 与父子权限/预算/取消。阶段 10 标为完成（当前 macOS，本地模型夹具范围），I07 完成，进入阶段 11 的待开始位置，唯一下一步 11.1/E01；本轮未实现阶段 11。
+
+## LOG-083｜阶段 11/11.1/E01：搜索、抓取与真实来源
+
+- 日期：2026-11-27；任务 ID：E01。用户确认先完成代码和本地验证，真实搜索端点另行联调，不能把本地 JSON 服务当作商业搜索验收。
+- 变更：SQLite v12 web_configs 保存项目级搜索/抓取开关、Brave/JSON 协议、固定端点和独立受保护凭据引用；新增网页工具设置组。Main 使用固定 IPv4 DNS 解析并锁定实际连接地址，禁止私网/元数据/不支持协议，逐跳复核重定向，无网页 Cookie/模型 Key。2 MiB 响应、15 秒 socket/5 秒 DNS、独立 64 MiB/2 秒 HTML Worker；实际 URL、标题、摘要和时间返回模型，原 Tool/Confirmation 对完整请求逐次审批。
+- 文件：shared/web-contracts、main/web、DataStore/LocalDataService/migrations/backup、ChatRuntime/ApprovalBroker、WebPanel/设置组/AgentTrace、electron.vite、builder、scripts/web*、tests/web-network、parse5 固定 8.1.1/原 MIT 许可。备份剥离搜索引用并核对配置，凭据生命周期与模型配置分离。
+- 验证：typecheck/build:bundle 退出 0；web-network 两项通过；verify:web 三组实际本地 HTTP/SQLite/Agent 审批测试退出 0，401/429、项目隔离、拒绝/非法/私网/版本变化零请求、重复授权无效、持久结果与 Key 脱敏通过。web-live.integration 当前 macOS 实际 HTTPS GET https://example.com/ 退出 0，标题 Example Domain、正文 156 字符，有实际取得时间，未用 Key/搜索/模型。GUI 与包内完整集成留到 E06。
+- 失败修正：安装受限 DNS ENOTFOUND 后停止重试并获主机联网安装成功；Node 双栈自动选择与自定义 lookup 参数不匹配最初报 ERR_INVALID_IP_ADDRESS，明确 family:4 后真实抓取通过。搜索凭据处理分支最初落入通用 Worker 路由导致 INVALID_REQUEST，补齐返回后集成通过；旧夹具 chat.read 多传 turnId 已按严格契约修正，没有放宽校验。
+- 状态：E01 代码与当前 macOS 本地/公开抓取验证完成；真实搜索端点待联调。按用户允许的本地范围进入 11.2/E02；不开放未审批的本地文件上传，不声称 IPv6/任意站点/付费搜索兼容。
+
+## LOG-084｜阶段 11/11.2/E02：真实附件与能力映射
+
+- 日期：2026-11-27；任务 ID：E02。系统选择器导入 UTF-8 文本（≤128 KiB）和 PNG/JPEG/WebP（≤2 MiB、尺寸/像素限制），每条最多 4 个；其他二进制/PDF/秘密文件明确拒绝。导入只保存在当前会话，不发网络；发送前页面明确文件内容/历史附件会交给所选供应商。新会话附件保留输入草稿，移除只移出待发送清单，不删用户原文件。
+- 数据/运行：SQLite v13 blobs.digest，实际 SHA-256/类型/字节数与消息分段引用；读时重新校验，跨项目/会话引用拒绝，已被历史引用的副本不能直接删除。完成回合的上下文按实际消息 ID 恢复附件，模型切换须既有显式历史确认，视觉未知/不支持时不静默丢掉图片历史、也不发请求。普通失败重发保留原附件引用；不自动重发副作用。
+- 协议：Chat image_url、Responses input_image、Anthropic base64 source 各自映射；没有把 data URI 当 Anthropic 在线 URL。图像上下文以明确估算的占位计算，供应商实际用量仍沿用上报，不编造图片 Token 或费用。备份检查新增摘要与 blob manifest 一致性，旧无摘要附件明确要求重新导入。
+- 文件：shared/attachment-contracts、main/attachments、data/store/service/migrations/backup、chat/runtime/repository、agent/context/runner、三协议映射、ChatWorkspace/use-chat/ChatHistory、样式、附件单测和集成脚本。
+- 验证：typecheck 退出 0；attachments 3 项单测通过（真实头/尺寸/秘密/大小边界、估算与三协议图片格式及未知视觉零请求）；verify:attachments 三组真实临时文件/SQLite/HTTP 退出 0，包括原文件不变、消息持久引用、重启后历史图片/文本、跨会话拒绝、切换不支持视觉模型拒绝、外部替换副本拒绝且零额外请求。Lint 退出 0，保留 TanStack 既有一条警告。模型响应为本地夹具，未声称任意模型视觉已验收；GUI 与包内在 E06 收口。
+- 状态：E02 当前 macOS 本地完成，进入 11.3/E03；真实搜索联调仍按用户确认保留，没有因此扩展阶段 12。
+
+## LOG-085｜阶段 11/11.3/E03：隔离静态预览与端口清理
+
+- 日期：2026-11-27；任务 ID：E03，关联 R04。预览用户明确选择的项目 HTML，以入口所在目录为静态根，支持 dist/index.html 等已构建产物，不执行 Shell/npm/任意项目命令。127.0.0.1 随机端口、随机入口令牌与 HttpOnly/SameSite Cookie，校验 Host；每资源≤2 MiB，限定类型、真实路径、无符号/硬链接、秘密检测；不把项目根之外或应用 userData 暴露为文件服务。
+- 容器边界：独立非持久 Session/BrowserWindow，sandbox/contextIsolation 开启，无 preload/Node/opener/主界面 IPC；禁止权限、显示媒体、下载、弹窗和 webview，限制 WebRTC 策略。静态 CSP 禁止连接/表单/框架/Worker，网络拦截只允许本预览来源；不声称 VM 或完整 OS 网络沙箱。静态后端/API/HMR/外部 CDN 不包含在此入口。
+- 生命周期：关闭预览窗口、停止、主界面重载或应用退出时关闭监听与连接、销毁窗口并清除会话存储。没有把旧端口或 PID 持久成仍在运行。独立设置组只显示本项配置，按钮具有实际状态。
+- 失败处理：首次预览夹具初始化两次 SIGSEGV（未进入网页加载）保留失败。DatabaseClient 原先在正常关闭握手后立即 terminate Worker，改为等待自然退出、3 秒超时才强制清理，并让并发关闭共享同一完成 Promise。修正后 verify:preview-ui 实际窗口通过，另 verify:worker-close 的三个独立 Electron 进程各重开四次 SQLite、保持记录与并发关闭，全部正常退出且未重试失败；不以这些样例宣称所有主机 SIGSEGV 根因已覆盖。WebRTC API 经本机类型/官方文档核对属于 webContents，修正初始 Session 调用的类型错误。
+- 文件：preview/service、shared/preview-contracts、DataService、DatabaseClient、PreviewPanel/设置组、stage11-ui-seed、smoke-preview、worker-close 集成与脚本。typecheck/build:bundle 退出 0；verify:preview-ui 三组通过，实际 HTML/CSS/DOM、无 Node/IPC/可读授权 Cookie/弹窗，秘密/越界/符号链接/无令牌请求拒绝，停止后真实端口不可连接，重新预览构建目录与主界面重载清理均通过；output/preview-isolated.png 为实际窗口截图。GUI/包内总回归在 E06 继续。
+- 状态：E03 当前 macOS 本地通过，进入 11.4/T10 的远程权限/传输边界，再实现 E04；不提前开放未验收浏览器工具。
+
+## LOG-086｜阶段 11/11.4/T10：独立远程权限与撤销
+
+- 日期：2026-11-27；任务 ID：T10。网页权限独立于项目写权限；默认关闭、精确请求审批，不把本地只读/写授权变成网络或文件上传授权。浏览器来源策略为显式 HTTPS origin 列表（上限 8），无路径/凭据/查询串/私网/特殊端口；保存策略尚不注册浏览器工具，实际浏览器在 E04 验收后接入。
+- 收紧：配置/凭据变化前后取消对应项目请求，UI 所有者释放只取消该所有者的测试请求；Agent 请求由回合取消链负责。每请求固定已批准的 revision，DNS 后连接前再次核对；搜索凭据只发固定搜索端点，正文抓取不携带它们。公共 HTTPS 抓取只跟随同来源重定向，跨来源要求新的请求/审批，不静默把授权扩散到新站点。错误返回明确的网络/凭据/限流/权限提示，不生成替代来源、不自动重试。
+- 文件：shared/web-contracts、web/network/service、data/service、chat/runtime、Agent runner、WebPanel、web-network 与 web.integration。typecheck/build:bundle 退出 0；web-network 三项通过，包含 IPv4 私网/特殊地址、固定端点和独立浏览器 origin 策略；verify:web 四组退出 0，两个实际保持连接的 HTTP 搜索请求分别绑定 owner，释放 A 不关闭 B，修改权限关闭 B，均无自动重试；旧审批/参数/私网/版本变化无新请求，独立 Key 仍脱敏。
+- 边界：已派发请求可能已经被远端记录或计费，取消不声称追回数据；当前网络支持有界 IPv4 公共 HTTPS 与用户明确配置的 127.0.0.1 搜索服务，不宣称完整 OS 网络沙箱或任意代理/IPv6 支持。网页内容始终为普通不可信工具数据，不能提升为系统指令或访问 Vault。
+- 状态：T10 本地策略与实际连接验收完成，进入 11.5/E04；浏览器实际页面/截图/交互及包内证据在下一步骤补齐，真实搜索端点仍按用户确认另行联调。
+
+## LOG-087｜阶段 11/11.5/E04：实际浏览器审批、交互与截图
+
+- 日期：2026-11-27；任务 ID：E04。每个回合使用独立非持久 Session、沙箱窗口与带随机认证的代理；仅配置的 HTTPS origin 或当前项目已启动的隔离预览可访问。固定 IPv4 解析并向已核对地址 CONNECT，不让浏览器再次 DNS 解析私网目标。无 preload/Node/主窗口 IPC、登录复用、弹窗、下载、文件上传或密码输入入口；没有任意 JS 执行工具。不是 OS 级网络沙箱。
+- 每次导航、读取、截图、点击、填入与关闭均绑定回合/调用/策略版本并逐次审批；点击/填入在同一次固定隔离世界脚本执行前重新比较页面与元素快照，用户在审批期间编辑会拒绝。注册表校验先于派发，模型不能调用未开放工具。设置/凭据更新撤销旧浏览器，结束或停止销毁回合窗口、端口与会话数据；已经发生的网站副作用不能撤回。
+- 截图来自实际 capturePage，PNG 有大小/摘要/项目/回合/工具归属校验，以 blob 和 assistant 消息引用持久化；界面提供分块读取、SHA-256 核对后查看，不自动宣称模型已看到截图或自动发送视觉请求。
+- 文件：shared/browser-contracts、main/browser、ApprovalBroker/runner、ChatRuntime、DataService/Store、WebPanel、AgentTrace/BrowserCapture、Vite 入口与 browser-proxy/smoke-browser 脚本。
+- 验证：typecheck、build:bundle 退出 0；真实代理脚本退出 0，407/精确预览请求/私网和未知来源 CONNECT 拒绝/关闭不可连接通过。verify:browser-ui 实际窗口两组退出 0，六次独立审批后导航→填入→点击→读取→实际 PNG→关闭，重复授权无效；审批期间外部 DOM 编辑拒绝，停止待审批回合关闭对应窗口、旧按钮无效；无页面错误。模型响应为本地 SSE 夹具，浏览器 DOM/HTTP/PNG 均为实际执行。
+- 失败记录：初始 GUI 卡在尚无文档的 BrowserWindow 上等待 Page.setInterceptFileChooserDialog 命令，未计通过；改为先加载隐藏窗口、设置文件选择拦截后再展示，实际重跑通过。测试脚本增加错误快照与有界关闭，未把超时强退当成通过。公开网站实际浏览验证和最终包内回归在 E06 记录。
+- 状态：E04 当前 macOS 本地完成，进入 11.6/E05；真实搜索端点按用户确认另行联调。
+
+## LOG-088｜阶段 11/11.6/E05：显式启用的本地只读定时任务
+
+- 日期：2026-11-27；任务 ID：E05。SQLite v14 local_schedules/schedule_runs，配置默认停用；明确指定 Provider/模型/任务/60 秒至 30 天间隔，错过跳过或最多补一次，UTC 日期每日 1–20 次（默认 5），通知默认关闭。每项目最多 10 项/全局 100 项，5 秒检查、最多四个活动；不是云端服务/系统常驻 daemon，应用退出不执行，睡眠取消当前执行，唤醒遵守错过策略。
+- 每次独立会话及持久领取记录，事务先占位再发 HTTP，重复 tick/并发点击不能重复领取。固定只读、2048 输出 Token/6 工具/4 轮/30 秒和项目更低上限；模型 Key 沿用 Main Vault，不进配置。隐藏所有写入/命令/MCP/网页/浏览器/子 Agent，注册表拒绝模型伪造调用。只读任务仍向已选模型发送必要项目上下文，启用界面明确说明费用和范围，不自动换供应商。
+- 停止先停用、再取消对应运行并等待真实收尾，不影响同项目手动会话；任务执行不改变手动选中的会话。重启领取中/运行中记 interrupted，不重放旧 HTTP。备份清除启用开关、恢复必须重新明确启用；任务内容和秘密校验、严格 DTO、项目归属及 Provider 缺失错误已接入。设置独立分组提供创建/修改/启用/执行一次/停止/历史/会话定位/移除，通知不含任务名或正文。
+- 文件：shared/schedule-contracts、main/schedules、DataStore/migrations/backup、ChatRuntime 控制参数与等待接口、DataService/index 的 powerMonitor/Notification、SchedulesPanel/设置组、Vite 入口、schedules 集成和验证脚本。
+- 验证：typecheck/build:bundle 退出 0；verify:schedules 四组真实 SQLite/HTTP/文件测试退出 0、模型请求共 10 次：停用零请求、实际读文件循环、第三次受次数限额阻断、隐藏写工具 UNKNOWN_TOOL 且文件未变、同项目手动会话不串；注入时钟模拟错过后跳过/补一次/重复 tick；停止对应保持连接的 HTTP，不关闭另一手动请求；实际数据库重开旧领取 interrupted，v14 备份所有任务均停用。时钟注入不是实际电脑物理睡眠实测，系统通知由用户选择且未发测试通知。
+- 失败修正：首次将 turnId 用作 session-keyed Run Map 查询，等待过早返回；改为按实际 turnId 查找并等待完成 Promise。夹具未先激活项目导致 bootstrap.activeSessionId 为 null，补齐激活项目的真实前提后通过，没有改产品去迎合测试。初始类型检查暴露未定义错误枚举与 sessions.activate，改用已有 CHAT_BUSY/sessions.select；Lint 未用变量按明确 DTO 白名单修正，最终全套在 E06 记录。
+- 状态：E05 当前 macOS 本地完成；进入 11.7/E06 的界面/包内回归和文档。真实搜索端点仍按用户确认另行联调。
+
+## LOG-089｜阶段 11/11.7/E06：界面交接、持久限额与验收修正
+
+- 日期：2026-11-27；任务 ID：E06，关联 E02/E04/E05/R04。原 Prompt Input 添加附件后的模型切换，原先预建会话旧绑定会覆盖新默认；改为绑定附件所属会话。App 按会话 ID 重建组件，还需在新会话提升为实际会话时按目标 sessionId 一次性交接草稿/附件/模式；纯读取与提交后清理兼容 StrictMode，不让别的会话接收该草稿。实际界面发送已通过。
+- 截图查看原先把含 turnId 的 scope 全量展开到严格 blobs.read，导致参数被拒绝；改为显式项目/会话白名单。读完摘要匹配后，Renderer CSP 只新增 img-src blob:，允许真实本地截图显示，未放宽脚本或外部连接。实际查看已核对 naturalWidth=1000 并截图，非仅检查按钮存在。
+- 调度收紧：Main 的存储忙/待恢复状态禁止新派发；停止仍按任务归属收尾。SQLite v15 新增 schedule_daily_counts 并迁移既有记录，每日计数独立于最近 300 条运行索引保留，避免清理后重置限额。305 次受限领取仍零额外模型请求，备份实际核对独立计数为 2、索引不超过 300。Main 保存前检查所选模型的实际保护凭据，秘密不能当任务正文持久化；通知不带任务名/正文；macOS 仅关闭窗口但应用仍在运行的行为已明确。
+- 浏览器收尾：并发清理共享代理关闭 Promise；创建失败销毁已创建窗口。系统上下文只在明确配置下允许已注册浏览器例外，不与默认网络禁止指令冲突。最初包内新增检查发现文件选择事件未订阅，补 Page.enable 后再配置拦截；未打包构建的实际可信 UI 点击已触发 CDP 文件选择事件并保持空文件列表，文件/密码目标直接拒绝且没有审批。包内最终复核在下一条记录。
+- 验证：pnpm check 退出 0（165 通过/3 默认主机跳过，32 文档/106 稳定 ID、35 原组件/357 图标及全部本地集成）；v15 调度五组、真实待恢复阻断、原 Worker 三进程自然关闭通过。此全套后追加的 Page 事件通知经 typecheck/build:bundle、实际 verify:browser-ui 通过（4 组，18 次本地模型请求），正在做最终包内复核。Lint 保留原 TanStack 一条警告，没有新增错误。
+- 界面：verify:stage11-ui 三组实际附件/能力门控/模型切换/搜索测试/启用与停止/重启通过、2 次本地模型请求；verify:browser-ui 在公开 HTTPS 样例下四组通过、16 次本地模型请求，真实页面实际标题/正文与 PNG 查看均通过。之后新增文件选择场景使用本地页面，无额外公网依赖。搜索测试使用本地 JSON 服务，不代表商业搜索端点已联通。
+- 失败记录：夹具第一次按纯文件名精确匹配但实际包含大小，改为可访问移除按钮定位；后续附件发送发现真实组件重建丢草稿，已修复而未放宽断言。首次公开页面正文有多语言、标题为 Example Domain，原英文正文断言不成立，改为核对实际标题与非空正文。脚本曾打印通过后因未清理关闭 timeout 回调退出 1，未记作通过；修正为捕获进程、清理 timeout 且超时明确失败后重跑退出 0。初次截图契约/CSP失败、文件选择事件缺失均保留为未通过，不以空文件列表推断事件已验收。
+- 文件：ChatWorkspace/attachment-draft/BrowserCapture、Renderer index CSP、ChatRuntime、BrowserRuntime/Proxy、DataService、ScheduleRepository/Runtime/migrations/backup、stage11 与浏览器/调度脚本及桌面套件；新增 web-and-automation.md 三张详细图并同步 README/架构/选型/数据/聊天/权限/UI/质量/依赖/阶段文档。68 直接/937 安装版本，parse5 上游/供应商目录/首次包内许可 SHA-256 一致；旧版权、维护和发行阻断保留。
+- 状态：E06 本地完成、最终包内收口进行中。真实搜索端点、新协议真实端点、真实视觉模型、物理睡眠/系统通知与 Windows 均不据本地夹具声称通过；不扩展阶段 12 的实现。
+
+## LOG-090｜阶段 11：当前 macOS 本地及包内验收归档，真实搜索待联调
+
+- 日期：2026-11-27；阶段 / 步骤 / ID：11.1–11.7，E01/E02/E03/T10/E04/E05/E06。用户明确先完成代码和本地验证，真实搜索端点另行联调；本条归档本地范围，不追认商业搜索、真实视觉模型或阶段 9 两新协议已通过。
+- 功能产物：系统选择器附件/视觉门控及实际传输、独立网页配置/保护凭据与来源、受限静态预览、逐次审批的回合隔离浏览器/DOM/真实截图、显式启用的只读本地任务/历史/取消/重启。界面只显示当前设置分组，复用原 Prompt Input/Tool/Confirmation 和 shadcn，主内容仍由 AppShell ScrollArea 管理；品牌 v5、原组件来源及选型未回退。完整边界和三张详细图见 docs/web-and-automation.md。
+- 完整检查：pnpm check 退出 0，165 项通过/3 项默认主机跳过，21 测试文件通过/2 文件跳过；类型/Lint/格式、当时 32 Markdown/106 唯一任务/88 条历史日志、35 原组件/357 图标和生产构建通过；数据、聊天、Agent、迁移/三协议/恢复/故障/配置、项目记录/Skill、网页四组、附件三组、v15 调度五组、实际代理和 Worker 清理均通过。调度额外验证 305 次受限请求没有额外模型 HTTP，运行索引保留≤300而独立每日计数仍为 2；待恢复/存储忙阻断、实际数据库重开、备份全部停用通过。Worker 为三个独立 Electron 进程各四次自然关闭，未重试失败。
+- 最后收紧的 Page.enable 已另经 typecheck/build:bundle、Lint、实际未打包浏览器四组退出 0；pnpm check 后没有改变其他生产逻辑。文件/密码选择器在审批前拒绝；实际可信点击触发 CDP 文件选择事件，文件列表保持空。失败的早期包内事件断言未算通过，修正后重新打包并执行整套。
+- 打包：pnpm exec electron-builder --dir --config.electronDist=node_modules/electron/dist --config.mac.identity=null 退出 0，生成 release/mac-arm64/Devly.app；未签名/未公证，不是 DMG 或正式安装包。parse5 8.1.1 实际 MIT 通知、resources/vendor/stage11-parse5.LICENSE 和包内 Resources/licenses 通知逐字节相同，SHA-256 8c535800331e1e4439835555b3f9edc7fe9dee2fab0d8bbbd5a982e8b8343d4d；库存 68 直接/937 已安装版本，khroma UNKNOWN 及原有发行阻断保留。
+- 最终包内：DEVLY_EXECUTABLE 指向上述新 .app，pnpm verify:stage11-suite 退出 0；preview-ui、browser-ui、stage11-ui、execution-ui、editor-ui、extensions-ui、stability-ui 七项顺序全通过。预览实际端口、Cookie、HTML/CSS/DOM、无 Node/IPC、越界/秘密拒绝和释放已验；浏览器四组/18 次本地模型请求，包含真实 PNG 查看、单次审批、变化拒绝、停止/旧审批及实际文件选择拦截；附件/调度界面三组/3 次本地模型请求，包含未知视觉零发送、实际文本/图片传输、默认停用、显式运行、运行中的定时 HTTP 在实际退出时关闭、重启保留 cancelled 并无重放。未测试系统通知发送或电脑物理睡眠，模拟时钟/显式 suspend 测试与行为说明不替代这两项。
+- 回归：原 Confirmation/Plan/Task 对真实命令/修改审批、停止/旧按钮、重启保留；Monaco 本地 blob Worker、保存冲突/实际 Diff；真实 MCP/Skill、父子 Agent/审查合并和新版备份恢复；两新协议本地聊天/错误/恢复/配置白名单均无核心回退。扩展脚本原文案 v11 指阶段 10 的扩展数据子集，本次运行实际采用 v15；已把报告文案改为 current-schema，不据文案假定数据库版本。
+- 实际公网：前期 web-live.integration 真实 HTTPS GET 的 URL/标题/时间和 browser-ui 的公开 HTTPS 导航/DOM 已通过（后者 16 次本地模型请求，含额外公网导航），网页可能返回多语言正文，按实际标题和内容核对。公网样例未纳入 CI 反复请求；实际模型和商业搜索调用均未冒充，所有新增模型响应为明确的本地协议夹具。
+- 文件与证据：shared 附件/网页/浏览器/预览/调度契约、Main 对应服务/SQLite v12–v15/保护存储与生命周期、Renderer 输入与设置/实际截图、parse5/打包资源、测试/CI/README 与当前架构/选型/数据/质量文档。output/preview-isolated.png、browser-capture.png、stage11-schedules.png 已实际查看；.cache/stage11-* 记录本机命令。退出时 Electron 曾打印 task_policy_set invalid argument，但这次套件七项均实际退出 0；未据该主机诊断宣称所有 OS 行为已覆盖。
+- 阶段验收：附件限制/真实传输通过；公开抓取/真实浏览/预览隔离和本地搜索通过，但真实搜索端点按用户安排保留未完成；本地任务启用/停止/实际退出及重启通过，睡眠/通知边界明确。E02/E03/T10/E04/E05/E06 标完成（当前 macOS 本地/包内）；E01 代码本地完成、真实端点待验证；阶段 11 总体待验证（本地范围已归档），阶段 12 待开始，唯一下一项为用户安排的 E01 真实搜索联调。
+- 未覆盖：Responses/Anthropic 真实端点、真实商业搜索/视觉模型、复杂网站/任意代理/IPv6/完整 OS 网络隔离、物理睡眠/通知、Windows/远端 CI/正式签名安装升级、旧维护/安全和完整上游版权通知仍独立保留。本轮不使用真实 Key、不请求聊天发 Key、不创建 Codex 后台自动任务、不提交或推送先前脏工作区。
+
+- 最终复核：全部生产改动与夹具/文档收口后，pnpm typecheck、pnpm lint（0 错误，保留原有 1 条 TanStack 警告）、pnpm format:check、pnpm check:docs（32 Markdown/106 唯一任务/90 条连续日志）及 git diff --check 均退出 0；最后只同步验收状态与检查结果，不追加业务改动。
+
+## LOG-091｜阶段 12/12.1/T12：核对目标环境与未支持执行的拒绝
+
+- 日期：2026-11-27；ID：T12。用户明确要求阶段 12，随后确认先完成 macOS，Windows 留待外部实测；暂无签名条件，交付明确预览版。阶段 9/11 的真实新协议/搜索待办不追认通过。
+- 环境：当前 macOS 26.5 / ARM64；未发现 prlctl/VirtualBox/QEMU/PowerShell/Wine 工具，GitHub CLI 未登录，security find-identity 报 0 valid identities。没有可使用的 Windows 主机/CI 和 Developer ID，不尝试以跨编译或模拟平台替代实测。
+- 实际变更：共享 host-support 策略与 Main 既有拒绝一致，非 macOS 的项目写入/命令/补丁/终端不提供无隔离回退；Renderer 项目 Agent 选项禁用并明确说明可用只读流程，终端显示原因。新增 Windows-only 真实限制检查入口，验证中文空格路径、越界、文件不变和拒绝派发；只证明受限预览拒绝，不声称 Windows OS 执行隔离或 PTY 已实现。CI 配置安排该入口，未运行远端 CI。
+- 文件：shared/host-support、Main command/patch/chat/terminal、ChatWorkspace/TerminalPanel、Windows 限制脚本、Vite 测试入口和 workflow。typecheck 退出 0；本机 verify:windows-restrictions 明确输出 host=darwin/status=not_run 并退出 2，作为未实测记录，不算通过；主机同时打印 task_name_for_pid 诊断，未据此声称 Windows 行为。
+- 状态：T12 部分完成（平台入口拒绝与可验证脚本，Windows 隔离未落地/未实测）。按用户确认的 macOS 预览范围推进 12.2/X05，其 Windows 部分继续保留。
+
+## LOG-092｜阶段 12/12.2/X05：当前 macOS 终端与主机边界复核
+
+- 日期：2026-11-27；ID：X05，关联 T12。按用户确认先交付 macOS 预览，Windows 不算通过。
+- 验证：pnpm verify:terminal 退出 0，五组实际 PTY：规范项目目录/最小环境/resize，多终端与 owner/项目隔离，Ctrl+C 中断前台 sleep 后继续输入，秘密文件拒绝与 262144 字符环形缓冲截断，关闭清理真实后台子进程、owner 释放关闭另一项目终端。pnpm verify:workbench-host 退出 0，三个测试文件共十五项，真实文件/网络拒绝、命令超时/取消、无晚到写入和 Git 边界通过。
+- 原生依赖失败收紧：TerminalService 对 node-pty 改为使用时加载，加载期间重新核对 owner/closing；缺失时返回明确重装当前架构完整应用的提示，不在导入 Main 阶段直接崩溃。已有文件不因该错误删除。安装副本缺依赖的实际场景在 V03 继续验证。
+- 文件：main/terminal/service、现有 terminal.integration 与 host 检查；全套 pnpm check 退出 0，新增真实 ANSI/KaTeX 安全渲染两项后共 167 通过/3 默认主机跳过，原数据/协议/恢复/网页/附件/调度/代理/Worker 集成通过。未用这些本机结果替代 Windows。
+- 状态：X05 部分完成（macOS 已实测，Windows 延期）。进入 12.3/V02 的 macOS ARM64 预览 DMG 和资源验证；V03 另验实际复制安装/中文路径/升级/缺依赖。
+
+## LOG-093｜阶段 12/12.3–12.4/V02/V03：真实 DMG 安装、升级和缺原生依赖
+
+- 日期：2026-11-27；ID：V02/V03。版本 0.2.0-preview.1；按用户确认交付 macOS ARM64 未签名预览，Windows 未验证。
+- 实际变更：electron-builder 固定预览版本产物名、明确 identity=null/publish never，增加 preview:mac/verify:mac-install；实际 DMG 先 hdiutil verify/read-only attach，再 ditto 到带归属标记的临时中文空格安装目录，独立中文 userData/空 PATH。迁移种子为实际 v7 数据库及旧设置/会话，使用项目 canonical realpath；不读取或迁移用户个人库。
+- 实际验证：构建 DMG 退出 0，release/Devly-0.2.0-preview.1-mac-arm64.dmg 为 199652005 字节；verify:mac-install 退出 0、三组通过。首装不要求 Codex/开发机工具；v7→v15 保留设置/历史并生成迁移前备份；本地 HTTP 数学响应、Monaco 本地 Worker/实际 PTY 和重启均通过。仅在归属检查后的安装副本改名 pty.node/better_sqlite3.node：前者主界面仍启动并返回重装提示，后者显示真实存储错误而非正常空历史；finally 恢复二进制/卸载镜像/清理副本。未改系统 /Applications。
+- 失败修正：首次夹具直接保存 /var 路径别名而实际文件守卫要求 canonical/private/var，导致项目不可用；改种子真实路径后通过，没有放宽产品目录校验。实际渲染发现 MathML 与排版重叠，原因是插件未自动引入 KaTeX CSS；增加精确 katex 0.18.2 和本地 CSS/字体，重新生产构建/DMG后，安装副本 computed position=absolute 检查通过。未把旧失败包算通过。
+- 文件：package/锁文件/Vite/builder/workflow、styles.css、stage12-upgrade-seed/smoke-release-mac/verify-mac-install 脚本。证据 .cache/stage12/package-mac.log、install-mac.log、output/release-mac-install.json，报告绑定实际 appVersion/平台/架构/挂载方式。V02/V03 标部分完成：macOS 当前安装与升级范围完成；Windows、其他历史版本、跨架构和 Gatekeeper 正式分发未验收。下一步 V04–V07 本机边界、真实 API 与发行文档。
+
+## LOG-094｜阶段 12/12.6、12.8/V05/V07：生产渲染依赖、包内回归与真实 API 编程
+
+- 日期：2026-11-27；ID：V05/V07，关联 V01/P10/A09。生产 npm 审计真实检出 linkify-it 两项 high、KaTeX 一项 low；覆盖至 linkify-it 5.0.2/KaTeX 0.18.2，生产审计重跑退出 0/各严重级别 0。ANSI 模糊链接、恶意 URL/重复 mailto 及真实 KaTeX 不可信链接渲染两项新增测试通过；保留原 AI Elements 源码和原插件。69 直接/940 安装版本，三份新增实际 MIT 通知与上游和包内字节一致。该结果不覆盖全部开发公告、旧 Electron/工具链和既有版权问题。
+- 本机检查：pnpm check 退出 0，167 通过/3 主机默认跳过；另十五项主机、五组 PTY 通过（LOG-092）。新包 preview/browser/stage11/execution/editor/extensions 六项顺序通过；stability 首次 page.screenshot 超时退出 1，该套件整体不计通过。未改代码或减弱断言，单独 verify:stability-ui 重跑退出 0，完整存储重连/只读核对继续/新协议本地聊天/导入导出/备份恢复/不重放检查和截图均通过，已查看实际截图。另包内 verify:workbench-ui 七组、verify:persistence 九组通过，包含原 Commit/真实 Git、Ctrl+C/resize/退出、主题/布局和系统 safeStorage 实际往返、明文不返回。
+- 真实供应商：使用用户已配置的应用默认 Provider，仅复制其非秘密元数据与系统保护密文到隔离 profile；所有解密留 Main，个人项目/会话未复制，不自动换供应商。Chat Completions，https://ark.cn-beijing.volces.com/api/v3，deepseek-v4-1-flash-261017，2026-11-27。新包 verify:editor-live 退出 0：六轮/七次工具，实际搜索/列目录/读取→只允许生成样例的预期补丁→只允许 /bin/sh tests/verify.sh→实际文件/Git/Monaco Diff。exitCode=0、testProofMatched/testsUnchanged/diffMatched=true；各工具完成且有日志引用。局部授权 operator 只用于隔离样例，没有授权访问用户其他文件。
+- 失败修正：首次真实 API 测试在密文初始化 SEED_FAILED，未发模型请求；实际目录 Devly/devly 大小写别名导致安全路径比较不一致。改为先 realpath 凭据根，再校验 UUID/文件/符号链接并复制密文，种子和实际 API 重跑通过。未在参数/环境/报告输出明文 Key。前期受限网络 DNS 失败的审计不算结果，允许访问后的独立文件才作审计证据。
+- 文件：shared host-support、Main terminal/chat/执行拒绝、ChatWorkspace/TerminalPanel、pnpm overrides/KaTeX CSS/实际许可证、rendering-security.test、live-agent-seed、原验证入口与发行指南。证据 .cache/stage12/check.log、host-boundaries.log、terminal-mac.log、audit-production-after.json、render-tests.log、live-api.log、packaged-suite.log、packaged-stability-recheck.log、packaged-workbench.log、packaged-persistence.log。
+- 状态：V05 当前 macOS 复核完成但跨平台/完整发行边界保留部分完成；V07 真实 API/macOS 核心通过、Windows 未验证，保留部分完成。Responses/Anthropic 真实端点、商业搜索、真实视觉、物理睡眠/通知及任意网站/IPv6 未据夹具通过；下一步按约定预览渠道归档交付。
+
+## LOG-095｜阶段 12/12.5、12.7、12.9/V04/V06/V08：macOS 预览交付与完整版本保留项
+
+- 日期：2026-11-27；ID：V04/V06/V08。用户确认暂无签名条件、Windows 外部实测；本轮仅交付 0.2.0-preview.1 macOS ARM64 本地未签名/未公证预览。未登录 GitHub CLI、0 有效签名身份，不发布或伪造远端 CI，不把未签名 DMG 叫正式发行。
+- 文档：新增 release-acceptance/user-guide/release-notes，包含逐平台/功能矩阵、实际安装方式、备份/升级、真实快捷键、API/审批/恢复/缺依赖排错、已知限制；同步 README/架构/技术栈/本地数据/协议矩阵/质量/阶段计划与状态唯一来源。T12/X05/V02/V03/V05/V07/V08 保留部分完成，V04 按约定预览分发范围、V06 当前文档完成；阶段 12 整体部分完成。未通过项未勾选，唯一下一步为用户延期的真实 Windows T12，不自动新增范围或后台任务。
+- 归档入口：archive:preview 收集当前 Git 工作区白名单（含本轮及既有未提交源码），排除 node_modules/out/缓存/测试 userData/凭据和符号链接，生成 source.zip、manifest、SHA256SUMS；manifest 要求实际 DMG 安装报告与版本匹配，列脏工作区/基准提交/字节数/摘要及保留事项。不使用 git archive HEAD 丢失未提交功能，不自动提交或推送。已实际生成 754 个源文件快照、manifest/SHA256SUMS，unzip 完整校验与 DMG/源码摘要校验退出 0；关键源文件与工作区逐字节一致，未含凭据、缓存或 node_modules。源码 ZIP 禁止扩展属性/资源叉，保持可跨平台读取。最终文档检查后的快照重新生成以包含本条记录；摘要以随包 SHA256SUMS 为准，避免在源日志嵌入自身 ZIP 摘要。
+- 未通过项：真实 Windows 隔离/终端/原生依赖/安装升级、Developer ID/公证与 Windows 签名、新协议/搜索/视觉真实端点、旧 Electron/工具链维护、ansi-to-react 完整上游版权通知及 khroma UNKNOWN。当前 Electron 39.8.10，registry 本轮最新 45.5.0，官方仅支持最新三稳定主版本；不将安全定向覆盖或产物生成冒称维护升级。受限 PTY 不是个人完整终端，浏览容器不是完整 OS 网络沙箱，未验范围见发行报告。
+
+- 最终静态复核：pnpm typecheck、pnpm lint、pnpm format:check、pnpm check:docs、pnpm verify:vendor、pnpm verify:icons、git diff --check 均退出 0；35 Markdown/106 稳定 ID/95 连续日志、35 原来源文件/357 SVG 通过。Lint 0 错误，原有 TanStack useVirtualizer 一条警告保留。最后只更新归档脚本元数据与文档，没有再改变已安装验收的产品代码。
+
 ## 追加记录模板
 
 ```text

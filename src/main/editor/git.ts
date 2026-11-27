@@ -19,26 +19,38 @@ export function readGit(
   cwd: string,
   args: string[],
   maxBytes = 1_048_576,
-): Promise<{ code: number; bytes: Buffer }> {
+  writable = false,
+  input?: string,
+): Promise<{ code: number; bytes: Buffer; error: string }> {
   if (process.platform !== 'darwin') return Promise.reject(new Error('UNSUPPORTED_PLATFORM'))
   return new Promise((done, reject) => {
     const child = spawn(
       '/usr/bin/sandbox-exec',
       [
         '-p',
-        commandProfile(root, { readOnly: true, gitMetadata: true }),
+        commandProfile(root, { readOnly: !writable, gitMetadata: true, gitWrite: writable }),
         '/usr/bin/git',
         '--no-pager',
         '--literal-pathspecs',
         '--no-optional-locks',
         '-c',
         'core.fsmonitor=false',
+        '-c',
+        'core.hooksPath=/dev/null',
+        '-c',
+        'commit.gpgSign=false',
+        '-c',
+        'core.attributesFile=/dev/null',
+        '-c',
+        'gc.auto=0',
+        '-c',
+        'maintenance.auto=false',
         ...args,
       ],
       {
         cwd,
         detached: true,
-        stdio: ['ignore', 'pipe', 'ignore'],
+        stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           PATH: '/usr/bin:/bin',
           LC_ALL: 'C',
@@ -48,9 +60,15 @@ export function readGit(
         },
       },
     )
+    child.stdin.on('error', () => {})
+    child.stdin.end(input)
     let length = 0,
       exceeded = false
     const chunks: Buffer[] = []
+    let error = ''
+    child.stderr.on('data', (chunk: Buffer) => {
+      if (error.length < 4096) error += chunk.toString('utf8').slice(0, 4096 - error.length)
+    })
     const kill = () => {
       if (child.pid)
         try {
@@ -76,7 +94,7 @@ export function readGit(
       clearTimeout(timer)
       kill()
       if (exceeded) reject(new Error('FILE_TOO_LARGE'))
-      else done({ code: code ?? 1, bytes: Buffer.concat(chunks) })
+      else done({ code: code ?? 1, bytes: Buffer.concat(chunks), error })
     })
   })
 }

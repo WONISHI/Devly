@@ -1,6 +1,6 @@
 // Explicit manual verification only. Copies selected metadata + ciphertext, never plaintext.
 import { createRequire } from 'node:module'
-import { mkdir, copyFile, writeFile } from 'node:fs/promises'
+import { mkdir, copyFile, writeFile, readFile, lstat, realpath } from 'node:fs/promises'
 import { join } from 'node:path'
 import { DatabaseClient } from '../out/main/data-client.js'
 const source = process.env.DEVLY_LIVE_SOURCE_PROFILE,
@@ -10,7 +10,15 @@ if (!source || !target || !/^[a-f\d-]{36}$/.test(id || ''))
   throw new Error('Explicit source profile, target profile and selected Provider UUID required')
 const require = createRequire(import.meta.url),
   SQLite = require('better-sqlite3')
-const original = new SQLite(join(source, 'storage/devly.sqlite'), {
+let sourceStorage = join(source, 'storage')
+try {
+  const pointer = JSON.parse(await readFile(join(sourceStorage, 'active-store.json'), 'utf8'))
+  if (!/^[a-f\d-]{36}$/.test(pointer.generation)) throw Error('Invalid source generation')
+  sourceStorage = join(sourceStorage, 'generations', pointer.generation)
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error
+}
+const original = new SQLite(join(sourceStorage, 'devly.sqlite'), {
   readonly: true,
   fileMustExist: true,
 })
@@ -20,6 +28,8 @@ try {
 } finally {
   original.close()
 }
+if (row?.credential_ref && !/^[a-f\d-]{36}$/.test(row.credential_ref))
+  throw Error('Invalid credential reference')
 if (!row || row.protocol !== 'chat-completions' || !row.model || !row.credential_ref)
   throw new Error('Selected provider must have a model and protected credential')
 const db = new DatabaseClient(join(target, 'storage'))
@@ -33,10 +43,11 @@ try {
     compatibility: JSON.parse(row.compatibility || '{}'),
   })
   await mkdir(join(target, 'storage/credentials'), { recursive: true, mode: 0o700 })
-  await copyFile(
-    join(source, 'storage/credentials', row.credential_ref + '.key'),
-    join(target, 'storage/credentials', row.credential_ref + '.key'),
-  )
+  const credentialRoot = await realpath(join(source, 'storage/credentials'))
+  const credential = join(credentialRoot, row.credential_ref + '.key')
+  if ((await lstat(credential)).isSymbolicLink() || (await realpath(credential)) !== credential)
+    throw Error('Credential source must be a regular protected file')
+  await copyFile(credential, join(target, 'storage/credentials', row.credential_ref + '.key'))
   await db.execute('internal.credential.ref', { providerId: provider.id, ref: row.credential_ref })
   const settings = await db.execute('settings.get', { projectId: null })
   await db.execute('settings.save', {

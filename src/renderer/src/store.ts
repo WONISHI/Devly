@@ -1,3 +1,4 @@
+import type { SettingsGroupId } from '@/features/provider-settings/SettingsGroup'
 import { create } from 'zustand'
 import { desktop } from '@/platform/desktop'
 import {
@@ -27,6 +28,12 @@ type WorkspaceState = {
   settings: Settings
   projectSettings: Settings
   providers: Provider[]
+  storageRecoveryError: boolean
+  pendingRestore: boolean
+  settingsEpoch: number
+  settingsGroup: SettingsGroupId
+  setSettingsGroup: (group: SettingsGroupId) => void
+  reopenStorage: () => Promise<void>
   credentialAvailable: boolean
   tab: WorkspaceTab
   loading: boolean
@@ -59,6 +66,24 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   settings: defaultSettings,
   projectSettings: defaultSettings,
   providers: [],
+  storageRecoveryError: false,
+  pendingRestore: false,
+  settingsEpoch: 0,
+  settingsGroup: 'providers',
+  setSettingsGroup: (group) => set({ settingsGroup: group, tab: 'providers' }),
+  reopenStorage: async () => {
+    set({ loading: true })
+    try {
+      await desktop.data('storage.reopen', {})
+      await get().refresh()
+    } catch (error) {
+      set({
+        loading: false,
+        loadError: '本地存储仍不可用，请检查权限、磁盘空间或备份；原数据未删除。',
+      })
+      throw error
+    }
+  },
   credentialAvailable: false,
   tab: 'workspace',
   loading: true,
@@ -91,6 +116,8 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
         projectSettings,
         providers: boot.providers,
         credentialAvailable: boot.storage.credentialAvailable,
+        storageRecoveryError: boot.storage.recoveryError,
+        pendingRestore: boot.storage.pendingRestore,
         sessions: page.items,
         nextCursor: page.nextCursor,
         activeSession,

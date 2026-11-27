@@ -8,6 +8,7 @@ import { patchRequest } from './patch-executor'
 import { applyIsolatedPatch } from './isolated-patch'
 import { commandRequest, executeProjectCommand } from './command-executor'
 import { ReadOnlyToolbox, readOnlyTools, redactToolText, ToolFailure } from './tools'
+import { commandRecord } from './validation'
 
 export const executionTools: Tool[] = [
   ...readOnlyTools,
@@ -175,6 +176,7 @@ export class ExecutionTools {
               results.some((item) => item.state !== 'applied'),
           }
         }
+        const started = performance.now()
         const result = await executeProjectCommand(
           this.toolbox.root,
           commandRequest.parse(parsed.data),
@@ -186,10 +188,15 @@ export class ExecutionTools {
           },
           this.secret,
         )
+        record.execution = commandRecord(result, performance.now() - started)
         if (result.state === 'unknown') throw new ToolFailure('EXECUTION_STATE_UNKNOWN')
         return {
           ...result,
-          failed: result.state !== 'completed',
+          failed:
+            result.state !== 'completed' ||
+            record.execution.validation.state === 'conflict' ||
+            (record.execution.validation.state === 'complete' &&
+              record.execution.validation.failed > 0),
           truncated: result.state === 'output_limit',
         }
       })

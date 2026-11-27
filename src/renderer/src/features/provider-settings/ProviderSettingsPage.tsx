@@ -1,3 +1,11 @@
+import { SchedulesPanel } from '@/features/extensions/SchedulesPanel'
+import { SkillsPanel } from '@/features/extensions/SkillsPanel'
+import { WebPanel } from '@/features/extensions/WebPanel'
+import { PreviewPanel } from '@/features/extensions/PreviewPanel'
+import { McpPanel } from '@/features/extensions/McpPanel'
+import { TaskPanel } from '@/features/extensions/TaskPanel'
+import { ProjectContextPanel } from '@/features/extensions/ProjectContextPanel'
+import { DataSettingsPanel } from './DataSettingsPanel'
 import { UsagePanel } from './UsagePanel'
 import { useRef, useState } from 'react'
 import { SettingsEditor } from './SettingsEditor'
@@ -12,6 +20,7 @@ import {
   Bot,
   ChevronRight,
   Code2,
+  Database,
   Palette,
   PlugZap,
   ShieldCheck,
@@ -22,11 +31,19 @@ import { Button } from '@/components/ui/button'
 import { EnvironmentPanel, type useEnvironment } from '@/features/environment'
 
 const groups = [
+  { id: 'schedules', label: '本地定时任务', icon: Blocks },
+  { id: 'preview', label: '网页预览', icon: Blocks },
+  { id: 'web', label: '网页工具', icon: PlugZap },
   { id: 'providers', label: '模型供应商', icon: PlugZap },
   { id: 'usage', label: '用量与额度', icon: ChartNoAxesCombined },
   { id: 'appearance', label: '外观', icon: Palette },
   { id: 'models', label: '默认模型', icon: Bot },
   { id: 'permissions', label: '权限与限额', icon: ShieldCheck },
+  { id: 'skills', label: 'Skills', icon: Blocks },
+  { id: 'mcp', label: 'MCP 工具', icon: PlugZap },
+  { id: 'tasks', label: '任务与隔离', icon: Blocks },
+  { id: 'context', label: '项目上下文', icon: Blocks },
+  { id: 'data', label: '数据与恢复', icon: Database },
   { id: 'developer', label: '开发者', icon: Code2 },
 ] as const
 
@@ -43,7 +60,7 @@ export function ProviderSettingsPage({
 }: ProviderSettingsProps) {
   const state = useWorkspace()
   const [scope, setScope] = useState<'global' | 'project'>('global')
-  const [activeGroup, setActiveGroup] = useState<SettingsGroupId>('providers')
+  const activeGroup = state.settingsGroup
   const pageRef = useRef<HTMLDivElement>(null)
   const settings = scope === 'project' ? state.projectSettings : state.settings
   const preferenceGroup =
@@ -53,7 +70,7 @@ export function ProviderSettingsPage({
   function goToGroup(id: SettingsGroupId) {
     const page = pageRef.current
     const viewport = page?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
-    setActiveGroup(id)
+    state.setSettingsGroup(id)
     viewport?.scrollTo({ top: 0, behavior: 'instant' })
   }
   return (
@@ -82,6 +99,45 @@ export function ProviderSettingsPage({
           ))}
         </nav>
         <div className="settings-group-content">
+          {activeGroup === 'schedules' && (
+            <SettingsGroup
+              id="schedules"
+              title="本地定时任务"
+              description="明确启用的项目只读任务、执行范围与运行记录。"
+            >
+              {state.project && !state.project.managed ? (
+                <SchedulesPanel key={state.project.id} projectId={state.project.id} />
+              ) : (
+                <p>先打开项目再配置本地任务。</p>
+              )}
+            </SettingsGroup>
+          )}
+          {activeGroup === 'preview' && (
+            <SettingsGroup
+              id="preview"
+              title="隔离网页预览"
+              description="静态项目入口、独立窗口与临时端口生命周期。"
+            >
+              {state.project && !state.project.managed ? (
+                <PreviewPanel key={state.project.id} projectId={state.project.id} />
+              ) : (
+                <p>先打开项目再启动预览。</p>
+              )}
+            </SettingsGroup>
+          )}
+          {activeGroup === 'web' && (
+            <SettingsGroup
+              id="web"
+              title="网页搜索与抓取"
+              description="独立搜索凭据、明确的网络传输和逐次审批。"
+            >
+              {state.project && !state.project.managed ? (
+                <WebPanel key={state.project.id} projectId={state.project.id} />
+              ) : (
+                <p>先打开项目再配置网页工具。</p>
+              )}
+            </SettingsGroup>
+          )}
           <SettingsGroup
             id="providers"
             title="模型供应商"
@@ -90,6 +146,67 @@ export function ProviderSettingsPage({
           >
             <ProviderManager />
           </SettingsGroup>
+          {activeGroup === 'skills' && (
+            <SettingsGroup
+              id="skills"
+              title="项目 Skills"
+              description="查看真实技能内容、启用范围与关联资源。"
+            >
+              {state.project && !state.project.managed ? (
+                <SkillsPanel key={state.project.id} projectId={state.project.id} />
+              ) : (
+                <p>请先打开本地项目。</p>
+              )}
+            </SettingsGroup>
+          )}
+          {activeGroup === 'mcp' && (
+            <SettingsGroup
+              id="mcp"
+              title="MCP 工具服务"
+              description="管理当前项目的外部工具与受保护凭据。"
+            >
+              {state.project && !state.project.managed ? (
+                <McpPanel key={state.project.id} projectId={state.project.id} />
+              ) : (
+                <p>请先打开本地项目。</p>
+              )}
+            </SettingsGroup>
+          )}
+          {activeGroup === 'tasks' && (
+            <SettingsGroup
+              id="tasks"
+              title="任务与隔离工作区"
+              description="创建独立任务，查看队列并审查 worktree 差异。"
+            >
+              {state.project && !state.project.managed ? (
+                <TaskPanel key={state.project.id} projectId={state.project.id} />
+              ) : (
+                <p>请先打开本地项目。</p>
+              )}
+            </SettingsGroup>
+          )}
+          {activeGroup === 'context' && (
+            <SettingsGroup
+              id="context"
+              title="项目指令与记忆"
+              description="查看、编辑或移除当前项目的持久记录。"
+            >
+              {state.project && !state.project.managed ? (
+                <ProjectContextPanel key={state.project.id} projectId={state.project.id} />
+              ) : (
+                <p>请先打开本地项目，再管理项目上下文。</p>
+              )}
+            </SettingsGroup>
+          )}
+          {activeGroup === 'data' && (
+            <SettingsGroup
+              id="data"
+              title="数据与恢复"
+              description="备份本地历史并检查恢复条件；密钥需要单独重新配置。"
+            >
+              <DataSettingsPanel />
+            </SettingsGroup>
+          )}
           {activeGroup === 'usage' && (
             <SettingsGroup
               id="usage"
@@ -115,7 +232,7 @@ export function ProviderSettingsPage({
           )}
           <SettingsEditor
             onExport={() => exportPreferences(scope === 'project' ? state.project!.id : null)}
-            key={`${scope}:${state.project?.id ?? 'global'}`}
+            key={`${state.settingsEpoch}:${scope}:${state.project?.id ?? 'global'}`}
             value={settings}
             activeGroup={preferenceGroup}
             providers={state.providers}

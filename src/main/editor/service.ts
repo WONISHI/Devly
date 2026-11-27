@@ -17,6 +17,7 @@ type Lease = {
   revision: number
   degraded: boolean
   handles: FSWatcher[]
+  stamps: string[]
   identities: string[]
   timer?: ReturnType<typeof setTimeout>
 }
@@ -170,17 +171,22 @@ export class EditorService {
         [...this.leases.values()].filter((lease) => lease.owner === owner).length >= 4
       )
         throw new ContractError(failure('LIMIT_EXCEEDED'))
-      const checked: { path: string; identity: string }[] = []
+      const checked: { path: string; identity: string; stamp: string }[] = []
       let degraded = false
       for (const path of paths)
         try {
           const safe = await toolbox.directoryPath(path),
             stat = await lstat(safe)
-          checked.push({ path: safe, identity: `${stat.dev}:${stat.ino}` })
+          checked.push({
+            path: safe,
+            identity: `${stat.dev}:${stat.ino}`,
+            stamp: `${stat.mtimeMs}:${stat.ctimeMs}:${stat.size}`,
+          })
         } catch {
           degraded = true
         }
-      const identities = checked.map((item) => item.identity)
+      const identities = checked.map((item) => item.identity),
+        stamps = checked.map((item) => item.stamp)
       let lease = existing
       if (
         !lease ||
@@ -197,6 +203,7 @@ export class EditorService {
           degraded,
           handles: [],
           identities,
+          stamps,
         }
         this.leases.set(id, lease)
         const target = lease
@@ -216,6 +223,10 @@ export class EditorService {
           } catch {
             lease.degraded = true
           }
+      }
+      if (JSON.stringify(lease.stamps) !== JSON.stringify(stamps)) {
+        lease.stamps = stamps
+        lease.revision = ++this.revision
       }
       if (!active() || this.closing || this.cancelledWatches.has(`${owner}:${id}`)) {
         this.release(owner, id)

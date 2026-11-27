@@ -172,7 +172,9 @@ function ProviderEditor({
   function option<K extends keyof Compatibility>(key: K, value: Compatibility[K]) {
     setDraft((old) => ({ ...old, compatibility: { ...old.compatibility, [key]: value } }))
   }
-  const supportedProtocol = draft.protocol === 'chat-completions'
+  const supportedProtocol = ['chat-completions', 'responses', 'anthropic-messages'].includes(
+    draft.protocol,
+  )
   const canCheck = !!value && !dirty && supportedProtocol && !probe.busy
   const currentKinds = new Set(probe.snapshot?.checks.map((check) => check.kind) ?? [])
   const checks = [
@@ -232,11 +234,10 @@ function ProviderEditor({
               }
               options={[
                 { value: 'chat-completions', label: 'OpenAI-compatible Chat Completions' },
-                { value: 'responses', label: 'Responses（暂未接入）', disabled: true },
+                { value: 'responses', label: 'OpenAI Responses' },
                 {
                   value: 'anthropic-messages',
-                  label: 'Anthropic Messages（暂未接入）',
-                  disabled: true,
+                  label: 'Anthropic Messages',
                 },
               ]}
             />
@@ -253,8 +254,8 @@ function ProviderEditor({
               onChange={(event) => setDraft({ ...draft, baseUrl: event.target.value })}
             />
             <small>
-              填写 API 根路径（如 /v1），自动追加 /chat/completions 和 /models。HTTP
-              会明文传输密钥。
+              填写 API 根路径（如 /v1），按协议追加 /chat/completions、/responses 或
+              /messages，模型列表使用 /models。HTTP 会明文传输密钥。
             </small>
           </div>
           <div className="settings-field provider-wide">

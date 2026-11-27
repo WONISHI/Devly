@@ -2,6 +2,7 @@ import type { RecentProject as Project } from '@shared/data-contracts'
 import type { WorkspaceTab } from '@/store'
 import { Button } from '@/components/ui/button'
 import { useEditorStore, isDirty } from '@/features/editor/store'
+import { useTerminalWorkspace } from '@/features/terminal/store'
 
 export function AppHeader({ project, tab }: { project: Project | null; tab: WorkspaceTab }) {
   const editor = useEditorStore()
@@ -25,6 +26,16 @@ export function AppHeader({ project, tab }: { project: Project | null; tab: Work
           </Button>
           <Button variant="ghost" size="sm" onClick={() => editor.show(project.id, 'changes')}>
             项目更改
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => editor.show(project.id, 'git')}>
+            Git 工作区
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => useTerminalWorkspace.getState().show(project.id)}
+          >
+            交互终端
           </Button>
         </div>
       )}

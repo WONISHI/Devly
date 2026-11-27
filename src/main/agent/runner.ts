@@ -1,9 +1,12 @@
+import { contextBytes } from '../attachments/service'
+import type { TaskBudget } from '../extensions/budget'
+import { projectGuidance } from '../extensions/context'
 import { captureGitBaseline } from './git-baseline'
 import { randomUUID } from 'node:crypto'
 import type { AgentInfo, AgentTool, AgentLimits } from '../../shared/agent-contracts'
 import type { ChatTurn } from '../../shared/chat-contracts'
 import type { Message, Usage, Completion, Tool } from '../../shared/provider-contracts'
-import type { ChatCompletionsAdapter } from '../providers/chat-completions'
+import type { ProviderAdapter } from '../../shared/provider-contracts'
 import type { DatabaseClient } from '../data/client'
 import { ProviderError } from '../providers/errors'
 import { ReadOnlyToolbox, readOnlyTools, redactToolText, ToolFailure } from './tools'
@@ -12,16 +15,18 @@ import { validatePlan } from './plan'
 
 export async function runAgent(options: {
   database: Pick<DatabaseClient, 'execute'>
-  adapter: ChatCompletionsAdapter
+  adapter: ProviderAdapter
   toolbox: ReadOnlyToolbox
   turn: ChatTurn
   messages: Message[]
   info: AgentInfo
   limits: AgentLimits
   maxTokens: number
+  budget?: TaskBudget
   secret: string
   signal: AbortSignal
   tools?: Tool[]
+  contextProjectId?: string
   contextWindow?: number | null
   executeTool?: (
     name: string,
@@ -41,17 +46,22 @@ export async function runAgent(options: {
   const records = new Map<string, AgentTool>()
   const finalized = new Set<string>()
   let failureCode = 'INCOMPLETE_CALL'
-  const saveInfo = () => database.execute('internal.chat.agent', { ...scope, info })
+  const saveInfo = () => {
+    if (info.family && options.budget) info.family.remaining = options.budget.remaining()
+    return database.execute('internal.chat.agent', { ...scope, info })
+  }
   const saveTool = (tool: AgentTool) => database.execute('internal.chat.tool', { ...scope, tool })
   try {
     for (let round = 0; round < limits.maxRounds; round++) {
       toolbox.check()
+      if (options.budget && options.budget.remaining().durationMs < 1)
+        throw new ToolFailure('TIME_BUDGET')
       if (remainingTokens <= 0) throw new ToolFailure('TOKEN_BUDGET')
       const summary = compactToolContext(messages, limits.contextChars)
       if (summary) info.summaries.push(summary)
       if (info.summaries.length > 20) throw new ToolFailure('CONTEXT_BUDGET')
       info.rounds = round + 1
-      const characters = JSON.stringify({ messages, tools: options.tools ?? readOnlyTools }).length
+      const characters = contextBytes({ messages, tools: options.tools ?? readOnlyTools })
       info.context = {
         characters,
         estimatedTokens: Math.ceil(characters / 3),
@@ -65,13 +75,25 @@ export async function runAgent(options: {
       await saveInfo()
       const parts = new Map<number, AgentTool>()
       let result: Completion | null = null
-      const reserved = Math.min(remainingTokens, 2048)
+      const reserved = Math.min(
+        remainingTokens,
+        options.budget?.remaining().tokens ?? Infinity,
+        2048,
+      )
+      if (reserved < 1) throw new ToolFailure('TOKEN_BUDGET')
+      if (info.family && options.budget)
+        messages.push({
+          role: 'user',
+          content: `Runtime budget metadata (not a user instruction): remaining ${JSON.stringify(options.budget.remaining())}; any child reservation must fit all remaining caps.`,
+        })
+      compactToolContext(messages, limits.contextChars)
       for await (const event of adapter.stream(
         { model: turn.model, messages, maxTokens: reserved, tools: options.tools ?? readOnlyTools },
         signal,
       )) {
         toolbox.check()
         if (event.type === 'text') {
+          options.budget?.output(event.delta.length)
           usedOutput += event.delta.length
           if (usedOutput > limits.maxOutputChars) throw new ToolFailure('OUTPUT_BUDGET')
           await options.onText(event.delta)
@@ -83,6 +105,7 @@ export async function runAgent(options: {
             name: '',
             state: 'proposed' as const,
             approval: null,
+            execution: null,
             input: '',
             output: '',
             error: null,
@@ -118,6 +141,7 @@ export async function runAgent(options: {
         } else if (total[field] !== null) total[field]! += result.usage[field]!
       }
       remainingTokens -= result.usage.outputTokens ?? reserved
+      options.budget?.tokens(result.usage.outputTokens ?? reserved)
       options.onUsage({ ...total })
       if (remainingTokens < 0) throw new ToolFailure('TOKEN_BUDGET')
       if (!result.toolCalls.length) {
@@ -144,11 +168,14 @@ export async function runAgent(options: {
         const record = parts.get(index)
         if (!record || record.callId !== call.id || record.name !== call.name)
           throw new ProviderError('INVALID_RESPONSE')
+        options.budget?.call()
         info.calls++
         record.state = 'running'
         await saveTool({ ...record, input: redactToolText(record.input, secret) })
         let output: Record<string, unknown>
         try {
+          if (!(options.tools ?? readOnlyTools).some((tool) => tool.name === call.name))
+            throw new ToolFailure('UNKNOWN_TOOL')
           let data: Record<string, unknown>
           if (
             call.name === 'update_plan' &&
@@ -163,6 +190,22 @@ export async function runAgent(options: {
           if (call.name === 'read_file' && typeof data.path === 'string') {
             const guidance = await toolbox.scopedGuidance(data.path)
             data.scopedInstructions = guidance
+            const records = await projectGuidance(
+              database,
+              options.contextProjectId ?? turn.projectId,
+              [data.path],
+              secret,
+            )
+            data.userManagedProjectGuidance = records
+            for (const source of records)
+              if (!info.sources.some((s) => s.kind === source.kind && s.path === source.path)) {
+                if (info.sources.length >= 100) throw new ToolFailure('CONTEXT_BUDGET')
+                info.sources.push({
+                  kind: source.kind,
+                  path: source.path,
+                  chars: source.text.length,
+                })
+              }
             for (const source of guidance)
               if (!info.sources.some((s) => s.kind === 'instruction' && s.path === source.path)) {
                 if (info.sources.length >= 100) throw new ToolFailure('CONTEXT_BUDGET')
@@ -195,7 +238,12 @@ export async function runAgent(options: {
           const code = error instanceof ToolFailure ? error.code : 'FILE_UNAVAILABLE'
           output = {
             ok: false,
-            error: { code, message: '工具未执行成功，请检查参数、审批、允许路径与文件类型' },
+            error: {
+              code,
+              message: code.startsWith('WEB_')
+                ? '网页请求未完成：请检查网络开关、独立搜索凭据、公开 HTTPS 地址或服务限流；不会生成替代来源或自动重试。'
+                : '工具未执行成功，请检查参数、审批、允许路径与文件类型',
+            },
           }
           record.state = ['APPROVAL_DENIED', 'APPROVAL_EXPIRED', 'PERMISSION_DENIED'].includes(code)
             ? 'denied'
@@ -204,7 +252,10 @@ export async function runAgent(options: {
         }
         let safe = redactToolText(JSON.stringify(output), secret)
         const originalSafe = safe
-        const available = limits.maxOutputChars - usedOutput
+        const available = Math.min(
+          limits.maxOutputChars - usedOutput,
+          options.budget?.remaining().outputChars ?? Infinity,
+        )
         if (available < 256) throw new ToolFailure('OUTPUT_BUDGET')
         if (safe.length > available) {
           safe = JSON.stringify({
@@ -216,6 +267,7 @@ export async function runAgent(options: {
           record.state = 'failed'
           record.error = 'OUTPUT_BUDGET'
         }
+        options.budget?.output(safe.length)
         usedOutput += safe.length
         const log = await database.execute<{ id: string }>('internal.agent.log', {
           ...scope,

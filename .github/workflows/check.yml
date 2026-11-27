@@ -49,6 +49,9 @@ jobs:
         run: pnpm verify:provider-icons
       - name: Check chat streaming, history, isolation and cancellation with a local fixture
         run: pnpm verify:chat-ui
+      - name: Check Windows restricted-preview guards (not a Windows sandbox or PTY acceptance)
+        if: runner.os == 'Windows'
+        run: pnpm verify:windows-restrictions
       - name: Check macOS host execution boundaries and scoped approvals
         if: runner.os == 'macOS'
         run: |
@@ -62,6 +65,32 @@ jobs:
         run: |
           pnpm verify:editor
           DEVLY_EDITOR_VITE_DEV=1 pnpm verify:editor-ui
+      - name: Check macOS Git, interactive PTY and actual test records
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:workbench-host
+          pnpm verify:git-workspace
+          pnpm verify:terminal
+          pnpm verify:workbench-ui
+          pnpm verify:results-ui
+      - name: Check macOS protocol, recovery, backups and long history UI
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:stability-ui
+          pnpm verify:performance-ui
+      - name: Check macOS worktrees, real MCP, Skills and child cancellation
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:workspaces
+          pnpm verify:mcp
+          pnpm verify:multitask
+          pnpm verify:extensions-ui
+      - name: Check macOS attachment, static preview, browser approvals and local schedules
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:preview-ui
+          pnpm verify:browser-ui
+          pnpm verify:stage11-ui
       - name: Check project persistence and system credential backend
         run: pnpm verify:persistence
       - name: Build unsigned application directory
@@ -81,11 +110,43 @@ jobs:
         run: pnpm verify:editor-ui
         env:
           DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
+      - name: Check packaged macOS Git, PTY, themes, layouts and test traces
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:workbench-ui
+          pnpm verify:results-ui
+        env:
+          DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
+      - name: Check packaged macOS recovery, exports and long history
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:stability-ui
+          pnpm verify:performance-ui
+        env:
+          DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
+      - name: Check packaged macOS task extensions
+        if: runner.os == 'macOS'
+        run: pnpm verify:extensions-ui
+        env:
+          DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
+      - name: Check packaged macOS web extensions
+        if: runner.os == 'macOS'
+        run: |
+          pnpm verify:preview-ui
+          pnpm verify:browser-ui
+          pnpm verify:stage11-ui
+        env:
+          DEVLY_EXECUTABLE: release/mac-arm64/Devly.app/Contents/MacOS/Devly
       - name: Check packaged Windows desktop
         if: runner.os == 'Windows'
         run: pnpm verify:desktop
         env:
           DEVLY_EXECUTABLE: release/win-unpacked/Devly.exe
+      - name: Build and verify macOS preview DMG
+        if: runner.os == 'macOS'
+        run: |
+          pnpm exec electron-builder --mac dmg --arm64 --config.electronDist=node_modules/electron/dist --config.mac.identity=null --publish never
+          pnpm verify:mac-install
       - name: Retain screenshots and unsigned build evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -93,5 +154,8 @@ jobs:
           name: desktop-${{ matrix.os }}-${{ matrix.arch }}
           path: |
             output/*.png
+            output/performance-stage9.json
             release/builder-*.yaml
+            release/*.dmg
+            output/release-mac-install.json
           if-no-files-found: ignore

@@ -1,4 +1,6 @@
+import type { AttachmentRef } from '@shared/attachment-contracts'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { acceptStart, projectMessages } from './projection'
 import { desktop } from '@/platform/desktop'
 import { useWorkspace } from '@/store'
 import { isGenerating, type ChatSnapshot } from '@shared/chat-contracts'
@@ -12,7 +14,12 @@ const merge = (previous: ChatMessage[], incoming: ChatMessage[]) =>
   )
 export function useChat(projectId: string | undefined, sessionId: string | undefined) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [snapshot, setSnapshot] = useState<ChatSnapshot>({ turn: null, text: '', tools: [] })
+  const [snapshot, setSnapshot] = useState<ChatSnapshot>({
+    sequence: 0,
+    turn: null,
+    text: '',
+    tools: [],
+  })
   const [cursor, setCursor] = useState<Cursor>(null)
   const [loading, setLoading] = useState(!!sessionId)
   const [paging, setPaging] = useState(false)
@@ -23,6 +30,8 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
   const generation = useRef(0),
     sending = useRef(false),
     initialized = useRef(false)
+  const observed = useRef<ChatSnapshot>({ sequence: 0, turn: null, text: '', tools: [] })
+  const lastSequence = useRef(0)
   const acceptedTurn = useRef<{ id: string; time: number } | null>(null)
   const loadLatest = useCallback(
     async (version: number) => {
@@ -32,7 +41,7 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
         limit: 20,
       })
       if (version !== generation.current) return
-      setMessages((old) => merge(old, page.items))
+      setMessages((old) => projectMessages(merge(old, page.items), observed.current))
       if (!initialized.current) setCursor(page.nextCursor)
       initialized.current = true
     },
@@ -59,27 +68,25 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
         }
         if (!initialized.current || previous?.id !== next.turn?.id) await loadLatest(version)
         if (version !== generation.current) return
+        if (next.sequence < lastSequence.current) {
+          timer = setTimeout(() => void poll(), 180)
+          return
+        }
+        if (
+          next.sequence === lastSequence.current &&
+          previous?.id === next.turn?.id &&
+          initialized.current
+        ) {
+          setLoading(false)
+          timer = setTimeout(() => void poll(), isGenerating(next.turn?.state) ? 180 : 1000)
+          return
+        }
+        lastSequence.current = next.sequence
+        observed.current = next
         setSnapshot(next)
         if (next.turn) {
           const turn = next.turn
-          setMessages((old) =>
-            old.map((message) =>
-              message.id === turn.assistantMessageId
-                ? {
-                    ...message,
-                    parts: message.parts.map((part) =>
-                      part.type === 'text' ? { ...part, text: next.text } : part,
-                    ),
-                    state: turn.state,
-                    error: turn.error,
-                    usage: turn.usage,
-                    finish: turn.finish,
-                    tools: next.tools,
-                    agent: turn.agent,
-                  }
-                : message,
-            ),
-          )
+          setMessages((old) => projectMessages(old, next))
           if (isGenerating(previous?.state) && !isGenerating(turn.state)) {
             setStopping(false)
             void useWorkspace
@@ -110,6 +117,9 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
       model: string
       mode?: 'chat' | 'read-only' | 'project-write'
       selectedPaths?: string[]
+      allowDelegation?: boolean
+      attachments?: AttachmentRef[]
+      attachmentScope?: { projectId: string; sessionId: string }
     },
   ): Promise<void> {
     if (!text.trim() || sending.current || isGenerating(snapshot.turn?.state))
@@ -121,13 +131,25 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
     const version = generation.current
     let accepted = false
     try {
-      const general = projectId ? null : await desktop.data('sessions.general', {})
-      const targetProjectId = projectId ?? general!.projectId
-      const target: Pick<Session, 'id'> =
-        general ??
-        (sessionId
-          ? { id: sessionId }
-          : await desktop.data('sessions.create', { projectId: targetProjectId, title: '新会话' }))
+      const general =
+        projectId || binding.attachmentScope ? null : await desktop.data('sessions.general', {})
+      const targetProjectId = binding.attachmentScope?.projectId ?? projectId ?? general!.projectId
+      const target: Pick<Session, 'id'> = binding.attachmentScope
+        ? { id: binding.attachmentScope.sessionId }
+        : (general ??
+          (sessionId
+            ? { id: sessionId }
+            : await desktop.data('sessions.create', {
+                projectId: targetProjectId,
+                title: '新会话',
+              })))
+      if (binding.attachmentScope && !sessionId)
+        await desktop.data('sessions.bind', {
+          projectId: targetProjectId,
+          sessionId: target.id,
+          providerId: binding.providerId,
+          model: binding.model,
+        })
       useWorkspace
         .getState()
         .rememberChat(target.id, binding.mode ?? 'chat', binding.selectedPaths ?? [])
@@ -139,11 +161,14 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
         expectedModel: binding.model,
         mode: binding.mode ?? 'chat',
         selectedPaths: binding.selectedPaths ?? [],
+        allowDelegation: binding.allowDelegation ?? false,
+        attachments: binding.attachments ?? [],
       })
       accepted = true
       if (version === generation.current) {
         acceptedTurn.current = { id: turn.id, time: turn.startedAt ?? Date.now() }
-        setSnapshot({ turn, text: '', tools: [] })
+        observed.current = acceptStart(observed.current, turn, lastSequence.current)
+        setSnapshot((current) => acceptStart(current, turn, lastSequence.current))
         await loadLatest(version).catch(() => setError('消息已发送，聊天记录刷新失败，请重新读取'))
       }
       // Accepted messages are never auto-resubmitted if a later UI refresh fails.
@@ -182,7 +207,7 @@ export function useChat(projectId: string | undefined, sessionId: string | undef
         cursor,
       })
       if (version !== generation.current) return
-      setMessages((old) => merge(old, page.items))
+      setMessages((old) => projectMessages(merge(old, page.items), observed.current))
       setCursor(page.nextCursor)
     } catch (error) {
       if (version === generation.current)

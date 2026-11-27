@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { desktop } from '@/platform/desktop'
 import type { ProjectDocument } from '@shared/editor-contracts'
+import { useLayoutStore } from '@/features/desktop/layout-store'
 
 export type EditorMode = 'file' | 'git' | 'draft' | 'conflict'
 export type BufferDocument = {
@@ -20,13 +21,13 @@ export const isDirty = (document: BufferDocument) =>
 type EditorState = {
   documents: Record<string, BufferDocument>
   visible: Record<string, boolean>
-  section: Record<string, 'files' | 'changes'>
-  active: Record<string, { path: string; mode: EditorMode }>
+  section: Record<string, 'files' | 'changes' | 'git'>
+  active: Record<string, { path: string; mode: EditorMode; line?: number }>
   error: string | null
   disposeModel: ((uri: string) => void) | null
-  show(projectId: string, section?: 'files' | 'changes'): void
+  show(projectId: string, section?: 'files' | 'changes' | 'git'): void
   hide(projectId: string): void
-  open(projectId: string, path: string, mode?: EditorMode): Promise<void>
+  open(projectId: string, path: string, mode?: EditorMode, line?: number): Promise<void>
   edit(projectId: string, path: string, text: string): void
   refresh(projectId: string): Promise<void>
   save(projectId: string, path: string): Promise<boolean>
@@ -40,13 +41,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   active: {},
   error: null,
   disposeModel: null,
-  show: (projectId, section = 'files') =>
+  show: (projectId, section = 'files') => {
+    useLayoutStore.getState().patch(projectId, { showEditor: true })
     set((state) => ({
       visible: { ...state.visible, [projectId]: true },
       section: { ...state.section, [projectId]: section },
-    })),
-  hide: (projectId) => set((state) => ({ visible: { ...state.visible, [projectId]: false } })),
-  open: async (projectId, path, mode = 'file') => {
+    }))
+  },
+  hide: (projectId) => {
+    useLayoutStore.getState().patch(projectId, { showEditor: false })
+    set((state) => ({ visible: { ...state.visible, [projectId]: false } }))
+  },
+  open: async (projectId, path, mode = 'file', line) => {
     const key = documentKey(projectId, path)
     if (!get().documents[key]) {
       if (Object.keys(get().documents).length >= 20)
@@ -69,9 +75,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
             },
       }))
     }
+    useLayoutStore.getState().patch(projectId, { showEditor: true })
     set((state) => ({
       visible: { ...state.visible, [projectId]: true },
-      active: { ...state.active, [projectId]: { path, mode } },
+      active: {
+        ...state.active,
+        [projectId]: {
+          path,
+          mode,
+          ...(line && Number.isInteger(line) && line > 0 ? { line: Math.min(line, 1000000) } : {}),
+        },
+      },
       error: null,
     }))
   },

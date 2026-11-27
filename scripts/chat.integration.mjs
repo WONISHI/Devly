@@ -376,13 +376,19 @@ try {
   const beforeLimit = captured.length
   await rejects(start(limited, 'must-not-truncate'), 'CONTEXT_LIMIT')
   assert.equal(captured.length, beforeLimit)
-  const slots = [await session(), await session(), await session(), await session()]
-  for (const slot of slots) await start(slot, 'slow')
-  await rejects(start(await session(), 'fifth'), 'LIMIT_EXCEEDED')
+  const slots = []
+  for (let index = 0; index < 32; index++) {
+    const slot = await session()
+    slots.push(slot)
+    await start(slot, 'slow')
+  }
+  await wait(async () => (await snapshot(slots[3])).text.includes('saved partial'))
+  assert.equal((await snapshot(slots[4])).turn.phase, 'queued')
+  await rejects(start(await session(), 'thirty-third'), 'LIMIT_EXCEEDED')
   await runtime.close()
   for (const slot of slots) assert.equal((await snapshot(slot)).turn.state, 'cancelled')
   passed.push(
-    'timeout/configuration changes are distinct; unreadable credential and oversized context send no HTTP; active binding locked and four-run concurrency enforced',
+    'timeout/configuration changes are distinct; unreadable credential and oversized context send no HTTP; active binding locked, four active runs and 32 total queued/running limit enforced',
   )
   const migrationRoot = join(root, 'legacy-v3')
   await mkdir(migrationRoot)

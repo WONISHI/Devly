@@ -32,18 +32,17 @@ it('retains the explicitly selected model when the provider default is edited', 
     options.filter((option) => option.providerId === b.id).map((option) => option.model),
   ).toEqual(['other-model'])
 })
-it('deduplicates a saved selection and refuses empty or unimplemented protocol options', () => {
+it('deduplicates a saved selection, refuses empty model IDs and enables implemented protocols', () => {
   const a = provider(),
     empty = provider({ model: '' }),
-    unsupported = provider({ protocol: 'responses' })
-  const options = modelOptions([a, empty, unsupported], {
+    responses = provider({ protocol: 'responses' })
+  const options = modelOptions([a, empty, responses], {
     defaultProviderId: a.id,
     defaultModel: a.model,
   })
   expect(options).toHaveLength(3)
   expect(options.filter((option) => option.disabled).map((option) => option.hint)).toEqual([
     '请先填写模型 ID',
-    '协议暂未接入',
   ])
 })
 it('does not silently select a replacement provider after removal', () => {

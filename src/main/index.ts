@@ -1,4 +1,13 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, safeStorage } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  nativeImage,
+  safeStorage,
+  powerMonitor,
+  Notification,
+} from 'electron'
 import { fileURLToPath } from 'node:url'
 import { basename, join, resolve } from 'node:path'
 import { realpath, stat } from 'node:fs/promises'
@@ -73,7 +82,12 @@ const router = new RequestRouter({
     return { path, name: basename(path) }
   },
   clearOwner: (owner) => localData?.clearOwner(owner),
-  data: (payload, isActive, owner) => {
+  data: async (payload, isActive, owner) => {
+    if (payload.operation === 'storage.reopen') {
+      if (!isActive()) throw new ContractError(failure('FORBIDDEN'))
+      const reopened = database?.isAvailable() && localData ? false : await initializeStorage()
+      return { operation: payload.operation, data: { reopened } }
+    }
     if (!localData) throw new ContractError(failure('STORAGE_UNAVAILABLE'))
     return localData.execute(payload, isActive, owner)
   },
@@ -153,16 +167,13 @@ function createWindow(): void {
   else void mainWindow.loadFile(join(here, '../renderer/index.html'))
 }
 
-app
-  .whenReady()
-  .then(async () => {
-    if (!ownsInstance) return
-    if (process.platform === 'darwin') {
-      app.dock?.setIcon(nativeImage.createFromPath(appIconPath))
-    }
-    app.setAppLogsPath(join(app.getPath('userData'), 'logs'))
-    log.initialize()
-    registerIPC()
+let initializingStorage: Promise<boolean> | null = null
+async function initializeStorage(): Promise<boolean> {
+  if (initializingStorage) return initializingStorage
+  const task = (async () => {
+    await localData?.close().catch(() => {})
+    await database?.close().catch(() => {})
+    localData = undefined
     try {
       const root = join(app.getPath('userData'), 'storage')
       database = new DatabaseClient(root)
@@ -185,6 +196,40 @@ app
           return selected.canceled || !selected.filePath ? null : selected.filePath
         },
         credential: promptCredential,
+        configExport: async (kind) => {
+          const selected = await dialog.showSaveDialog(mainWindow!, {
+            title: kind === 'diagnostics' ? '导出诊断（不含日志正文）' : '导出配置（不含密钥）',
+            defaultPath: join(
+              app.getPath('downloads'),
+              kind === 'diagnostics' ? 'devly-diagnostics.json' : 'devly-config.json',
+            ),
+            filters: [{ name: 'JSON', extensions: ['json'] }],
+          })
+          return selected.canceled ? null : (selected.filePath ?? null)
+        },
+        configImport: async () => {
+          const selected = await dialog.showOpenDialog(mainWindow!, {
+            title: '导入 Devly 配置（devly-config-v1）',
+            properties: ['openFile'],
+            filters: [{ name: 'JSON', extensions: ['json'] }],
+          })
+          return selected.canceled ? null : (selected.filePaths[0] ?? null)
+        },
+        backup: async () => {
+          const selected = await dialog.showSaveDialog(mainWindow!, {
+            title: '创建数据备份（不含密钥）',
+            defaultPath: join(app.getPath('documents'), `Devly-${Date.now()}.devly-backup`),
+            properties: ['createDirectory'],
+          })
+          return selected.canceled ? null : (selected.filePath ?? null)
+        },
+        restore: async () => {
+          const selected = await dialog.showOpenDialog(mainWindow!, {
+            title: '检查 Devly 备份目录',
+            properties: ['openDirectory'],
+          })
+          return selected.canceled ? null : (selected.filePaths[0] ?? null)
+        },
         export: async () => {
           const selected = await dialog.showSaveDialog(mainWindow!, {
             title: '导出设置',
@@ -204,6 +249,44 @@ app
         },
       })
       await localData.initialize()
+      localData.schedules.setNotifier((_name, state) => {
+        if (Notification.isSupported())
+          new Notification({
+            title: 'Devly 本地任务',
+            body:
+              state === 'completed'
+                ? '任务已完成，请在应用内查看结果'
+                : '任务未完成，请在应用内检查运行记录',
+          }).show()
+      })
+      return true
+    } catch {
+      await localData?.close().catch(() => {})
+      localData = undefined
+      await database?.close().catch(() => {})
+      throw new ContractError(failure('STORAGE_UNAVAILABLE'))
+    }
+  })()
+  initializingStorage = task
+  try {
+    return await task
+  } finally {
+    initializingStorage = null
+  }
+}
+
+app
+  .whenReady()
+  .then(async () => {
+    if (!ownsInstance) return
+    if (process.platform === 'darwin') {
+      app.dock?.setIcon(nativeImage.createFromPath(appIconPath))
+    }
+    app.setAppLogsPath(join(app.getPath('userData'), 'logs'))
+    log.initialize()
+    registerIPC()
+    try {
+      await initializeStorage()
     } catch {
       localData = undefined
       log.error('Local storage initialization failed')
@@ -243,4 +326,9 @@ app.on('before-quit', (event) => {
   quitRequested = true
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.close()
   else void finishQuit()
+})
+
+app.whenReady().then(() => {
+  powerMonitor.on('suspend', () => localData?.schedules.suspend())
+  powerMonitor.on('resume', () => localData?.schedules.resume())
 })

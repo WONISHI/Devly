@@ -37,15 +37,15 @@ flowchart TB
     DISK --> DIFF
 ```
 
-| 操作 | 参数要点 | 返回与处理 |
-| --- | --- | --- |
-| editor.list | projectId、path、offset | 单目录最多 100 个 entry、nextOffset；不递归加载全项目 |
-| editor.read | projectId、path | 完整受限 UTF-8 文本、精确版本、字节数，或明确不支持状态 |
-| editor.save | projectId、path、expectedHash、content | saved、重新读取的 document、error、必要时 recoveryPath |
-| editor.observe | projectId、watchId、最多 64 个目录 | revision、实际 watching 数、degraded |
-| editor.release | watchId | 仅释放当前窗口 owner 的监听 |
-| editor.changes | projectId | 有界变化列表、截断标记、非仓库/不可用原因 |
-| editor.diff | projectId、path | original、modified、oldPath、HEAD 基线与可用性 |
+| 操作           | 参数要点                               | 返回与处理                                              |
+| -------------- | -------------------------------------- | ------------------------------------------------------- |
+| editor.list    | projectId、path、offset                | 单目录最多 100 个 entry、nextOffset；不递归加载全项目   |
+| editor.read    | projectId、path                        | 完整受限 UTF-8 文本、精确版本、字节数，或明确不支持状态 |
+| editor.save    | projectId、path、expectedHash、content | saved、重新读取的 document、error、必要时 recoveryPath  |
+| editor.observe | projectId、watchId、最多 64 个目录     | revision、实际 watching 数、degraded                    |
+| editor.release | watchId                                | 仅释放当前窗口 owner 的监听                             |
+| editor.changes | projectId                              | 有界变化列表、截断标记、非仓库/不可用原因               |
+| editor.diff    | projectId、path                        | original、modified、oldPath、HEAD 基线与可用性          |
 
 现有 RequestRouter 校验来源、请求归属和严格 Schema；EditorService 再检查项目在 Repository 中登记、非托管通用聊天目录、根路径与 canonical realpath 一致。数据库只查项目元数据，本阶段不增加迁移。文件模型 URI 为 `devly://项目UUID/逐段编码路径`，跨项目同名文件不会共用内容。
 
@@ -71,7 +71,7 @@ EditorPane 延迟加载；当前含五类 Worker 的单块约 22.9 MB（未压�
 
 ## Git Diff 范围
 
-系统 Git 使用参数数组、literal pathspec、NUL porcelain、禁止可选锁、禁用 fsmonitor、只读 macOS 约束与受限环境；不执行提交、推送或写入 index。状态最多 1000 项，Git 输出/时间也有界。非仓库和系统拒绝显示不可用，普通文件编辑仍可用。
+系统 Git 使用参数数组、literal pathspec、NUL porcelain、禁止可选锁、禁用 fsmonitor、只读 macOS 约束与受限环境；此只读 Diff 路径不执行提交、推送或写入 index；阶段 8 的用户主动 Git 操作走独立的 GitService。状态最多 1000 项，Git 输出/时间也有界。非仓库和系统拒绝显示不可用，普通文件编辑仍可用。
 
 比较 HEAD 与实际磁盘，新增左侧为空、删除右侧为空；Git 已识别重命名显示旧路径，二进制/编码/大文件明确不能显示文本 Diff。未暂存重命名按 Git 实际 status 可能表现为删除与新增；不编造重命名。未合并路径显示冲突。忽略/敏感路径不出现在文件和更改列表；内容敏感时不把秘密作为 Diff 返回。外置 worktree 元数据等超出已验证约束时明确不可用。
 
@@ -88,4 +88,8 @@ DEVLY_EXECUTABLE=release/mac-arm64/Devly.app/Contents/MacOS/Devly pnpm verify:ed
 
 A09 手工入口 `pnpm verify:editor-live` 要求显式 DEVLY_EXECUTABLE、DEVLY_LIVE_SOURCE_PROFILE 与 DEVLY_LIVE_PROVIDER_ID。只把用户已选 Provider 的元数据和保护密文复制到隔离临时配置；Key 仍仅在应用 Main 解密。生成失败的加法函数和固定测试，真实模型搜索、读取、提出精确单文件修改，测试操作员仅批准匹配当前哈希的预期修改与指定 `/bin/sh tests/verify.sh`，其他提案拒绝。对照真实文件、随机测试证明、退出码和 Monaco Diff；不发送用户既有项目或会话，不打印凭据。此入口会调用真实 API，不能放入自动 CI 或把替身结果当作真实验收。
 
-本阶段没有实现提交历史、暂存/提交、交互 PTY、持久布局、跨重启草稿恢复或所有平台的编辑保存；分别按阶段 8、9、12 继续。应用目录未签名、未公证，不是正式安装包。
+阶段 7 当时未接入的提交历史、暂存/提交、交互 PTY 与持久布局，现已由阶段 8 完成当前 macOS 验收，见 [Git 与终端](./git-and-terminal.md)。跨重启文件草稿恢复仍未实现，阶段 9 的 R02 仅核对任务/文件状态；其他平台编辑保存留阶段 12 实测。应用目录未签名、未公证，不是正式安装包。
+
+## 阶段 10 工作区审查
+
+独立任务的 worktree Diff/提交/合并入口在设置 → 任务与隔离。审查基于实际 HEAD、分支、状态和内容摘要，外部变化须重新审查；只快进，不自动冲突覆盖或推送。受保护补丁恢复副本单独提示并保留，不读取/暂存/删除；存在副本的工作区关闭被拒绝。普通编辑器任意外部 Git metadata 约束保持，专用托管工作区服务通过源项目进行审查。见 [多任务与扩展](./task-extensions.md)。

@@ -1,4 +1,16 @@
+import { scheduleArguments, scheduleResults } from './schedule-contracts'
+import { previewArguments, previewResults } from './preview-contracts'
+import { extensionArguments, extensionResults } from './extension-contracts'
+import { webArguments, webResults } from './web-contracts'
+import {
+  attachmentArguments,
+  attachmentResults,
+  attachmentRef,
+  attachmentInfo,
+} from './attachment-contracts'
+import { stabilityArguments, stabilityResults } from './stability-contracts'
 import { editorArguments, editorResults } from './editor-contracts'
+import { workbenchArguments, workbenchResults } from './workbench-contracts'
 import { usageSummarySchema, accountQuerySchema } from './usage-contracts'
 import { z } from 'zod'
 import {
@@ -98,6 +110,44 @@ export const providerSchema = providerInputSchema
   })
   .strict()
 export type Provider = z.infer<typeof providerSchema>
+export const portableConfigSchema = z
+  .object({
+    format: z.literal('devly-config-v1'),
+    settings: settingsSchema,
+    providers: z.array(providerInputSchema.extend({ id: entityId }).strict()).max(50),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (new Set(value.providers.map((p) => p.id)).size !== value.providers.length)
+      context.addIssue({ code: 'custom', message: 'Duplicate provider IDs' })
+    if (
+      value.settings.defaultProviderId &&
+      !value.providers.some((p) => p.id === value.settings.defaultProviderId)
+    )
+      context.addIssue({ code: 'custom', message: 'Unknown default provider' })
+  })
+export type PortableConfig = z.infer<typeof portableConfigSchema>
+export const configPreviewSchema = z
+  .object({
+    previewId: entityId,
+    theme: settingsSchema.shape.theme,
+    projectPermission: settingsSchema.shape.projectPermission,
+    maxTokens: z.number(),
+    maxCost: z.number(),
+    providers: z
+      .array(
+        z
+          .object({
+            name: text,
+            protocol: providerInputSchema.shape.protocol,
+            host: z.string().max(300),
+            model: z.string().max(200),
+          })
+          .strict(),
+      )
+      .max(50),
+  })
+  .strict()
 export const sessionSchema = z
   .object({
     id: entityId,
@@ -131,6 +181,17 @@ export const blobSchema = session
   })
   .strict()
 export const operationArgs = {
+  ...scheduleArguments,
+  ...previewArguments,
+  ...attachmentArguments,
+  ...webArguments,
+  ...extensionArguments,
+  'config.export': z.object({}).strict(),
+  'config.import.inspect': z.object({}).strict(),
+  'config.import.apply': z.object({ previewId: entityId }).strict(),
+  'diagnostics.export': z.object({}).strict(),
+  ...stabilityArguments,
+  ...workbenchArguments,
   ...editorArguments,
   bootstrap: z.object({}).strict(),
   'projects.list': z.object({}).strict(),
@@ -185,6 +246,8 @@ export const operationArgs = {
   'sessions.messages': session.extend(page).strict(),
   'chat.start': session
     .extend({
+      allowDelegation: z.boolean().default(false),
+      attachments: z.array(attachmentRef).max(4).default([]),
       turnId: entityId,
       text: z.string().trim().min(1).max(32768),
       expectedProviderId: entityId,
@@ -248,6 +311,7 @@ export const messageSchema = z
           type: z.enum(['text', 'blob']),
           text: z.string().nullable(),
           blobId: entityId.nullable(),
+          attachment: attachmentInfo.nullable().optional(),
         })
         .strict(),
     ),
@@ -264,7 +328,12 @@ export const bootstrapSchema = z
     settings: settingsSchema,
     providers: z.array(providerSchema),
     storage: z
-      .object({ schemaVersion: z.number().int(), credentialAvailable: z.boolean() })
+      .object({
+        schemaVersion: z.number().int(),
+        credentialAvailable: z.boolean(),
+        recoveryError: z.boolean().default(false),
+        pendingRestore: z.boolean().default(false),
+      })
       .strict(),
   })
   .strict()
@@ -272,6 +341,19 @@ export type Bootstrap = z.infer<typeof bootstrapSchema>
 export type ChatMessage = z.infer<typeof messageSchema>
 const ack = z.object({ removed: z.boolean() }).strict()
 export const operationResults = {
+  ...scheduleResults,
+  ...previewResults,
+  ...attachmentResults,
+  ...webResults,
+  ...extensionResults,
+  'config.export': z.object({ saved: z.boolean() }).strict(),
+  'config.import.inspect': configPreviewSchema.nullable(),
+  'config.import.apply': z
+    .object({ imported: z.number().int(), settingsImported: z.boolean() })
+    .strict(),
+  'diagnostics.export': z.object({ saved: z.boolean() }).strict(),
+  ...stabilityResults,
+  ...workbenchResults,
   ...editorResults,
   bootstrap: bootstrapSchema,
   'projects.list': z.array(recentProjectSchema),

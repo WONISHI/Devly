@@ -5,7 +5,9 @@ import { agentInfoSchema, agentToolSchema } from './agent-contracts'
 export const turnStateSchema = z.enum(['pending', 'running', 'completed', 'failed', 'cancelled'])
 export const taskPhaseSchema = z.enum([
   'pending',
+  'queued',
   'running',
+  'waiting_children',
   'waiting_approval',
   'stopping',
   'completed',
@@ -15,8 +17,10 @@ export const taskPhaseSchema = z.enum([
 export type TaskPhase = z.infer<typeof taskPhaseSchema>
 // waiting_approval is reserved for the Agent phase; ordinary chat never invents approvals/tools.
 const transitions: Record<TaskPhase, TaskPhase[]> = {
-  pending: ['running', 'stopping', 'failed', 'cancelled'],
-  running: ['waiting_approval', 'stopping', 'completed', 'failed', 'cancelled'],
+  pending: ['queued', 'running', 'stopping', 'failed', 'cancelled'],
+  queued: ['running', 'stopping', 'failed', 'cancelled'],
+  running: ['waiting_children', 'waiting_approval', 'stopping', 'completed', 'failed', 'cancelled'],
+  waiting_children: ['running', 'queued', 'stopping', 'failed', 'cancelled'],
   waiting_approval: ['running', 'stopping', 'failed', 'cancelled'],
   stopping: ['cancelled', 'failed'],
   completed: [],
@@ -75,6 +79,7 @@ export const chatTurnSchema = z
 export type ChatTurn = z.infer<typeof chatTurnSchema>
 export const chatSnapshotSchema = z
   .object({
+    sequence: z.number().int().nonnegative().default(0),
     turn: chatTurnSchema.nullable(),
     text: z.string().max(262144),
     tools: z.array(agentToolSchema).max(40).default([]),

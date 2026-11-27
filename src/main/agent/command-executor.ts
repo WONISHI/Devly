@@ -1,3 +1,4 @@
+import { supportsHostExecution } from '../../shared/host-support'
 import { spawn } from 'node:child_process'
 import { lstat, realpath, stat } from 'node:fs/promises'
 import { resolve, relative, sep } from 'node:path'
@@ -23,7 +24,7 @@ export type CommandRequest = z.input<typeof commandRequest>
 /** A defense-in-depth macOS profile; there is deliberately no unsandboxed fallback. */
 export function commandProfile(
   root: string,
-  options: { readOnly?: boolean; gitMetadata?: boolean } = {},
+  options: { readOnly?: boolean; gitMetadata?: boolean; gitWrite?: boolean; pty?: boolean } = {},
 ) {
   const quote = JSON.stringify
   const insensitive = (pattern: string) =>
@@ -42,8 +43,10 @@ export function commandProfile(
 (allow file-read-metadata)
 (allow file-read* (literal "/") (subpath ${quote(root)}) (subpath "/System") (subpath "/Library/Developer") (subpath "/Library/Apple") (subpath "/private/etc") (subpath "/usr") (subpath "/bin") (subpath "/sbin") (subpath "/private/var/db/dyld") (subpath "/dev"))
 (allow file-write* ${options.readOnly ? '' : `(subpath ${quote(root)})`} (literal "/dev/null"))
-(deny ${options.gitMetadata ? 'file-write*' : 'file-read* file-write*'} (subpath ${quote(resolve(root, '.git'))}))
-(deny file-read* file-write* (regex #"${secretPaths}") (regex #"${secretExtensions}"))`
+${options.gitWrite ? '' : `(deny ${options.gitMetadata ? 'file-write*' : 'file-read* file-write*'} (subpath ${quote(resolve(root, '.git'))}))`}
+${options.pty ? '(allow pseudo-tty)\n(allow file-read* file-write* file-ioctl (regex #"^/dev/(tty|ttys[0-9]+|ptmx)$"))' : ''}
+(deny file-read* file-write* (regex #"${secretPaths}"))
+(deny file-read* file-write* (require-all (regex #"${secretExtensions}") (require-not (subpath "/usr/share/i18n"))))`
 }
 
 /** Main-only executor. The coordinator requires a fresh scoped approval before every invocation. */
@@ -55,7 +58,7 @@ export async function executeProjectCommand(
   secret = '',
 ) {
   const args = commandRequest.parse(raw)
-  if (process.platform !== 'darwin') throw new Error('UNSUPPORTED_PLATFORM')
+  if (!supportsHostExecution(process.platform)) throw new Error('UNSUPPORTED_PLATFORM')
   signal.throwIfAborted()
   const canonical = await realpath(root)
   if ((await lstat(root)).isSymbolicLink()) throw new Error('PROJECT_CHANGED')

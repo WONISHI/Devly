@@ -4,16 +4,16 @@
 
 ## 两层组件
 
-| 范围 | 当前使用 | 位置 |
-| --- | --- | --- |
-| 基础控件 | shadcn/ui + Radix：Button、Input、Textarea、Label、Select、Collapsible、ScrollArea | components/ui/ |
-| 通用表单组合 | SelectField 组合现有 Select/Trigger/Content/Item，不重新实现下拉行为 | components/forms/SelectField.tsx |
-| AI 交互 | 原版 AI Elements：ModelSelector、Conversation、Message、Tool、Commit、Code Block | components/ai-elements/ |
-| 布局 | 正常 React/HTML/CSS 的侧栏、页面框架、可拖动标题栏 | app/、features/、styles.css |
+| 范围         | 当前使用                                                                           | 位置                             |
+| ------------ | ---------------------------------------------------------------------------------- | -------------------------------- |
+| 基础控件     | shadcn/ui + Radix：Button、Input、Textarea、Label、Select、Collapsible、ScrollArea | components/ui/                   |
+| 通用表单组合 | SelectField 组合现有 Select/Trigger/Content/Item，不重新实现下拉行为               | components/forms/SelectField.tsx |
+| AI 交互      | 原版 AI Elements：ModelSelector、Conversation、Message、Tool、Commit、Code Block   | components/ai-elements/          |
+| 布局         | 正常 React/HTML/CSS 的侧栏、页面框架、可拖动标题栏                                 | app/、features/、styles.css      |
 
 shadcn/ui 采用源码放进项目的方式，所以 components/ui 中可以看到底层 HTML 或 Radix primitive；判断是否复用要看业务页的组件导入和调用，不能以最终 DOM 是否出现 button/input 判断。当前业务交互控件已经统一，正常 form/div/section 等结构元素继续用于布局和原生表单语义。
 
-原版 AI Elements ModelSelector 已用于首页：搜索/按供应商分组/键盘选择、应用或项目默认值持久化。阶段 4 已复用原 PromptInput、Conversation 和 Message 接入普通文本聊天；Tool/Commit/Code Block 等仍用于明确标识的演示或后续业务，不把选择模型称为已经接通聊天。没有迁移到新版 Base UI 或其他 AI patterns。
+原版 AI Elements ModelSelector 已用于首页：搜索/按供应商分组/键盘选择、应用或项目默认值持久化。阶段 4 已复用原 PromptInput、Conversation 和 Message 接入普通文本聊天；Tool/Commit/Code Block 已用于实际工具记录、Git 历史与内容展示，组件预览保留明确标注的示例，不把选择模型称为已经接通聊天。没有迁移到新版 Base UI 或其他 AI patterns。
 
 ## 当前映射
 
@@ -57,3 +57,17 @@ ProviderSettingsPage 使用现有 Button 切换模型供应商、外观、默认
 开发者诊断沿用原 Collapsible，控件复用现有 shadcn/ui，没有新增依赖或修改上游 AI Elements。桌面检查覆盖五组唯一可见、供应商/模型草稿往返、隐藏非法值与按组保存、持久化、主题、导出、960×680 边界及单层主滚动。LOG-040 的滚动锚点方案已由本次用户指令替换，历史记录保留。
 
 阶段 5 的 AgentTrace 已将原 Message/Tool 接入真实调用状态、ID、JSON 参数/结果和脱敏 blob 日志；上游组件文件未修改。只读模式、可选文件及 Agent 限额仍复用 shadcn/Radix 基础控件。项目/最近列表及日志使用同源 ScrollArea，独立原生新建项目与新聊天见 LOG-042/LOG-043。
+
+阶段 8 新增原 Terminal/Test Results/Stack Trace，Commit 用于真实 Git 历史；交互 Shell 由 xterm 提供。新增来源仍为同一固定提交，当前共 35 份文件离线校验。提交审查使用现有 Dialog/ScrollArea，业务控件继续复用 components/ui，分隔条使用既有 resizable 组件与中性色状态。详情见 [Git 与终端工作台](./git-and-terminal.md)。
+
+## 阶段 9 补充
+
+阶段 9 已接入独立 Responses/Anthropic 协议、持久事件保护、核对后新回合继续与数据设置入口。项目继续始终只读复核，不自动重放旧命令/审批；新协议真实供应商待联调。备份、配置、诊断、虚拟化和错误处理的当前规则见 [恢复与稳定性](./stability-and-recovery.md) 及 [供应商矩阵](./provider-matrix.md)。
+
+## 阶段 10 组件复用
+
+项目上下文、任务与隔离、MCP 工具、Skills 为独立设置组，右侧只显示所选组。复用既有 shadcn/Radix Button、Input、Textarea、Label、SelectField、Dialog、ScrollArea；原 AI Elements Tool/Confirmation/Plan/Task 展示真实 MCP 和父子任务事件。没有修改原 35 份来源文件、引入另一套 AI patterns 或更改品牌 v5。查看 Skill、最小窗口 Diff 审查、父子跳转与包内验收入口见 [扩展说明](./task-extensions.md)。
+
+## 阶段 11 扩展
+
+[附件、网页与本地自动化](./web-and-automation.md) 记录当前实现和边界：受限文本/图片附件、独立搜索凭据及精确审批、隔离静态预览、每回合浏览器/真实截图、默认停用的本地只读定时任务。SQLite 追加至 v15；模型 Key 不进入 Renderer。网页容器不等于 OS 沙箱，搜索真实端点按用户确认另行联调，本轮视觉/模型响应使用本地协议夹具；最终验证状态见工作计划与日志。

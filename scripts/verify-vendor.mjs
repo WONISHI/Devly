@@ -20,6 +20,9 @@ if (process.argv.includes('--refresh')) {
       'plan',
       'task',
       'shimmer',
+      'terminal',
+      'test-results',
+      'stack-trace',
     ].map((name) => ({
       upstream: `packages/elements/src/${name}.tsx`,
       local: `src/renderer/src/components/ai-elements/${name}.tsx`,

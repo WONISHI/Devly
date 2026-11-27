@@ -1,3 +1,4 @@
+@import 'katex/dist/katex.min.css';
 @import 'tailwindcss';
 @custom-variant dark (&:is(.dark *));
 @theme inline {
@@ -1474,34 +1475,87 @@ button:disabled {
   font-size: 11px;
   flex-shrink: 0;
 }
-.editor-resize-vertical {
-  width: 5px;
+/* A hairline boundary with a larger transparent pointer target. */
+.editor-resize-vertical,
+.editor-resize-horizontal,
+.sidebar-resize-handle {
+  position: relative;
+  z-index: 3;
   flex-shrink: 0;
   background: var(--border);
-  position: relative;
+  outline: none;
+  touch-action: none;
+  transition: background-color 140ms ease;
+}
+.editor-resize-vertical,
+.sidebar-resize-handle {
+  width: 1px;
   cursor: col-resize;
 }
-.editor-resize-vertical::after {
+.editor-resize-horizontal {
+  height: 1px;
+  cursor: row-resize;
+}
+.editor-resize-vertical::before,
+.editor-resize-horizontal::before,
+.sidebar-resize-handle::before {
   content: '';
   position: absolute;
-  left: 2px;
-  top: 45%;
-  width: 1px;
-  height: 36px;
-  background: var(--muted-foreground);
-  border-radius: 3px;
+  inset: 0 -4px;
 }
-.editor-resize-vertical:hover,
-.editor-resize-vertical[data-resize-handle-state='drag'] {
-  background: var(--muted);
+.editor-resize-horizontal::before {
+  inset: -4px 0;
+}
+.editor-resize-vertical::after,
+.editor-resize-horizontal::after,
+.sidebar-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+.editor-resize-horizontal::after {
+  width: 28px;
+  height: 3px;
+}
+:is(.editor-resize-vertical, .editor-resize-horizontal, .sidebar-resize-handle):is(
+  :hover,
+  :focus-visible,
+  [data-resize-handle-state='hover'],
+  [data-resize-handle-state='drag'],
+  [data-dragging='true']
+) {
+  background: color-mix(in srgb, var(--muted-foreground) 55%, var(--border));
+}
+:is(.editor-resize-vertical, .editor-resize-horizontal, .sidebar-resize-handle):is(
+    :hover,
+    :focus-visible,
+    [data-resize-handle-state='hover'],
+    [data-resize-handle-state='drag'],
+    [data-dragging='true']
+  )::after {
+  opacity: 1;
 }
 .editor-hidden .editor-resize-vertical {
   display: none;
 }
-.editor-resize-horizontal {
-  height: 4px;
-  background: var(--border);
-  cursor: row-resize;
+@media (prefers-reduced-motion: reduce) {
+  .editor-resize-vertical,
+  .editor-resize-horizontal,
+  .sidebar-resize-handle,
+  .editor-resize-vertical::after,
+  .editor-resize-horizontal::after,
+  .sidebar-resize-handle::after {
+    transition: none;
+  }
 }
 .editor-tabs-scroll {
   height: 37px;
@@ -1639,4 +1693,334 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* Stage 8: real local Git workspace. */
+.git-panel {
+  padding: 10px;
+  font-size: 12px;
+  min-width: 0;
+}
+.git-toolbar,
+.git-branch-controls,
+.git-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.git-toolbar strong {
+  margin-right: auto;
+  overflow-wrap: anywhere;
+}
+.git-branch-controls {
+  margin: 10px 0;
+  border: 0;
+}
+.git-branch-controls input,
+.git-branch-controls .settings-select {
+  max-width: 200px;
+}
+.git-result {
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+  padding: 6px 0;
+}
+.git-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.git-change {
+  border-bottom: 1px solid var(--border);
+  padding: 4px 0;
+}
+.git-change > button:first-child {
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.git-commit-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.git-review {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.desktop-workbench {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.terminal-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.terminal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.terminal-toolbar > span,
+.terminal-status {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.terminal-tabs {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.interactive-terminal-host {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 5px 8px 0;
+}
+.interactive-terminal-host .xterm {
+  height: 100%;
+}
+.terminal-status {
+  padding: 3px 8px;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.terminal-empty {
+  padding: 12px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.terminal-resize[data-resize-handle-state='inactive'][aria-disabled='true'] {
+  display: none;
+}
+
+.command-result {
+  min-width: 0;
+  max-width: 100%;
+}
+.command-result [data-execution-stack] button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.command-result [data-execution-stack],
+.agent-command-terminal {
+  max-width: 100%;
+  min-width: 0;
+}
+.command-result pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.command-result .agent-command-terminal > div:first-child {
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+}
+.chat-viewport > div {
+  display: block !important;
+  min-width: 0;
+  width: 100%;
+}
+
+.layout-save-error {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.topbar {
+  gap: 8px;
+  height: auto;
+  min-height: 52px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.topbar > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 60px;
+  flex: 1;
+}
+.workspace-file-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.git-review-scroll {
+  height: min(26vh, 220px);
+}
+@media (max-width: 1100px) {
+  .topbar {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .workspace-file-actions button {
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 11px;
+  }
+  .editor-draft-count {
+    flex-basis: 100%;
+    text-align: right;
+  }
+  .terminal-toolbar > span {
+    display: none;
+  }
+  .terminal-toolbar {
+    gap: 2px;
+    padding: 3px 5px;
+  }
+  .terminal-toolbar button {
+    padding-left: 5px;
+    padding-right: 5px;
+    font-size: 11px;
+  }
+  .task-page-chat .chat-composer-dock {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+
+.recovery-dialog {
+  max-width: min(640px, calc(100vw - 32px));
+}
+.recovery-review {
+  height: min(45vh, 380px);
+  min-width: 0;
+}
+.recovery-checks {
+  display: grid;
+  gap: 12px;
+  padding-right: 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.recovery-checks p {
+  color: var(--muted-foreground);
+  margin: 5px 0;
+}
+
+.chat-virtual-list {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+}
+.chat-virtual-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-bottom: 28px;
+}
+
+.data-settings-panel {
+  display: grid;
+  gap: 20px;
+}
+.data-settings-panel > p,
+.data-settings-panel .settings-group > p {
+  color: var(--muted-foreground);
+  line-height: 1.7;
+}
+.data-settings-panel .settings-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.extension-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.extension-list {
+  display: grid;
+  gap: 12px;
+}
+.extension-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+.extension-row > div {
+  flex: 1;
+  min-width: 180px;
+}
+.extension-panel p {
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.workspace-review-dialog {
+  max-width: min(860px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+}
+.workspace-review-scroll {
+  height: min(40vh, 340px);
+  min-width: 0;
+}
+.workspace-review-scroll pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.workspace-review-actions {
+  flex-wrap: wrap;
+}
+
+.chat-attachments {
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px;
+}
+.chat-attachments > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.chat-attachments span {
+  overflow-wrap: anywhere;
+  flex: 1;
+}
+.attachment-transfer,
+.message-attachment {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.attachment-transfer {
+  margin: 0 12px 8px;
+}
+.web-source-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.web-source-list p {
+  overflow-wrap: anywhere;
 }

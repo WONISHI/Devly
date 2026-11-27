@@ -1,3 +1,4 @@
+import { supportsHostExecution } from '../../shared/host-support'
 import { spawn } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -11,7 +12,7 @@ export async function applyIsolatedPatch(
   input: PatchRequest,
   signal: AbortSignal,
 ): Promise<PatchResult[]> {
-  if (process.platform !== 'darwin') throw new Error('UNSUPPORTED_PLATFORM')
+  if (!supportsHostExecution(process.platform)) throw new Error('UNSUPPORTED_PLATFORM')
   const patch = patchRequest.parse(input)
   const canonical = await realpath(root)
   const executable = await realpath(process.execPath)

@@ -18,9 +18,17 @@ import {
 import { desktop } from '@/platform/desktop'
 import type { FileEntry, FileChange } from '@shared/editor-contracts'
 import { useEditorStore, isDirty, documentKey } from './store'
+import { GitPanel } from '@/features/git/GitPanel'
+import { useDesktopLayout } from '@/features/desktop/use-layout'
+import { currentLayout } from '@/features/desktop/layout-store'
 const EditorPane = lazy(() => import('./EditorPane'))
 type Page = { entries: FileEntry[]; nextOffset: number | null }
 function WorkbenchPanel({ projectId }: { projectId: string }) {
+  const { layout, ready, patch, flush } = useDesktopLayout(projectId)
+  const treePanel = useRef<ImperativePanelHandle>(null)
+  useEffect(() => {
+    if (ready) treePanel.current?.resize(currentLayout(projectId).tree)
+  }, [projectId, ready])
   const state = useEditorStore(),
     section = state.section[projectId] ?? 'files'
   const [pages, setPages] = useState<Record<string, Page>>({}),
@@ -219,6 +227,13 @@ function WorkbenchPanel({ projectId }: { projectId: string }) {
       <div className="editor-browser-toolbar">
         <Button
           size="sm"
+          variant={section === 'git' ? 'secondary' : 'ghost'}
+          onClick={() => state.show(projectId, 'git')}
+        >
+          Git
+        </Button>
+        <Button
+          size="sm"
           variant={section === 'files' ? 'secondary' : 'ghost'}
           onClick={() => state.show(projectId, 'files')}
         >
@@ -253,10 +268,18 @@ function WorkbenchPanel({ projectId }: { projectId: string }) {
           {error}
         </p>
       )}
-      <PanelGroup direction="vertical" className="editor-body-split">
-        <Panel defaultSize={28} minSize={12} maxSize={55}>
+      <PanelGroup
+        direction="vertical"
+        className="editor-body-split"
+        onLayout={(sizes) => {
+          if (ready) patch({ tree: Math.max(12, Math.min(55, sizes[0])) })
+        }}
+      >
+        <Panel ref={treePanel} defaultSize={layout.tree} minSize={12} maxSize={55}>
           <ScrollArea className="editor-tree-scroll" type="auto">
-            {section === 'files' ? (
+            {section === 'git' ? (
+              <GitPanel projectId={projectId} />
+            ) : section === 'files' ? (
               directory('.')
             ) : changes?.available ? (
               <div className="editor-changes">
@@ -306,7 +329,13 @@ function WorkbenchPanel({ projectId }: { projectId: string }) {
             )}
           </ScrollArea>
         </Panel>
-        <PanelResizeHandle className="editor-resize-horizontal" />
+        <PanelResizeHandle
+          className="editor-resize-horizontal"
+          aria-label="调整文件列表高度"
+          onDragging={(dragging) => {
+            if (!dragging) void flush()
+          }}
+        />
         <Panel minSize={35}>
           <div className="editor-document-area">
             <ScrollArea className="editor-tabs-scroll">
@@ -395,23 +424,41 @@ export function ProjectWorkbench({
   children: ReactNode
 }) {
   const visible = useEditorStore((state) => (projectId ? state.visible[projectId] : false))
+  const { layout, ready, patch, flush } = useDesktopLayout(projectId)
   const panel = useRef<ImperativePanelHandle>(null)
   useEffect(() => {
     if (visible) {
       panel.current?.expand()
-      panel.current?.resize(60)
+      panel.current?.resize(currentLayout(projectId).editor)
     } else panel.current?.collapse()
-  }, [visible])
+  }, [visible, projectId, ready])
   if (!projectId) return <>{children}</>
   return (
     <PanelGroup
       direction="horizontal"
       className={`project-workbench ${visible ? 'with-editor' : 'editor-hidden'}`}
+      onLayout={(sizes) => {
+        if (visible && ready && sizes[0] >= 32) patch({ editor: Math.min(72, sizes[0]) })
+      }}
     >
-      <Panel ref={panel} collapsible collapsedSize={0} minSize={32} defaultSize={visible ? 60 : 0}>
+      <Panel
+        ref={panel}
+        collapsible
+        collapsedSize={0}
+        minSize={32}
+        maxSize={72}
+        defaultSize={visible ? layout.editor : 0}
+      >
         {visible && <WorkbenchPanel key={projectId} projectId={projectId} />}
       </Panel>
-      <PanelResizeHandle className="editor-resize-vertical" disabled={!visible} />
+      <PanelResizeHandle
+        className="editor-resize-vertical"
+        disabled={!visible}
+        aria-label="调整编辑区宽度"
+        onDragging={(dragging) => {
+          if (!dragging) void flush()
+        }}
+      />
       <Panel minSize={28} defaultSize={visible ? 40 : 100}>
         <div className="workbench-chat">{children}</div>
       </Panel>

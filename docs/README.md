@@ -11,6 +11,13 @@
 
 ## 设计与搭建资料
 
+- [多任务、MCP 与 Skills](./task-extensions.md)：阶段 10 的项目记忆、队列/worktree、父子权限/预算/取消、真实 MCP/Skill、迁移与限制。
+
+- [协议、恢复与稳定性](./stability-and-recovery.md)：阶段 9 的备份、核对后继续、事件、配置与诊断、性能和异常交互。
+- [供应商验收矩阵](./provider-matrix.md)：三种独立协议的证据、能力差异与真实待联调范围。
+
+- [Git 与交互终端工作台](./git-and-terminal.md)：阶段 8 的真实提交/分支、受限 PTY/xterm、实际测试与堆栈、主题布局和快捷键。
+
 - [编辑器与实际 Diff](./editor-and-diff.md)：阶段 7 的按需文件树、本地 Monaco/Worker、有版本保存、未保存保护、真实 Git Diff 与 A09 验收入口。
 
 - [第三方 Provider API](./provider-api.md)：P01–P06 的实现、数据流、协议规则、能力表、错误/取消和真实验收操作。
@@ -41,3 +48,9 @@
 架构图使用 Mermaid 编写；阅读器需要支持 Mermaid 渲染。计划和文档不代表相应功能已经实现。
 
 阶段 6 的 macOS 项目写入、命令、逐次审批、停止、计划和主机执行边界见 [执行与审批](./execution-foundation.md)。默认跳过的原生检查须另行运行，未签名 .app 不等于正式发行包。
+
+- [附件、网页与本地自动化](./web-and-automation.md)：阶段 11 的详细架构、使用、权限/传输边界、预算与验收范围。
+
+- [发行验收与交付矩阵](./release-acceptance.md)：阶段 12/macOS 预览、安装证据及未通过项。
+- [预览版使用与排错](./user-guide.md)：安装/升级、操作、快捷键、失败恢复。
+- [0.2.0-preview.1 版本说明](./release-notes.md)。

@@ -1,11 +1,27 @@
 appId: com.devly.desktop
 productName: Devly
+artifactName: '${productName}-${version}-${os}-${arch}.${ext}'
 directories:
   output: release
 files:
   - out/**
   - package.json
 extraResources:
+  - from: resources/vendor
+    to: licenses
+    filter:
+      - stage10-*
+      - stage11-*
+      - stage12-*
+      - ansi-to-react.NOTICE
+      - BSD-3-Clause.LICENSE
+      - anser.LICENSE
+      - escape-carriage.LICENSE
+      - linkify-it.LICENSE
+      - uc-micro.LICENSE
+      - radix-use-controllable-state.LICENSE
+      - xterm.LICENSE
+      - xterm-addon-fit.LICENSE
   - from: node_modules/monaco-editor/LICENSE
     to: licenses/monaco-editor.LICENSE
   - from: node_modules/@monaco-editor/react/LICENSE

@@ -14,15 +14,8 @@ export function modelOptions(
       providerName: provider.name,
       host: new URL(provider.baseUrl).host,
       model,
-      disabled: !model || provider.protocol !== 'chat-completions',
-      hint:
-        provider.protocol !== 'chat-completions'
-          ? '协议暂未接入'
-          : !model
-            ? '请先填写模型 ID'
-            : provider.hasCredential
-              ? ''
-              : '未设置密钥',
+      disabled: !model,
+      hint: !model ? '请先填写模型 ID' : provider.hasCredential ? '' : '未设置密钥',
     }))
   })
 }

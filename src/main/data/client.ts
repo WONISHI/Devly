@@ -16,6 +16,7 @@ export class DatabaseClient {
   >()
   private failed = false
   private closing = false
+  private closeTask: Promise<void> | null = null
   readonly ready: Promise<number>
   constructor(
     root: string,
@@ -65,6 +66,9 @@ export class DatabaseClient {
       if (!this.closing) this.fail()
     })
   }
+  isAvailable(): boolean {
+    return !this.failed && !this.closing
+  }
   private fail(): void {
     this.failed = true
     for (const entry of this.pending.values()) {
@@ -75,6 +79,17 @@ export class DatabaseClient {
     void this.worker.terminate()
   }
   async execute<T = unknown>(operation: string, args: unknown = {}): Promise<T> {
+    if (
+      [
+        'internal.chat.update',
+        'internal.chat.tool',
+        'internal.chat.agent',
+        'internal.chat.approval',
+      ].includes(operation)
+    ) {
+      const value = args as Record<string, unknown>
+      args = { ...value, eventId: value.eventId ?? randomUUID() }
+    }
     await this.ready
     if (this.failed || (this.closing && operation !== 'internal.close'))
       throw new ContractError(failure('STORAGE_UNAVAILABLE'))
@@ -87,12 +102,30 @@ export class DatabaseClient {
     })
   }
   async close(): Promise<void> {
-    if (this.closing) return
+    if (this.closeTask) return this.closeTask
     this.closing = true
-    try {
-      if (!this.failed) await this.execute('internal.close')
-    } finally {
-      await this.worker.terminate()
-    }
+    this.closeTask = (async () => {
+      const exited = new Promise<void>((resolve) => this.worker.once('exit', () => resolve()))
+      let graceful = false
+      try {
+        if (!this.failed) {
+          await this.execute('internal.close')
+          graceful = true
+        }
+      } finally {
+        if (graceful) {
+          let timer: ReturnType<typeof setTimeout> | undefined
+          const stopped = await Promise.race([
+            exited.then(() => true),
+            new Promise<false>((resolve) => {
+              timer = setTimeout(() => resolve(false), 3000)
+            }),
+          ])
+          clearTimeout(timer)
+          if (!stopped) await this.worker.terminate()
+        } else await this.worker.terminate()
+      }
+    })()
+    return this.closeTask
   }
 }

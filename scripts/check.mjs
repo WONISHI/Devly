@@ -13,6 +13,19 @@ for (const script of [
   'verify:data',
   'verify:chat',
   'verify:agent',
+  'verify:stability',
+  'verify:protocols',
+  'verify:recovery',
+  'verify:lifecycle',
+  'verify:storage-faults',
+  'verify:configuration',
+  'verify:extensions',
+  'verify:skills',
+  'verify:web',
+  'verify:attachments',
+  'verify:schedules',
+  'verify:browser-proxy',
+  'verify:worker-close',
 ]) {
   console.log(`\n[check] ${script}`)
   const result =

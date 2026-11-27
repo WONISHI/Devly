@@ -5,7 +5,7 @@ const messages: Record<ProviderErrorInfo['code'], string> = {
   ACCESS_DENIED: '访问被拒绝（403），请检查模型权限',
   RATE_LIMITED: '请求限流（429），请稍后手动重试',
   SERVER_ERROR: '供应商服务异常（5xx），请稍后重试',
-  TIMEOUT: '请求超时，可调整超时后重试',
+  TIMEOUT: '请求超时，请核对网络与供应商状态后手动重试',
   CANCELLED: '已取消请求',
   NETWORK: '网络连接失败，请检查地址与网络',
   DISCONNECTED: '响应中断，未收到完整结束标记',

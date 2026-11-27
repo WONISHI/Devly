@@ -10,33 +10,27 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 
 ## 2. 技术选择与实现状态
 
-
-| 功能           | 选择                                                                    | 当前状态与实现方式                                                                            |
-| -------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 桌面与界面     | Electron、React、TypeScript                                             | 已建立 main/preload/renderer/shared；现有界面为基础暗色工作台                                 |
-| 构建与包管理   | electron-vite、Vite、pnpm、Volta                                        | 已配置，依赖版本以锁文件为准                                                                  |
-| AI 组件        | 用户指定的原 AI Elements                                                | 原 PromptInput、Conversation、Message、Tool、ModelSelector 已连接聊天；Confirmation、Plan、Task 连接阶段 6 审批/计划；Commit 仍用于预览                       |
-| 通用 UI        | 与原 AI Elements 同版本配套 shadcn/ui、Radix                            | 已按源码引入，不能自动替换为迁移后方案                                                        |
-| 样式与图标     | Tailwind CSS、Lucide React                                              | 已接入；应用品牌用用户确认的图片，Dock 当前为 v5                                              |
-| 状态管理       | Zustand                                                                 | 目前只有项目与页签内存状态，真实任务投影待实现                                                |
-| 通知           | Sonner                                                                  | 已接入，审批与任务结果不只依赖短暂 toast                                                      |
-| 面板与长列表   | react-resizable-panels、TanStack Virtual                                | 已安装，未形成完整布局或性能验收                                                              |
-| 运行时校验     | Zod + 共享契约                                                          | 已覆盖版本化 IPC、数据操作、Provider 配置/诊断；Agent 工具注册契约待后续                       |
-| Markdown       | react-markdown、remark-gfm、rehype-sanitize；原 Message 配套 Streamdown | 已安装；选定一条正文渲染路径并复核原始 HTML/链接/资源处理                                     |
-| 代码与 Diff    | Monaco 0.52.2 + @monaco-editor/react 4.7.0                               | 本地内联 Worker、项目文件模型、有版本保存与 HEAD→磁盘 Diff；语言服务限已打开模型，见 editor-and-diff.md |
-| 交互终端       | xterm.js + addon-fit + node-pty                                         | 已安装，PTY 技术验证通过；交互界面与服务待实现                                                |
-| 数据           | better-sqlite3 + SQLite Worker + SQL 迁移                               | 只验证了原生查询；数据库文件、Worker、表和 Repository 待实现                                  |
-| 凭据           | Electron 主进程及系统保护存储                                           | 待实现；保护能力不可用时明确失败，不明文兜底                                                  |
-| Agent          | 自研 Node 后台运行时                                                    | 待实现；负责上下文、工具循环、预算、审批、取消、恢复                                          |
-| API 适配       | ProviderAdapter + Main 原生 fetch；Chat Completions 兼容协议           | 非流式/SSE/工具归一化、诊断和能力表已实现，本地检查通过，真实端点待验收；未增加 Provider SDK |
-| 其他协议       | Responses、Anthropic Messages 独立适配器                                | 待实现；每种协议单独验证流式与工具调用                                                        |
-| HTTP 与 SDK    | 首个适配器优先评估 openai SDK，保留统一接口                             | 尚未声明 openai 或 Anthropic SDK 为直接依赖；实现任务时按需安装并锁版本，禁止在 Renderer 调用 |
-| Git            | Node child_process 调 Git CLI                                           | 已接入 macOS 只读 root/HEAD/status 前后基线；diff/log/提交后续实现                                               |
-| 命令与文件工具 | Node 文件 API、子进程、权限策略、OS 执行隔离                            | 待实现；工作目录与 worktree 不能代替沙箱                                                      |
-| MCP/Skills     | 本地 MCP 客户端、Skills 资源与规则加载                                  | 已接入本地模型/工具循环与 macOS 审批执行，不依赖 Codex；更多平台后续验证                                              |
-| 日志           | electron-log + 结构化工具日志                                           | 主进程日志已接入，业务日志与脱敏待完善                                                        |
-| 分发           | electron-builder                                                        | 本机 macOS 未签名 .app 已生成；DMG、签名、Windows 仍待验证                                    |
-| 检查           | TypeScript、ESLint、Prettier、Vitest、Playwright                        | 已配置；目前仅 1 项契约测试及基础桌面 smoke                                                   |
+| 功能                    | 选择                                                            | 当前实现与边界                                                                                                                                |
+| ----------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 桌面与构建              | Electron / React / TypeScript / electron-vite / pnpm / Volta    | main/preload/renderer/shared 分层，工具与锁文件固定；当前 macOS ARM64                                                                         |
+| AI 组件                 | 用户指定原 AI Elements                                          | PromptInput/Conversation/Message/Tool/ModelSelector、Confirmation/Plan/Task、真实 Commit 和 Terminal/Test Results/Stack Trace；来源 35 份校验 |
+| 基础 UI / 样式 / 图标   | 配套 shadcn/ui / Radix / Tailwind / Lucide                      | 业务复用 components/ui；固定窗口与 ScrollArea；品牌 v5 不变                                                                                   |
+| 状态与面板              | Zustand / react-resizable-panels                                | 项目、聊天、编辑缓冲区、终端视图和项目布局；只有明确持久化字段跨重启保存                                                                      |
+| 通知与正文              | Sonner / 原 Message 的 Streamdown 及配套插件                    | 真实状态/错误展示；审批与执行结果保存在历史，不只依赖 toast                                                                                   |
+| 校验                    | Zod + 共享契约                                                  | IPC 来源、归属、参数、Provider、工具/审批、编辑/Git/PTY/布局运行时校验                                                                        |
+| 代码与 Diff             | Monaco 0.52.2 / @monaco-editor/react 4.7.0                      | 本地 Worker、模型/标签、保存冲突与实际 Diff；仅已打开模型基础语言服务                                                                         |
+| 用户终端                | xterm 5.5.0 / fit 0.10.0 / node-pty 1.1.0                       | 实际输入/resize/Ctrl+C/多终端与清理；受限系统 Shell，无个人工具链和网络                                                                       |
+| Agent 日志              | 原 Terminal / ansi-to-react 6.2.6                               | 只读实际执行输出；严格 TAP 测试与真实堆栈定位；未知报告不称测试通过                                                                           |
+| 数据                    | better-sqlite3 / worker_threads / SQL 迁移                      | userData SQLite Worker v15；新增项目上下文、worktree/父子关系、MCP 引用与 Skill 哈希，事务迁移与去秘密备份                                                                 |
+| 凭据                    | Main / Electron safeStorage                                     | DB 只存引用，密文单独受保护保存，系统保护不可用拒绝，不回传保存后明文                                                                         |
+| Agent                   | 自研本地运行时                                                  | 模型/工具循环、macOS 审批执行、4 并发队列与有界父子任务；重启核对后新只读继续，不重放旧副作用                                                             |
+| 主协议                  | ProviderAdapter / Main 原生 fetch / Chat Completions            | 非流式/SSE/工具归一化、错误生命周期、能力诊断；指定真实端点已验证，不推广所有模型                                                             |
+| 其他协议                | Responses / Anthropic Messages 独立适配                         | 阶段 9 独立适配和本地协议验证已接入；真实端点待联调，无新增 SDK                                                                                           |
+| Git                     | Node child_process / 系统 Git CLI                               | 只读基线/Diff、真实第一父历史、审查后的暂存/本地提交、安全分支；无自动推送                                                                    |
+| 文件与命令              | 路径/版本校验 / 单修改队列 / macOS Seatbelt                     | 项目内受限执行；cwd/worktree 不是沙箱，Windows 约束待 T12                                                                                     |
+| MCP / Skills / 多 Agent | 官方 MCP Client 2.4.0 / Ajv 8.20.0 / 自研队列与预算 | Streamable HTTP 实际服务、显式 Skill 与资源、两子任务隔离/继承/取消；本机验收边界见 task-extensions.md                                                                                       |
+| 日志                    | electron-log / 脱敏结构化记录 / blob 引用                       | 输出截断、原始日志读取、实际退出与审批历史；阶段 9 增加白名单诊断、备份及核对恢复                                                                             |
+| 分发与检查              | electron-builder / TS / ESLint / Prettier / Vitest / Playwright | 167 项常规检查通过、3 项主机检查默认跳过；扩展原生/窗口与包内证据见阶段 10/11 日志；未签名目录不是正式发行                                     |
 
 ## 3. Provider 配置契约
 
@@ -52,13 +46,12 @@ Codex App Server 不再是主引擎或安装前提；目前的 CLI 检测和握�
 
 ## 4. 原 AI Elements 的使用方式
 
-
 | Devly 界面           | 原组件                                           | 接入要求                                                      |
 | -------------------- | ------------------------------------------------ | ------------------------------------------------------------- |
 | 对话、输入、附件     | Conversation、Message、Prompt Input、Attachments | 来自 Devly 会话/消息，不依赖某家 API 的历史 ID                |
 | 工具过程             | Tool、Task、Plan、Reasoning                      | 将自研 Agent 事件映射到组件契约，展示可获得的真实摘要         |
 | 审批                 | Confirmation                                     | 对应自己的审批 ID、操作范围和生命周期                         |
-| 提交历史             | Commit                                           | 数据来自 Git 服务，当前演示数据不得视作真实提交               |
+| 提交历史             | Commit                                           | 业务面板来自真实 Git；开发者预览的演示数据明确标记            |
 | 文件和代码           | File Tree、Code Block                            | 编辑和完整 Diff 仍由 Monaco 承担                              |
 | 命令与测试           | Terminal、Test Results、Stack Trace              | 原 Terminal 是日志展示，不代替交互式 PTY                      |
 | 上下文、队列与检查点 | Context、Queue、Checkpoint                       | 需要 Devly 的预算、调度和快照支持，不因组件存在而自动具备功能 |
@@ -97,3 +90,21 @@ B03 已将工作台迁移为 Provider/Devly Agent 概念，并提供明确待接
 阶段 2 使用现有 better-sqlite3 和 Node worker_threads，不增加数据库或凭据依赖；Electron 39 的 safeStorage 由 Main 使用，密文落盘且 DB 只存 UUID 引用，缺少安全后端时拒绝保存。详见 [本地数据架构](./local-data.md)。
 
 阶段 6 的原 Confirmation/Plan/Task/Shimmer 与 Alert/Card 沿用同一固定提交。新增 motion 12.42.0（MIT，React 18/19 peer），原组件校验扩展至 32 个文件；命令/补丁采用 macOS Seatbelt 子进程，非工作目录伪隔离。具体能力限制见 [执行与审批](./execution-foundation.md)。
+
+阶段 8：原 Terminal/Test Results/Stack Trace 仍取同一固定来源，新增 ansi-to-react 6.2.6 与显式 Radix use-controllable-state 1.3.0。xterm 与 PTY 从技术储备接入实际桌面业务，主题与布局有开发/包内证据。ansi-to-react 仅包元数据声明 BSD-3-Clause，缺完整上游权利人通知，正式发行前必须补全，不能用标准模板代替。详细契约、系统边界、快捷键和依赖核对见 [工作台说明](./git-and-terminal.md) 与 [依赖评估](./dependency-review.md)。
+
+阶段 9 沿用原生 fetch、Zod、SQLite Worker 和已有 TanStack Virtual，不增加依赖；数据库仍 v8。独立协议、短时推理延续、事件去重与状态核对、generation 恢复、配置白名单和测量边界见 [稳定性说明](./stability-and-recovery.md)。
+
+## 阶段 10 依赖与边界
+
+新增精确固定 @modelcontextprotocol/client 2.4.0、ajv 8.20.0；官方测试服务 @modelcontextprotocol/server 2.4.0 为 devDependency。SDK 只在 Main 使用，JSON Schema 校验放在有内存/时限的 Worker；Renderer 无客户端秘密。原 AI/UI 来源清单仍为 35 份，没有换库。SDK v2 为 Apache-2.0，Ajv 为 MIT，相关实际通知随 resources/vendor/stage10-* 打包；见 [依赖评估](./dependency-review.md)。
+
+项目记录/所选 Skill 不是扩权；MCP 也不受本机文件沙箱保证。worktree 使用实际系统 Git、固定参数和 ff-only，父子 Agent 没有任意供应商/递归/自动合并入口。完整当前实现与限制见 [扩展说明](./task-extensions.md)。阶段 9 节中的 v8 是当时版本，当前链已追加至 v15。
+
+## 阶段 11 的新增实现
+
+HTML 使用精确 parse5 8.1.1（MIT）在有界 Worker 解析；现有 Electron Session/BrowserWindow/CDP 与 Main 私有认证代理实现受控浏览器及静态预览，没有额外浏览器 SDK。现有 shadcn 表单与原 Prompt Input/Tool/Confirmation 接真实附件/审批，未改原组件来源。调度用 Main 定时器、powerMonitor/Notification 和 SQLite v15，不新增系统 daemon 或云服务。详见[网页扩展说明](./web-and-automation.md)。
+
+## 阶段 12 预览收口
+
+版本 0.2.0-preview.1 使用原选型与品牌 v5；KaTeX 0.18.2 显式本地 CSS/字体，linkify-it 定向锁到 5.0.2，实际渲染安全检查通过。Main 延迟加载 PTY，非 macOS 写入/命令/终端明确拒绝。当前 ARM64 DMG 实际复制安装与升级通过，Windows/正式签名/维护主版本升级仍未通过；详见[发行验收](./release-acceptance.md)。

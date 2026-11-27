@@ -11,3 +11,7 @@ playwright-report
 docs
 src/renderer/src/components/ai-elements
 src/renderer/src/assets/provider-icons
+resources/vendor/stage10-*
+resources/vendor/stage11-*
+
+resources/vendor/stage12-*
